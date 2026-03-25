@@ -6,8 +6,8 @@ const Index = () => {
       <Button className="bg-blue-btn text-blue-btn-foreground hover:bg-blue-btn/90">
         Botão Laranja
       </Button>
-      <Button variant="destructive">
-        Botão Vermelho
+      <Button className="bg-blue-btn text-blue-btn-foreground hover:bg-blue-btn/90">
+        Botão Azul
       </Button>
     </div>
   );
