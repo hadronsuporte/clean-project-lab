@@ -1,17 +1,7 @@
-import { Button } from "@/components/ui/button";
-
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center gap-4 bg-background">
-      <Button className="bg-orange-btn text-orange-btn-foreground hover:bg-orange-btn/90">
-        Botão Laranja
-      </Button>
-      <Button className="bg-blue-btn text-blue-btn-foreground hover:bg-blue-btn/90">
-        Botão Azul
-      </Button>
-      <Button className="bg-green-btn text-green-btn-foreground hover:bg-green-btn/90">
-        Botão Verde
-      </Button>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <h1 className="text-2xl font-bold text-foreground">Projeto em branco</h1>
     </div>
   );
 };
