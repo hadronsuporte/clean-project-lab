@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,13 @@ import { Eye, EyeOff, Facebook, Mail } from "lucide-react";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulating login
+    navigate("/dashboard");
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F7F6] p-4">
@@ -25,7 +33,7 @@ const Login = () => {
             <h2 className="text-xl font-semibold text-gray-800">Acessar minha conta</h2>
           </CardHeader>
           <CardContent className="px-8 pb-10 space-y-6">
-            <div className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">E-mail ou usuário</label>
                 <div className="relative">
@@ -62,10 +70,10 @@ const Login = () => {
                 <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">Lembrar de mim</label>
               </div>
 
-              <Button className="w-full h-12 bg-[#3498DB] hover:bg-[#2980B9] text-white font-bold text-base transition-all">
+              <Button type="submit" className="w-full h-12 bg-[#3498DB] hover:bg-[#2980B9] text-white font-bold text-base transition-all">
                 ENTRAR
               </Button>
-            </div>
+            </form>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
