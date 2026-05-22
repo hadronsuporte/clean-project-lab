@@ -62,7 +62,7 @@ const Login = () => {
                 <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">Lembrar de mim</label>
               </div>
 
-              <Button className="w-full h-12 bg-[#27AE60] hover:bg-[#2ECC71] text-white font-bold text-base transition-all">
+              <Button className="w-full h-12 bg-[#3498DB] hover:bg-[#2980B9] text-white font-bold text-base transition-all">
                 ENTRAR
               </Button>
             </div>
