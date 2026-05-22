@@ -85,7 +85,7 @@ const Index = () => {
         <div className="p-8 space-y-8">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
-            <Button className="bg-[#27ae60] hover:bg-[#2ecc71] gap-2">
+            <Button className="bg-[#3498DB] hover:bg-[#2980B9] gap-2">
               <Plus size={18} />
               Novo Pedido
             </Button>

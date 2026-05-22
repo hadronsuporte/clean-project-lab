@@ -195,7 +195,7 @@ const Register = () => {
                 </label>
               </div>
 
-              <Button className="w-full h-14 bg-[#27AE60] hover:bg-[#2ECC71] text-white font-bold text-lg shadow-lg shadow-green-200 transition-all rounded-lg">
+              <Button className="w-full h-14 bg-[#3498DB] hover:bg-[#2980B9] text-white font-bold text-lg shadow-lg shadow-blue-200 transition-all rounded-lg">
                 CRIAR CONTA
               </Button>
             </form>
