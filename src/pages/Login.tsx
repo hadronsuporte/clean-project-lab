@@ -63,18 +63,14 @@ export default function Login() {
     <div className="min-h-screen bg-[#1c2333] text-[#c8d4e8] flex flex-col items-center justify-center p-6 font-light">
       <div className="w-full max-w-[390px] space-y-12">
         {/* Logo Section */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-4">
-            <div className="w-2 h-16 bg-gradient-to-b from-red-500 via-white to-blue-500" />
-            <div className="border-2 border-[#f0c040] px-4 py-2">
-              <h1 className="text-3xl font-bold tracking-[0.2em] text-[#f0c040] font-oswald m-0">BARBEARIA</h1>
-            </div>
-            <div className="w-2 h-16 bg-gradient-to-b from-red-500 via-white to-blue-500" />
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="h-[1px] w-32 bg-[#2a3347] mb-2" />
-            <Scissors className="w-5 h-5 text-[#8a9ab5]" />
-            <div className="h-[1px] w-32 bg-[#2a3347] mt-2" />
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <div className="relative w-full flex justify-center">
+            <img 
+              src="/logo-barber.png" 
+              alt="Logo Barber Shop" 
+              className="w-48 h-auto object-contain"
+              style={{ filter: "invert(81%) sepia(35%) saturate(847%) hue-rotate(352deg) brightness(101%) contrast(89%)" }}
+            />
           </div>
         </div>
 
