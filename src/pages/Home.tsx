@@ -159,24 +159,23 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Categories */}
+        {/* Categorias (Apenas Visual) */}
         <div className="flex justify-between items-center pt-2">
           {[
             { id: "SCISSORS", icon: Scissors },
-            { id: "ZAP", icon: Zap },
-            { id: "AWARD", icon: Award },
-          ].map((cat) => (
-            <button
+            { id: "RAZOR", icon: Razor },
+            { id: "COMB", icon: Comb },
+          ].map((cat, index) => (
+            <div
               key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
               className={`w-16 h-16 rounded-[4px] border flex items-center justify-center transition-all ${
-                activeCategory === cat.id 
+                index === 0 
                 ? "bg-[#161e2e] border-[#f0c040] text-[#f0c040]" 
                 : "bg-[#141b2a] border-[#2a3347] text-[#8a9ab5]"
               }`}
             >
               <cat.icon className="w-6 h-6" />
-            </button>
+            </div>
           ))}
         </div>
 
