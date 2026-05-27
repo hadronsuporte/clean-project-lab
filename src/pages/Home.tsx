@@ -2,8 +2,46 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Scissors, Zap, Award } from "lucide-react";
+import { LogOut, User, Scissors } from "lucide-react";
 import { toast } from "sonner";
+
+// Custom Razor icon (Navalha)
+const Razor = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
+// Custom Comb icon (Pente)
+const Comb = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M2 10h20" />
+    <path d="M4 10v6" />
+    <path d="M7 10v6" />
+    <path d="M10 10v6" />
+    <path d="M13 10v6" />
+    <path d="M16 10v6" />
+    <path d="M19 10v6" />
+    <path d="M22 10v6" />
+  </svg>
+);
 
 interface Service {
   id: string;
@@ -121,24 +159,23 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Categories */}
+        {/* Categorias (Apenas Visual) */}
         <div className="flex justify-between items-center pt-2">
           {[
             { id: "SCISSORS", icon: Scissors },
-            { id: "ZAP", icon: Zap },
-            { id: "AWARD", icon: Award },
-          ].map((cat) => (
-            <button
+            { id: "RAZOR", icon: Razor },
+            { id: "COMB", icon: Comb },
+          ].map((cat, index) => (
+            <div
               key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
               className={`w-16 h-16 rounded-[4px] border flex items-center justify-center transition-all ${
-                activeCategory === cat.id 
+                index === 0 
                 ? "bg-[#161e2e] border-[#f0c040] text-[#f0c040]" 
                 : "bg-[#141b2a] border-[#2a3347] text-[#8a9ab5]"
               }`}
             >
               <cat.icon className="w-6 h-6" />
-            </button>
+            </div>
           ))}
         </div>
 
