@@ -2,8 +2,48 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Scissors, Zap, Award } from "lucide-react";
+import { LogOut, User, Scissors } from "lucide-react";
 import { toast } from "sonner";
+
+const Razor = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M3 17l4 4" />
+    <path d="M7 13l10 10" />
+    <path d="M11 9l2 2" />
+    <path d="M15 5l2 2" />
+    <path d="M19 1l2 2" />
+    <path d="M12 22l9-9" />
+    <path d="M2 12l9-9" />
+  </svg>
+);
+
+const Comb = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M2 8h20v4H2z" />
+    <path d="M4 12v4" />
+    <path d="M7 12v4" />
+    <path d="M10 12v4" />
+    <path d="M13 12v4" />
+    <path d="M16 12v4" />
+    <path d="M19 12v4" />
+  </svg>
+);
 
 interface Service {
   id: string;
@@ -122,23 +162,29 @@ export default function Home() {
         </div>
 
         {/* Categories */}
-        <div className="flex justify-between items-center pt-2">
+        <div className="flex justify-between items-center pt-2 px-4">
           {[
-            { id: "SCISSORS", icon: Scissors },
-            { id: "ZAP", icon: Zap },
-            { id: "AWARD", icon: Award },
+            { id: "SCISSORS", icon: Scissors, label: "CORTE" },
+            { id: "RAZOR", icon: Razor, label: "BARBA" },
+            { id: "COMB", icon: Comb, label: "PENTEADO" },
           ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`w-16 h-16 rounded-[4px] border flex items-center justify-center transition-all ${
-                activeCategory === cat.id 
-                ? "bg-[#161e2e] border-[#f0c040] text-[#f0c040]" 
-                : "bg-[#141b2a] border-[#2a3347] text-[#8a9ab5]"
-              }`}
-            >
-              <cat.icon className="w-6 h-6" />
-            </button>
+            <div key={cat.id} className="flex flex-col items-center gap-3">
+              <button
+                onClick={() => setActiveCategory(cat.id)}
+                className={`w-20 h-24 rounded-[8px] border flex items-center justify-center transition-all ${
+                  activeCategory === cat.id 
+                  ? "bg-[#161e2e] border-[#f0c040] text-[#f0c040]" 
+                  : "bg-[#141b2a] border-[#2a3347] text-[#8a9ab5]"
+                }`}
+              >
+                <cat.icon className="w-10 h-10" />
+              </button>
+              <span className={`text-[10px] font-bold tracking-[0.2em] font-oswald ${
+                activeCategory === cat.id ? "text-[#f0c040]" : "text-[#8a9ab5]"
+              }`}>
+                {cat.label}
+              </span>
+            </div>
           ))}
         </div>
 
