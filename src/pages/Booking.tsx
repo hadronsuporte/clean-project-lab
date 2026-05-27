@@ -107,7 +107,7 @@ export default function Booking() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      // Simple time conversion for the dummy data slots
+      // Simple time conversion
       const [timePart, ampm] = selectedTime.split(" ");
       let [hours] = timePart.split(".").map(Number);
       if (ampm === "PM" && hours !== 12) hours += 12;
@@ -151,7 +151,7 @@ export default function Booking() {
 
         {/* Header Section */}
         <div>
-          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">THANKS</h1>
+          <h1 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#8a9ab5] m-0">THANKS</h1>
           <h2 className="text-4xl font-bold uppercase text-[#22a6f0] font-oswald tracking-tight m-0 leading-tight">
             STEVE!
           </h2>
@@ -170,26 +170,24 @@ export default function Booking() {
 
           {/* Calendar Horizontal */}
           <div className="flex justify-between items-center px-2">
-            {days.map((day) => {
-              const isSelected = isSameDay(day, selectedDate);
-              const dayNum = format(day, "d");
-              const dayName = format(day, "EEEEEE").toUpperCase().substring(0, 2);
-              const isSpecial = dayNum === "14"; // In the image 14 is red
+            {[13, 14, 15, 16, 17, 18, 19].map((day) => {
+              const isSelected = day === 16;
+              const isSpecial = day === 14;
 
               return (
-                <div key={day.toISOString()} className="flex flex-col items-center gap-2 relative">
-                  <span className={`text-[12px] font-bold font-oswald ${
-                    isSelected ? "text-[#1c2333] z-10" : isSpecial ? "text-red-500" : "text-white"
+                <div key={day} className="flex flex-col items-center gap-2 relative">
+                  <span className={`text-[12px] font-bold font-oswald transition-all ${
+                    isSelected ? "text-[#1c2333] z-10" : isSpecial ? "text-[#f06060]" : "text-white"
                   }`}>
-                    {dayNum}
+                    {day}
                   </span>
-                  <span className={`text-[8px] font-bold tracking-tighter ${
+                  <span className={`text-[8px] font-bold tracking-tighter transition-all ${
                     isSelected ? "text-[#1c2333] z-10" : "text-[#8a9ab5]"
                   }`}>
-                    {dayName}
+                    {day === 13 ? "SU" : day === 14 ? "MO" : day === 15 ? "TU" : day === 16 ? "WE" : day === 17 ? "TH" : day === 18 ? "FR" : "SA"}
                   </span>
                   {isSelected && (
-                    <div className="absolute top-[-4px] w-7 h-10 bg-[#22a6f0] rounded-full -z-0" />
+                    <div className="absolute top-[-5px] w-8 h-12 bg-[#22a6f0] rounded-full -z-0" />
                   )}
                 </div>
               );
@@ -198,13 +196,13 @@ export default function Booking() {
         </div>
 
         {/* Time Grid */}
-        <div className="space-y-4">
+        <div className="space-y-4 pt-4">
           <h3 className="text-[11px] font-bold tracking-[0.25em] text-[#22a6f0] font-oswald uppercase text-center">
             AVAILABLE TIMES
           </h3>
           <div className="grid grid-cols-3 gap-2">
             {timeSlots.map((time) => {
-              const isBooked = bookedSlots.includes(time) || time === "12.00 AM" || time === "07.00 PM"; // Mimic image booked slots
+              const isBooked = bookedSlots.includes(time) || time === "12.00 AM" || time === "07.00 PM"; 
               const isSelected = selectedTime === time;
               
               return (
@@ -216,8 +214,8 @@ export default function Booking() {
                     isSelected
                       ? "bg-[#22a6f0] text-white"
                       : isBooked
-                        ? "bg-[#f06060]/20 text-[#f06060] border border-[#f06060]/50"
-                        : "bg-[#141b2a] text-[#8a9ab5]"
+                        ? "bg-[#f06060]/20 text-[#f06060] border border-[#f06060]/30"
+                        : "bg-white/5 border border-white/5 text-[#8a9ab5]"
                   }`}
                 >
                   {isBooked ? "BOOKED" : time}
@@ -233,7 +231,7 @@ export default function Booking() {
         <Button
           onClick={handleBooking}
           disabled={isSubmitting || !selectedTime}
-          className="w-full bg-[#22a6f0] hover:bg-[#1a88c7] text-white font-bold py-7 text-xs rounded-[4px] transition-all font-oswald uppercase tracking-[3px]"
+          className="w-full bg-[#22a6f0] hover:bg-[#1a88c7] text-white font-bold py-7 text-xs rounded-xl transition-all font-oswald uppercase tracking-[3px] shadow-lg shadow-[#22a6f0]/20"
         >
           CONTINUE
         </Button>
