@@ -15,13 +15,8 @@ const Razor = ({ className }: { className?: string }) => (
     strokeLinejoin="round"
     className={className}
   >
-    <path d="M3 17l4 4" />
-    <path d="M7 13l10 10" />
-    <path d="M11 9l2 2" />
-    <path d="M15 5l2 2" />
-    <path d="M19 1l2 2" />
-    <path d="M12 22l9-9" />
-    <path d="M2 12l9-9" />
+    <path d="M3 21l8-8" />
+    <path d="M11 13l9-4 2 2-9 4z" />
   </svg>
 );
 
@@ -35,13 +30,11 @@ const Comb = ({ className }: { className?: string }) => (
     strokeLinejoin="round"
     className={className}
   >
-    <path d="M2 8h20v4H2z" />
-    <path d="M4 12v4" />
-    <path d="M7 12v4" />
-    <path d="M10 12v4" />
-    <path d="M13 12v4" />
-    <path d="M16 12v4" />
-    <path d="M19 12v4" />
+    <path d="M4 6h16l-2 12H6L4 6z" />
+    <path d="M7 6v8" />
+    <path d="M10 6v8" />
+    <path d="M13 6v8" />
+    <path d="M16 6v8" />
   </svg>
 );
 
