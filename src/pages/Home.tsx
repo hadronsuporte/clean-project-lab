@@ -121,15 +121,15 @@ export default function Home() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white hover:bg-white/10">
             <ChevronLeft className="w-6 h-6" />
           </Button>
-          <div className="w-10 h-10 rounded-full border-2 border-[#22a6f0] flex items-center justify-center overflow-hidden bg-[#141b2a]">
-            <User className="w-6 h-6 text-[#22a6f0]" />
+          <div className="w-10 h-10 rounded-full bg-[#22a6f0] flex items-center justify-center overflow-hidden">
+            <User className="w-6 h-6 text-white" />
           </div>
         </div>
 
         {/* Welcome */}
         <div>
-          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">WELCOME</h1>
-          <h2 className="text-4xl font-bold uppercase text-[#22a6f0] font-oswald tracking-tight m-0 leading-tight">
+          <h1 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#8a9ab5] m-0">WELCOME</h1>
+          <h2 className="text-4xl font-bold uppercase text-white font-oswald tracking-tight m-0 leading-tight">
             STEVE!
           </h2>
           <p className="text-[10px] text-[#8a9ab5] mt-1 max-w-[200px] leading-tight">Lorem ipsum dolor sit amet consectetur adipiscing elit</p>
@@ -142,7 +142,7 @@ export default function Home() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`text-[11px] font-bold tracking-[0.2em] font-oswald uppercase transition-all relative pb-2 ${
-                activeTab === tab ? "text-[#22a6f0] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#22a6f0]" : "text-[#8a9ab5]"
+                activeTab === tab ? "text-[#22a6f0] after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-[3px] after:bg-[#22a6f0] after:rounded-full" : "text-[#8a9ab5]"
               }`}
             >
               {tab}
