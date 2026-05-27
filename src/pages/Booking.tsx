@@ -141,31 +141,31 @@ export default function Booking() {
       <div className="w-full max-w-[390px] p-6 space-y-10">
         {/* Header */}
         <div className="flex justify-between items-center w-full">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-[#8a9ab5] hover:text-[#f0c040]">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white hover:bg-white/10">
             <ChevronLeft className="w-6 h-6" />
           </Button>
-          <div className="w-10 h-10 rounded-full border-2 border-[#f0c040] flex items-center justify-center overflow-hidden bg-[#141b2a]">
-            <User className="w-6 h-6 text-[#f0c040]" />
+          <div className="w-10 h-10 rounded-full bg-[#22a6f0] flex items-center justify-center overflow-hidden">
+            <User className="w-6 h-6 text-white" />
           </div>
         </div>
 
         {/* Header Section */}
         <div>
           <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">THANKS</h1>
-          <h2 className="text-4xl font-bold uppercase text-[#f0c040] font-oswald tracking-tight m-0 leading-tight">
-            GUILHERME!
+          <h2 className="text-4xl font-bold uppercase text-[#22a6f0] font-oswald tracking-tight m-0 leading-tight">
+            STEVE!
           </h2>
           <p className="text-[10px] text-[#8a9ab5] mt-1 max-w-[200px] leading-tight">Lorem ipsum dolor sit amet consectetur adipiscing elit</p>
         </div>
 
         {/* Appointment Header */}
         <div>
-          <h3 className="text-xs font-bold tracking-[0.3em] text-[#f0c040] font-oswald uppercase mb-8 text-center">
+          <h3 className="text-sm font-bold tracking-[0.3em] text-[#22a6f0] font-oswald uppercase mb-8 text-center">
             BOOK AN APPOINTMENT
           </h3>
           
           <div className="flex justify-center items-center mb-6">
-            <span className="text-[11px] font-bold tracking-[0.4em] text-[#f0c040] uppercase">JULY</span>
+            <span className="text-[11px] font-bold tracking-[0.4em] text-[#22a6f0] uppercase">JULY</span>
           </div>
 
           {/* Calendar Horizontal */}
@@ -189,7 +189,7 @@ export default function Booking() {
                     {dayName}
                   </span>
                   {isSelected && (
-                    <div className="absolute top-[-4px] w-7 h-10 bg-[#f0c040] rounded-full -z-0" />
+                    <div className="absolute top-[-4px] w-7 h-10 bg-[#22a6f0] rounded-full -z-0" />
                   )}
                 </div>
               );
@@ -199,7 +199,7 @@ export default function Booking() {
 
         {/* Time Grid */}
         <div className="space-y-4">
-          <h3 className="text-[11px] font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase text-center">
+          <h3 className="text-[11px] font-bold tracking-[0.25em] text-[#22a6f0] font-oswald uppercase text-center">
             AVAILABLE TIMES
           </h3>
           <div className="grid grid-cols-3 gap-2">
@@ -214,9 +214,9 @@ export default function Booking() {
                   onClick={() => setSelectedTime(time)}
                   className={`py-3 rounded-[4px] text-[10px] font-bold font-oswald tracking-widest transition-all ${
                     isSelected
-                      ? "bg-[#f0c040] text-white"
+                      ? "bg-[#22a6f0] text-white"
                       : isBooked
-                        ? "bg-[#8b0000]/40 text-red-500 border border-red-500/50"
+                        ? "bg-[#f06060]/20 text-[#f06060] border border-[#f06060]/50"
                         : "bg-[#141b2a] text-[#8a9ab5]"
                   }`}
                 >
@@ -233,7 +233,7 @@ export default function Booking() {
         <Button
           onClick={handleBooking}
           disabled={isSubmitting || !selectedTime}
-          className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-7 text-xs rounded-[4px] transition-all font-oswald uppercase tracking-[3px]"
+          className="w-full bg-[#22a6f0] hover:bg-[#1a88c7] text-white font-bold py-7 text-xs rounded-[4px] transition-all font-oswald uppercase tracking-[3px]"
         >
           CONTINUE
         </Button>
