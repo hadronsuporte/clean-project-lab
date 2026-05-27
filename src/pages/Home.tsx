@@ -17,24 +17,12 @@ const Razor = ({ className }: { className?: string }) => (
 
 // Custom Comb icon (Pente)
 const Comb = ({ className }: { className?: string }) => (
-  <svg 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M2 10h20" />
-    <path d="M4 10v6" />
-    <path d="M7 10v6" />
-    <path d="M10 10v6" />
-    <path d="M13 10v6" />
-    <path d="M16 10v6" />
-    <path d="M19 10v6" />
-    <path d="M22 10v6" />
-  </svg>
+  <img 
+    src="/pente-de-cabelo.png" 
+    alt="Pente" 
+    className={`${className} scale-125`}
+    style={{ filter: "invert(81%) sepia(35%) saturate(847%) hue-rotate(352deg) brightness(101%) contrast(89%)" }}
+  />
 );
 
 interface Service {
