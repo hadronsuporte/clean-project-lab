@@ -164,8 +164,8 @@ export default function Booking() {
               locale={ptBR}
               className="text-white bg-zinc-900"
               classNames={{
-                day_selected: "bg-amber-500 text-black hover:bg-amber-600",
-                day_today: "text-amber-500 font-bold underline",
+                selected: "bg-amber-500 text-black hover:bg-amber-600",
+                today: "text-amber-500 font-bold underline",
               }}
             />
           </div>
