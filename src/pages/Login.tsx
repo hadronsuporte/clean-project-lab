@@ -42,7 +42,8 @@ export default function Login() {
           if (profileError) throw profileError;
         }
 
-        toast.success("Conta criada com sucesso! Verifique seu e-mail.");
+        toast.success("Conta criada com sucesso! Você já pode entrar.");
+        setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
