@@ -2,8 +2,41 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Scissors, Zap, Award } from "lucide-react";
+import { LogOut, User, Scissors, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+
+const Razor = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M3 21l8-8" />
+    <path d="M11 13l9-4 2 2-9 4z" />
+  </svg>
+);
+
+const Comb = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M4 6h16l-2 12H6L4 6z" />
+    <path d="M7 6v8" />
+    <path d="M10 6v8" />
+    <path d="M13 6v8" />
+    <path d="M16 6v8" />
+  </svg>
+);
 
 interface Service {
   id: string;
@@ -86,59 +119,62 @@ export default function Home() {
     <div className="min-h-screen bg-[#1c2333] text-[#c8d4e8] flex flex-col items-center font-light pb-24">
       <div className="w-full max-w-[390px] p-6 space-y-8">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center w-full">
           <Button variant="ghost" size="icon" onClick={handleLogout} className="text-[#8a9ab5] hover:text-[#f0c040]">
-            <LogOut className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5" />
           </Button>
-          <div className="w-10 h-10 rounded-full bg-[#141b2a] border border-[#2a3347] flex items-center justify-center overflow-hidden">
-            <User className="w-6 h-6 text-[#8a9ab5]" />
+          <div className="w-8 h-8 rounded-full bg-[#f0c040] flex items-center justify-center overflow-hidden">
+            <User className="w-5 h-5 text-white" />
           </div>
         </div>
 
         {/* Welcome */}
         <div>
-          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">BEM-VINDO</h1>
+          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">WELCOME</h1>
           <h2 className="text-4xl font-bold uppercase text-[#f0c040] font-oswald tracking-tight m-0 leading-tight">
-            {firstName.toUpperCase()}!
+            GUILHERME!
           </h2>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#2a3347] gap-8">
+        <div className="flex justify-between items-center bg-[#141b2a] p-1 rounded-full w-full max-w-[320px] mx-auto">
           {["SERVIÇOS", "BARBEIROS", "PROMO"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-3 text-xs font-bold tracking-[0.15em] font-oswald uppercase transition-all relative ${
-                activeTab === tab ? "text-[#f0c040]" : "text-[#8a9ab5]"
+              className={`flex-1 py-2 text-[10px] font-bold tracking-[0.1em] font-oswald uppercase transition-all rounded-full ${
+                activeTab === tab ? "bg-[#f0c040] text-[#1c2333]" : "text-[#8a9ab5]"
               }`}
             >
               {tab}
-              {activeTab === tab && (
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#f0c040]" />
-              )}
             </button>
           ))}
         </div>
 
         {/* Categories */}
-        <div className="flex justify-between items-center pt-2">
+        <div className="flex justify-between items-center pt-2 px-4">
           {[
-            { id: "SCISSORS", icon: Scissors },
-            { id: "ZAP", icon: Zap },
-            { id: "AWARD", icon: Award },
+            { id: "SCISSORS", icon: Scissors, label: "CORTE" },
+            { id: "RAZOR", icon: Razor, label: "BARBA" },
+            { id: "COMB", icon: Comb, label: "PENTEADO" },
           ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`w-16 h-16 rounded-[4px] border flex items-center justify-center transition-all ${
-                activeCategory === cat.id 
-                ? "bg-[#161e2e] border-[#f0c040] text-[#f0c040]" 
-                : "bg-[#141b2a] border-[#2a3347] text-[#8a9ab5]"
-              }`}
-            >
-              <cat.icon className="w-6 h-6" />
-            </button>
+            <div key={cat.id} className="flex flex-col items-center gap-3">
+              <button
+                onClick={() => setActiveCategory(cat.id)}
+                className={`w-20 h-24 rounded-[12px] border flex items-center justify-center transition-all ${
+                  activeCategory === cat.id 
+                  ? "bg-[#f0c040] border-[#f0c040] text-white" 
+                  : "bg-[#141b2a] border-[#2a3347] text-[#f0c040]"
+                }`}
+              >
+                <cat.icon className="w-10 h-10" />
+              </button>
+              <span className={`text-[10px] font-bold tracking-[0.2em] font-oswald ${
+                activeCategory === cat.id ? "text-[#f0c040]" : "text-[#8a9ab5]"
+              }`}>
+                {cat.label}
+              </span>
+            </div>
           ))}
         </div>
 

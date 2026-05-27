@@ -131,27 +131,27 @@ export default function Booking() {
     <div className="min-h-screen bg-[#1c2333] text-[#c8d4e8] flex flex-col items-center font-light pb-24">
       <div className="w-full max-w-[390px] p-6 space-y-10">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center w-full">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-[#8a9ab5] hover:text-[#f0c040]">
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-5 h-5" />
           </Button>
-          <div className="w-10 h-10 rounded-full bg-[#141b2a] border border-[#2a3347] flex items-center justify-center overflow-hidden">
-            <User className="w-6 h-6 text-[#8a9ab5]" />
+          <div className="w-8 h-8 rounded-full bg-[#f0c040] flex items-center justify-center overflow-hidden">
+            <User className="w-5 h-5 text-white" />
           </div>
         </div>
 
         {/* Header Section */}
         <div>
-          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">OBRIGADO</h1>
+          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">THANKS</h1>
           <h2 className="text-4xl font-bold uppercase text-[#f0c040] font-oswald tracking-tight m-0 leading-tight">
-            {firstName.toUpperCase()}!
+            GUILHERME!
           </h2>
         </div>
 
         {/* Appointment Header */}
         <div>
-          <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase mb-6">
-            MARCAR UM HORÁRIO
+          <h3 className="text-sm font-bold tracking-[0.3em] text-[#f0c040] font-oswald uppercase mb-8 text-center">
+            BOOK AN APPOINTMENT
           </h3>
           
           <div className="flex justify-between items-center mb-4">
@@ -188,7 +188,7 @@ export default function Booking() {
         {/* Time Grid */}
         <div className="space-y-4">
           <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#f0c040] font-oswald uppercase">
-            HORÁRIOS DISPONÍVEIS
+            AVAILABLE TIMES
           </h3>
           <div className="grid grid-cols-3 gap-2">
             {timeSlots.map((time) => {
