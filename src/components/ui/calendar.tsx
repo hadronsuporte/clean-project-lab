@@ -28,8 +28,8 @@ function Calendar({
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
         ),
-        table: "w-full border-collapse space-y-1",
-        row: "flex w-full mt-2",
+        month_grid: "w-full border-collapse space-y-1",
+        weeks: "flex w-full mt-2",
         selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         today: "bg-accent text-accent-foreground",
         outside: "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
