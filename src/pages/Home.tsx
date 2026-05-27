@@ -178,27 +178,27 @@ export default function Home() {
         </div>
 
         {/* Services List - Selection circle exactly like image */}
-        <div className="space-y-5 pt-2">
+        <div className="space-y-6 pt-2">
           {services.map((s) => (
             <div 
               key={s.id}
               onClick={() => setSelectedServiceId(s.id)}
-              className="flex items-start gap-4 cursor-pointer group"
+              className="flex items-center gap-5 cursor-pointer group"
             >
-              <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center transition-all ${
-                selectedServiceId === s.id ? "border-[#22a6f0]" : "border-[#2a3347]"
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                selectedServiceId === s.id ? "border-[#22a6f0] bg-[#22a6f0]" : "border-white/10 bg-white/5"
               }`}>
                 {selectedServiceId === s.id && (
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#22a6f0]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
                 )}
               </div>
               <div className="flex-1">
-                <h3 className={`text-xs font-bold tracking-widest font-oswald uppercase transition-all ${
-                  selectedServiceId === s.id ? "text-[#22a6f0]" : "text-white"
+                <h3 className={`text-[11px] font-bold tracking-widest font-oswald uppercase transition-all ${
+                  selectedServiceId === s.id ? "text-white" : "text-white/80"
                 }`}>
                   {s.name}
                 </h3>
-                <p className="text-[9px] text-[#8a9ab5] mt-1 leading-relaxed">
+                <p className="text-[9px] text-[#8a9ab5] mt-0.5 leading-tight">
                   Lorem ipsum dolor sit amet consectetur adipiscing elit
                 </p>
               </div>
@@ -211,7 +211,7 @@ export default function Home() {
       <div className="fixed bottom-0 w-full max-w-[390px] p-6 bg-[#1c2333]">
         <Button
           onClick={handleContinue}
-          className="w-full bg-[#22a6f0] hover:bg-[#1a88c7] text-white font-bold py-7 text-xs rounded-[4px] transition-all font-oswald uppercase tracking-[3px]"
+          className="w-full bg-[#22a6f0] hover:bg-[#1a88c7] text-white font-bold py-7 text-xs rounded-xl transition-all font-oswald uppercase tracking-[3px] shadow-lg shadow-[#22a6f0]/20"
         >
           CONTINUE
         </Button>
