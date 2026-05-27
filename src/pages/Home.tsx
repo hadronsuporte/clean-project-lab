@@ -164,10 +164,10 @@ export default function Home() {
             <div key={cat.id} className="flex flex-col items-center gap-3">
               <button
                 onClick={() => setActiveCategory(cat.id)}
-                className={`w-20 h-24 rounded-[8px] border flex items-center justify-center transition-all ${
+                className={`w-20 h-24 rounded-[12px] border flex items-center justify-center transition-all ${
                   activeCategory === cat.id 
-                  ? "bg-[#161e2e] border-[#f0c040] text-[#f0c040]" 
-                  : "bg-[#141b2a] border-[#2a3347] text-[#8a9ab5]"
+                  ? "bg-[#f0c040] border-[#f0c040] text-white" 
+                  : "bg-[#141b2a] border-[#2a3347] text-[#f0c040]"
                 }`}
               >
                 <cat.icon className="w-10 h-10" />
