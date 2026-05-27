@@ -2,41 +2,70 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { MapPin, LogOut, User } from "lucide-react";
+import { LogOut, User, Scissors, Zap, Award } from "lucide-react";
 import { toast } from "sonner";
 
-interface Barbershop {
+interface Service {
   id: string;
   name: string;
-  address: string;
-  logo_url: string;
-  description: string;
+  price: number;
+  duration_min: number;
+}
+
+interface UserProfile {
+  id: string;
+  name: string;
+  avatar_url: string;
 }
 
 export default function Home() {
-  const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("SERVICES");
+  const [activeCategory, setActiveCategory] = useState("SCISSORS");
   const navigate = useNavigate();
 
+  // For this simplified multi-tenant demo, we'll use a fixed barbershop_id or find the first one
+  const [barbershopId, setBarbershopId] = useState<string | null>(null);
+
   useEffect(() => {
-    fetchBarbershops();
-    checkUser();
+    checkUserAndFetchData();
   }, []);
 
-  const checkUser = async () => {
+  const checkUserAndFetchData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate("/login");
+      return;
     }
-  };
 
-  const fetchBarbershops = async () => {
-    const { data, error } = await supabase.from("barbershops").select("*");
-    if (error) {
-      toast.error("Erro ao carregar barbearias");
-    } else {
-      setBarbershops(data || []);
+    // Fetch user profile
+    const { data: profile } = await supabase
+      .from("users")
+      .select("id, name, avatar_url")
+      .eq("id", session.user.id)
+      .single();
+    
+    if (profile) setUserProfile(profile);
+
+    // Fetch first barbershop to get its ID
+    const { data: shops } = await supabase.from("barbershops").select("id").limit(1);
+    if (shops && shops.length > 0) {
+      const bId = shops[0].id;
+      setBarbershopId(bId);
+
+      // Fetch services for this barbershop
+      const { data: serviceData } = await supabase
+        .from("services")
+        .select("*")
+        .eq("barbershop_id", bId)
+        .eq("active", true);
+      
+      if (serviceData) setServices(serviceData);
     }
+    
     setIsLoading(false);
   };
 
@@ -45,61 +74,123 @@ export default function Home() {
     navigate("/login");
   };
 
+  const handleContinue = () => {
+    if (!selectedServiceId) {
+      toast.error("Please select a service first");
+      return;
+    }
+    navigate(`/booking/${barbershopId}?serviceId=${selectedServiceId}`);
+  };
+
   if (isLoading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center text-white">Carregando...</div>;
+    return <div className="min-h-screen bg-[#1c2333] flex items-center justify-center text-[#c8d4e8]">LOADING...</div>;
   }
 
+  const firstName = userProfile?.name?.split(" ")[0] || "USER";
+
   return (
-    <div className="min-h-screen bg-[#1E212B] text-white p-6 pb-20">
-      <div className="flex justify-between items-center mb-10">
-        <div>
-          <h1 className="text-sm font-bold uppercase tracking-widest text-zinc-400">Welcome</h1>
-          <h2 className="text-3xl font-black uppercase text-white tracking-tighter">STEVE!</h2>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-400 hover:text-white">
+    <div className="min-h-screen bg-[#1c2333] text-[#c8d4e8] flex flex-col items-center font-light pb-24">
+      <div className="w-full max-w-[390px] p-6 space-y-8">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <Button variant="ghost" size="icon" onClick={handleLogout} className="text-[#8a9ab5] hover:text-[#f0c040]">
             <LogOut className="w-5 h-5" />
           </Button>
-          <div className="w-10 h-10 rounded-full bg-[#EAB308] flex items-center justify-center">
-            <User className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-full bg-[#141b2a] border border-[#2a3347] flex items-center justify-center overflow-hidden">
+            {userProfile?.avatar_url ? (
+              <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-6 h-6 text-[#8a9ab5]" />
+            )}
           </div>
+        </div>
+
+        {/* Welcome */}
+        <div>
+          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">Welcome</h1>
+          <h2 className="text-4xl font-bold uppercase text-[#f0c040] font-oswald tracking-tight m-0 leading-tight">
+            {firstName}!
+          </h2>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-[#2a3347] gap-8">
+          {["SERVICES", "BARBERS", "PROMO"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pb-3 text-xs font-bold tracking-[0.15em] font-oswald uppercase transition-all relative ${
+                activeTab === tab ? "text-[#f0c040]" : "text-[#8a9ab5]"
+              }`}
+            >
+              {tab}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#f0c040]" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Categories */}
+        <div className="flex justify-between items-center pt-2">
+          {[
+            { id: "SCISSORS", icon: Scissors },
+            { id: "ZAP", icon: Zap },
+            { id: "AWARD", icon: Award },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`w-16 h-16 rounded-[4px] border flex items-center justify-center transition-all ${
+                activeCategory === cat.id 
+                ? "bg-[#161e2e] border-[#f0c040] text-[#f0c040]" 
+                : "bg-[#141b2a] border-[#2a3347] text-[#8a9ab5]"
+              }`}
+            >
+              <cat.icon className="w-6 h-6" />
+            </button>
+          ))}
+        </div>
+
+        {/* Services List */}
+        <div className="space-y-6 pt-4">
+          {services.map((s) => (
+            <div 
+              key={s.id}
+              onClick={() => setSelectedServiceId(s.id)}
+              className="flex items-start gap-4 cursor-pointer group"
+            >
+              <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center transition-all ${
+                selectedServiceId === s.id ? "border-[#f0c040]" : "border-[#2a3347]"
+              }`}>
+                {selectedServiceId === s.id && (
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#f0c040]" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-sm font-bold tracking-wider font-oswald transition-all ${
+                  selectedServiceId === s.id ? "text-[#f0c040]" : "text-[#c8d4e8]"
+                }`}>
+                  {s.name}
+                </h3>
+                <p className="text-[11px] text-[#8a9ab5] mt-1 leading-relaxed">
+                  Professional service with high quality tools and products. Duration: {s.duration_min} min.
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="grid gap-6">
-        <h2 className="text-xs font-black uppercase tracking-widest text-[#EAB308]">Select a Barbershop</h2>
-        {barbershops.map((shop) => (
-          <div 
-            key={shop.id} 
-            onClick={() => navigate(`/booking/${shop.id}`)}
-            className="bg-[#2D323E] rounded-2xl overflow-hidden shadow-xl cursor-pointer transition-transform active:scale-[0.98]"
-          >
-            <div className="h-44 overflow-hidden relative">
-              <img 
-                src={shop.logo_url || "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=400&auto=format&fit=crop"} 
-                alt={shop.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#2D323E] to-transparent" />
-              <div className="absolute bottom-4 left-5">
-                <h3 className="text-xl font-black uppercase tracking-tight">{shop.name}</h3>
-                <div className="flex items-center text-zinc-400 text-[10px] mt-0.5 uppercase tracking-widest">
-                  <MapPin className="w-3 h-3 mr-1 text-[#EAB308]" />
-                  {shop.address}
-                </div>
-              </div>
-            </div>
-            <div className="p-4 flex justify-end">
-              <Button 
-                className="bg-[#EAB308] hover:bg-yellow-500 text-white font-black py-4 px-8 text-xs rounded-xl uppercase tracking-widest"
-              >
-                Book Now
-              </Button>
-            </div>
-          </div>
-        ))}
+      {/* Footer Button */}
+      <div className="fixed bottom-0 w-full max-w-[390px] p-6 bg-[#1c2333]/90 backdrop-blur-sm">
+        <Button
+          onClick={handleContinue}
+          className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-7 text-lg rounded-[4px] transition-all font-oswald uppercase tracking-[3px]"
+        >
+          CONTINUE
+        </Button>
       </div>
     </div>
-
   );
 }

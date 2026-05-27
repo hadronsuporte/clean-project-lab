@@ -1,14 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&family=Oswald:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+@layer base {
+  :root {
+    --background: 222 29% 16%;
+    --foreground: 217 33% 85%;
+    --card: 222 35% 12%;
+    --card-foreground: 217 33% 85%;
+    --popover: 222 29% 16%;
+    --popover-foreground: 217 33% 85%;
+    --primary: 44 87% 60%;
+    --primary-foreground: 222 29% 16%;
+    --secondary: 222 35% 12%;
+    --secondary-foreground: 217 18% 62%;
+    --muted: 222 35% 12%;
+    --muted-foreground: 217 18% 62%;
+    --accent: 44 87% 60%;
+    --accent-foreground: 222 29% 16%;
+    --destructive: 0 100% 27%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 222 26% 22%;
+    --input: 222 35% 12%;
+    --ring: 44 87% 60%;
+    --radius: 4px;
+  }
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
+  font-family: 'Open Sans', sans-serif;
+  background-color: #1c2333;
+  color: #c8d4e8;
+  font-weight: 300;
+}
+
+h1, h2, h3, h4, h5, h6, .font-oswald {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.btn-oswald {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 3px !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #141b2a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3347;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f0c040;
 }
