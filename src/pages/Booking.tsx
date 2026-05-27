@@ -245,7 +245,7 @@ export default function Booking() {
         <Button
           onClick={handleBooking}
           disabled={isSubmitting || !selectedTime}
-          className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-7 text-lg rounded-[4px] transition-all font-oswald uppercase tracking-[3px]"
+          className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-7 text-lg rounded-[4px] border-none shadow-none transition-all font-oswald uppercase tracking-[3px]"
         >
           {isSubmitting ? "PROCESSANDO..." : "CONTINUAR"}
         </Button>
