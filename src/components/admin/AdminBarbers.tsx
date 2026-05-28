@@ -175,7 +175,8 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             name,
             bio,
             active,
-            commission_pct: parseFloat(commission)
+            commission_pct: parseFloat(commission) || 0,
+            photo_url: finalAvatarUrl
           });
 
         if (barberError) throw barberError;
