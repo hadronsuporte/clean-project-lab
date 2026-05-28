@@ -47,6 +47,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         user_id,
         bio,
         commission_pct,
+        photo_url,
         profiles:user_id (avatar_url, whatsapp)
       `)
       .eq("barbershop_id", barbershopId);
@@ -56,7 +57,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         id: b.id,
         name: b.name,
         active: b.active,
-        avatar_url: b.profiles?.avatar_url,
+        avatar_url: b.profiles?.avatar_url || b.photo_url,
         user_id: b.user_id,
         bio: b.bio,
         commission_pct: b.commission_pct,
@@ -135,19 +136,21 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         finalAvatarUrl = publicUrl;
       }
 
-      // Update Profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          full_name: name,
-          whatsapp,
-          avatar_url: finalAvatarUrl,
-          role: 'barber',
-          barbershop_id: barbershopId || undefined
-        })
-        .eq("id", currentUserId);
+      // Update Profile only if user exists
+      if (currentUserId) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            full_name: name,
+            whatsapp,
+            avatar_url: finalAvatarUrl,
+            role: 'barber',
+            barbershop_id: barbershopId || undefined
+          })
+          .eq("id", currentUserId);
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
+      }
 
       // Create or Update Barber entry
       if (editingBarber) {
@@ -157,7 +160,8 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             name,
             bio,
             active,
-            commission_pct: parseFloat(commission)
+            commission_pct: parseFloat(commission) || 0,
+            photo_url: finalAvatarUrl
           })
           .eq("id", editingBarber.id);
         
@@ -171,7 +175,8 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             name,
             bio,
             active,
-            commission_pct: parseFloat(commission)
+            commission_pct: parseFloat(commission) || 0,
+            photo_url: finalAvatarUrl
           });
 
         if (barberError) throw barberError;
