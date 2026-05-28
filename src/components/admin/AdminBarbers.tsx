@@ -108,15 +108,27 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
       let currentUserId = editingBarber?.user_id;
 
       if (!editingBarber) {
-        // Create User in Auth if adding new
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email,
-          password,
+        // Use Edge Function to create barber without session swap
+        const { data, error: functionError } = await supabase.functions.invoke('manage-barbers', {
+          body: {
+            action: 'create',
+            barberData: {
+              email,
+              password,
+              name,
+              whatsapp,
+              bio,
+              commission,
+              active,
+              avatar_url: avatarPreview // We'll update this if file exists
+            }
+          }
         });
 
-        if (authError) throw authError;
-        if (!authData.user) throw new Error("Erro ao criar usuário");
-        currentUserId = authData.user.id;
+        if (functionError) throw functionError;
+        if (data.error) throw new Error(data.error);
+        
+        currentUserId = data.user.id;
       }
 
       let finalAvatarUrl = avatarPreview;
