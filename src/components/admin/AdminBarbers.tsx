@@ -15,6 +15,7 @@ interface Barber {
 export default function AdminBarbers({ barbershopId }: { barbershopId: string | null }) {
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingBarber, setEditingBarber] = useState<Barber | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Form state
@@ -40,7 +41,9 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         name, 
         active,
         user_id,
-        profiles:user_id (avatar_url)
+        bio,
+        commission_pct,
+        profiles:user_id (avatar_url, whatsapp)
       `)
       .eq("barbershop_id", barbershopId);
 
@@ -49,10 +52,39 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         id: b.id,
         name: b.name,
         active: b.active,
-        avatar_url: b.profiles?.avatar_url
+        avatar_url: b.profiles?.avatar_url,
+        user_id: b.user_id,
+        bio: b.bio,
+        commission_pct: b.commission_pct,
+        whatsapp: b.profiles?.whatsapp
       })));
     }
     setIsLoading(false);
+  };
+
+  const handleEdit = (barber: any) => {
+    setEditingBarber(barber);
+    setName(barber.name);
+    setWhatsapp(barber.whatsapp || "");
+    setBio(barber.bio || "");
+    setCommission(barber.commission_pct?.toString() || "0");
+    setActive(barber.active);
+    setAvatarPreview(barber.avatar_url);
+    setIsAdding(true);
+  };
+
+  const resetForm = () => {
+    setIsAdding(false);
+    setEditingBarber(null);
+    setName("");
+    setEmail("");
+    setPassword("");
+    setWhatsapp("");
+    setBio("");
+    setCommission("0");
+    setActive(true);
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
