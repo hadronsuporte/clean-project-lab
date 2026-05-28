@@ -106,32 +106,9 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
 
     try {
       let currentUserId = editingBarber?.user_id;
+      let finalAvatarUrl = avatarPreview || "";
 
-      if (!editingBarber) {
-        // Use Edge Function to create barber without session swap
-        const { data, error: functionError } = await supabase.functions.invoke('manage-barbers', {
-          body: {
-            action: 'create',
-            barberData: {
-              email,
-              password,
-              name,
-              whatsapp,
-              bio,
-              commission,
-              active,
-              avatar_url: avatarPreview // We'll update this if file exists
-            }
-          }
-        });
-
-        if (functionError) throw functionError;
-        if (data.error) throw new Error(data.error);
-        
-        currentUserId = data.user.id;
-      }
-
-      let finalAvatarUrl = avatarPreview;
+      // 1. Upload Avatar if file exists
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
         const identifier = currentUserId || editingBarber?.id || Math.random().toString(36).substring(7);
@@ -150,24 +127,46 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         finalAvatarUrl = publicUrl;
       }
 
-      // Update Profile only if user exists
-      if (currentUserId) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({
-            full_name: name,
-            whatsapp,
-            avatar_url: finalAvatarUrl,
-            role: 'barber',
-            barbershop_id: barbershopId || undefined
-          })
-          .eq("id", currentUserId);
+      if (!editingBarber) {
+        // 2. Use Edge Function to create barber without session swap
+        const { data, error: functionError } = await supabase.functions.invoke('manage-barbers', {
+          body: {
+            action: 'create',
+            barberData: {
+              email,
+              password,
+              name,
+              whatsapp,
+              bio,
+              commission,
+              active,
+              avatar_url: finalAvatarUrl
+            }
+          }
+        });
 
-        if (profileError) throw profileError;
-      }
+        if (functionError) throw functionError;
+        if (data.error) throw new Error(data.error);
+        
+        currentUserId = data.user.id;
+      } else {
+        // Update Profile only if user exists
+        if (currentUserId) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update({
+              full_name: name,
+              whatsapp,
+              avatar_url: finalAvatarUrl,
+              role: 'barber',
+              barbershop_id: barbershopId || undefined
+            })
+            .eq("id", currentUserId);
 
-      // Create or Update Barber entry
-      if (editingBarber) {
+          if (profileError) throw profileError;
+        }
+
+        // Update Barber entry
         const { error: barberError } = await supabase
           .from("barbers")
           .update({
@@ -179,20 +178,6 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
           })
           .eq("id", editingBarber.id);
         
-        if (barberError) throw barberError;
-      } else {
-        const { error: barberError } = await supabase
-          .from("barbers")
-          .insert({
-            user_id: currentUserId,
-            barbershop_id: barbershopId,
-            name,
-            bio,
-            active,
-            commission_pct: parseFloat(commission) || 0,
-            photo_url: finalAvatarUrl
-          });
-
         if (barberError) throw barberError;
       }
 
