@@ -10,11 +10,16 @@ interface Barber {
   name: string;
   active: boolean;
   avatar_url?: string;
+  user_id?: string;
+  bio?: string;
+  commission_pct?: number;
+  whatsapp?: string;
 }
 
 export default function AdminBarbers({ barbershopId }: { barbershopId: string | null }) {
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingBarber, setEditingBarber] = useState<Barber | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Form state
@@ -40,7 +45,9 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         name, 
         active,
         user_id,
-        profiles:user_id (avatar_url)
+        bio,
+        commission_pct,
+        profiles:user_id (avatar_url, whatsapp)
       `)
       .eq("barbershop_id", barbershopId);
 
@@ -49,10 +56,39 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         id: b.id,
         name: b.name,
         active: b.active,
-        avatar_url: b.profiles?.avatar_url
+        avatar_url: b.profiles?.avatar_url,
+        user_id: b.user_id,
+        bio: b.bio,
+        commission_pct: b.commission_pct,
+        whatsapp: b.profiles?.whatsapp
       })));
     }
     setIsLoading(false);
+  };
+
+  const handleEdit = (barber: any) => {
+    setEditingBarber(barber);
+    setName(barber.name);
+    setWhatsapp(barber.whatsapp || "");
+    setBio(barber.bio || "");
+    setCommission(barber.commission_pct?.toString() || "0");
+    setActive(barber.active);
+    setAvatarPreview(barber.avatar_url);
+    setIsAdding(true);
+  };
+
+  const resetForm = () => {
+    setIsAdding(false);
+    setEditingBarber(null);
+    setName("");
+    setEmail("");
+    setPassword("");
+    setWhatsapp("");
+    setBio("");
+    setCommission("0");
+    setActive(true);
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,28 +104,24 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
     setIsLoading(true);
 
     try {
-      // 1. Create User in Auth (Simulated for this flow as we can't easily create auth users from client without admin key)
-      // In a real production app, this would be an Edge Function.
-      // For this prototype, we'll try to use signUp which might create a session, 
-      // but let's assume we use an edge function if available. 
-      // Since I can't easily deploy an edge function here without more steps, 
-      // I'll stick to a direct database insert if possible or explain the limitation.
-      
-      // Let's assume we're creating a profile directly for now as a placeholder
-      // and in a real scenario this would call an Edge Function.
-      
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      let currentUserId = editingBarber?.user_id;
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Erro ao criar usuário");
+      if (!editingBarber) {
+        // Create User in Auth if adding new
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
-      let finalAvatarUrl = "";
-      if (avatarFile) {
+        if (authError) throw authError;
+        if (!authData.user) throw new Error("Erro ao criar usuário");
+        currentUserId = authData.user.id;
+      }
+
+      let finalAvatarUrl = avatarPreview || "";
+      if (avatarFile && currentUserId) {
         const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
+        const fileName = `${currentUserId}-${Math.random()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, avatarFile);
@@ -113,26 +145,40 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
           role: 'barber',
           barbershop_id: barbershopId
         })
-        .eq("id", authData.user.id);
+        .eq("id", currentUserId);
 
       if (profileError) throw profileError;
 
-      // Create Barber entry
-      const { error: barberError } = await supabase
-        .from("barbers")
-        .insert({
-          user_id: authData.user.id,
-          barbershop_id: barbershopId,
-          name,
-          bio,
-          active,
-          commission_pct: parseFloat(commission)
-        });
+      // Create or Update Barber entry
+      if (editingBarber) {
+        const { error: barberError } = await supabase
+          .from("barbers")
+          .update({
+            name,
+            bio,
+            active,
+            commission_pct: parseFloat(commission)
+          })
+          .eq("id", editingBarber.id);
+        
+        if (barberError) throw barberError;
+      } else {
+        const { error: barberError } = await supabase
+          .from("barbers")
+          .insert({
+            user_id: currentUserId,
+            barbershop_id: barbershopId,
+            name,
+            bio,
+            active,
+            commission_pct: parseFloat(commission)
+          });
 
-      if (barberError) throw barberError;
+        if (barberError) throw barberError;
+      }
 
-      toast.success("Barbeiro cadastrado com sucesso!");
-      setIsAdding(false);
+      toast.success(editingBarber ? "Barbeiro atualizado!" : "Barbeiro cadastrado!");
+      resetForm();
       fetchBarbers();
     } catch (error: any) {
       toast.error(error.message);
@@ -145,8 +191,10 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
     return (
       <form onSubmit={handleSave} className="space-y-8 animate-in slide-in-from-right duration-300">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => setIsAdding(false)} className="text-[#8a9ab5]">VOLTAR</Button>
-          <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">NOVO BARBEIRO</h3>
+          <Button variant="ghost" size="sm" type="button" onClick={resetForm} className="text-[#8a9ab5]">VOLTAR</Button>
+          <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">
+            {editingBarber ? "EDITAR BARBEIRO" : "NOVO BARBEIRO"}
+          </h3>
         </div>
 
         {/* Avatar Upload */}
@@ -168,8 +216,12 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         <div className="space-y-4">
           <Input placeholder="NOME COMPLETO" value={name} onChange={e => setName(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
           <Input placeholder="WHATSAPP" type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
-          <Input placeholder="E-MAIL" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
-          <Input placeholder="SENHA INICIAL" type="password" value={password} onChange={e => setPassword(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
+          {!editingBarber && (
+            <>
+              <Input placeholder="E-MAIL" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
+              <Input placeholder="SENHA INICIAL" type="password" value={password} onChange={e => setPassword(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
+            </>
+          )}
           <Input placeholder="ESPECIALIDADE (EX: CORTE CLÁSSICO)" value={bio} onChange={e => setBio(e.target.value)} className="bg-[#141b2a] border-[#2a3347] h-12" />
           <div className="flex gap-4">
             <div className="flex-1 space-y-1">
@@ -198,7 +250,11 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
       
       <div className="space-y-4">
         {barbers.map(barber => (
-          <div key={barber.id} className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] flex items-center gap-4">
+          <div 
+            key={barber.id} 
+            onClick={() => handleEdit(barber)}
+            className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] flex items-center gap-4 cursor-pointer hover:border-[#f0c040]/50 transition-all"
+          >
             <div className="w-12 h-12 rounded-full border border-[#f0c040] overflow-hidden flex items-center justify-center bg-[#1c2333]">
               {barber.avatar_url ? (
                 <img src={barber.avatar_url} alt={barber.name} className="w-full h-full object-cover" />
