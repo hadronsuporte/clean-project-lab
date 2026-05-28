@@ -10,6 +10,10 @@ interface Barber {
   name: string;
   active: boolean;
   avatar_url?: string;
+  user_id?: string;
+  bio?: string;
+  commission_pct?: number;
+  whatsapp?: string;
 }
 
 export default function AdminBarbers({ barbershopId }: { barbershopId: string | null }) {
