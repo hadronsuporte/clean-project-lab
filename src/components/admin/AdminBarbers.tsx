@@ -119,10 +119,12 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         currentUserId = authData.user.id;
       }
 
-      let finalAvatarUrl = avatarPreview || "";
-      if (avatarFile && currentUserId) {
+      let finalAvatarUrl = avatarPreview;
+      if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${currentUserId}-${Math.random()}.${fileExt}`;
+        const identifier = currentUserId || editingBarber?.id || Math.random().toString(36).substring(7);
+        const fileName = `${identifier}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, avatarFile);

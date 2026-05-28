@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Scissors, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Scissors, LogOut, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminBarbers from "@/components/admin/AdminBarbers";
@@ -57,9 +57,14 @@ export default function Admin() {
       <div className="w-full max-w-[390px] p-6 space-y-8 flex-1">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold uppercase text-[#f0c040] font-oswald tracking-widest leading-tight">
-            PAINEL ADMIN
-          </h1>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="text-[#8a9ab5] hover:text-[#f0c040]">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-bold uppercase text-[#f0c040] font-oswald tracking-widest leading-tight">
+              PAINEL ADMIN
+            </h1>
+          </div>
           <Button variant="ghost" size="icon" onClick={handleLogout} className="text-[#8a9ab5] hover:text-[#f0c040]">
             <LogOut className="w-5 h-5" />
           </Button>
