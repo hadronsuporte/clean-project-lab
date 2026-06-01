@@ -11,38 +11,30 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<"agenda" | "barbeiros" | "servicos">("agenda");
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [barbershopId, setBarbershopId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/login");
-      return;
+    if (!loading) {
+      if (!user) {
+        navigate("/login");
+      } else if (profile && profile.role !== "owner" && profile.role !== "admin") {
+        toast.error("Acesso restrito");
+        navigate("/");
+      }
     }
+  }, [user, profile, loading, navigate]);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, barbershop_id")
-      .eq("id", session.user.id)
-      .single();
-
-    if (!profile || (profile.role !== "owner" && profile.role !== "admin")) {
-      toast.error("Acesso restrito");
-      navigate("/");
-      return;
-    }
-
-    setUserRole(profile.role);
-    setBarbershopId(profile.barbershop_id);
-    setIsLoading(false);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#1c2333] flex items-center justify-center text-[#c8d4e8]">CARREGANDO...</div>;
+  }
+
+  const barbershopId = profile?.barbershop_id;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
