@@ -47,9 +47,15 @@ export default function Admin() {
     }
   }, [user, profile, authLoading, navigate]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
   if (authLoading || loadingBarbershop) {
     return <div className="min-h-screen bg-[#1c2333] flex items-center justify-center text-[#c8d4e8] font-oswald tracking-[0.2em]">CARREGANDO...</div>;
   }
+
 
 
   return (
