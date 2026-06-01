@@ -45,8 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { role: 'client', name: 'USUÁRIO' }; // Default to client on error
       }
       
-      console.log("AuthProvider: Profile found:", data);
-      return data ? { ...data, name: data.full_name } : { role: 'client', name: 'USUÁRIO' };
+      const normalizedData = data ? { ...data, name: data.full_name } : { role: 'client', name: 'USUÁRIO' };
+      console.log('Perfil do usuário:', normalizedData);
+      console.log('Role:', normalizedData?.role);
+      return normalizedData;
     } catch (err) {
       console.error("AuthProvider: Unexpected error in fetchProfile:", err);
       return { role: 'client', name: 'USUÁRIO' }; // Default to client on exception
