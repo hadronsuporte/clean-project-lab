@@ -55,7 +55,7 @@ export default function Booking() {
       return;
     }
 
-    const { data: profile } = await supabase.from("users").select("*").eq("id", session.user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
     
     // Set profile data, using auth metadata as fallback for the name
     const userData = profile || {

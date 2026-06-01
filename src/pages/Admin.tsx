@@ -27,7 +27,7 @@ export default function Admin() {
     }
 
     const { data: profile } = await supabase
-      .from("users")
+      .from("profiles")
       .select("role, barbershop_id")
       .eq("id", session.user.id)
       .single();

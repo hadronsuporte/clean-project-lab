@@ -36,7 +36,7 @@ export default function Login() {
 
         if (authData.user) {
           const { error: profileError } = await supabase
-            .from("users")
+            .from("profiles")
             .insert({
               id: authData.user.id,
               name: fullName,

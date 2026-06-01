@@ -173,7 +173,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         // Update Profile only if user exists
         if (currentUserId) {
           const { error: profileError } = await supabase
-            .from("users")
+            .from("profiles")
             .update({
               name,
               phone: whatsapp,
