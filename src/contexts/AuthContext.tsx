@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async function initializeAuth() {
       try {
         console.log("AuthProvider: Initializing...");
+        // Get session once
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -83,38 +84,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
+    // The subscription should not reset loading to true unless it's a real login event
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("AuthProvider: Auth change event:", event);
       if (!mounted) return;
 
       const currentUser = session?.user ?? null;
-      setUser(currentUser);
       
-      if (currentUser) {
-        const p = await fetchProfile(currentUser.id);
-        if (mounted) setProfile(p);
-      } else {
-        if (mounted) setProfile(null);
+      // Only trigger a profile fetch if the user has changed
+      if (currentUser?.id !== user?.id) {
+        setUser(currentUser);
+        if (currentUser) {
+          const p = await fetchProfile(currentUser.id);
+          if (mounted) setProfile(p);
+        } else {
+          if (mounted) setProfile(null);
+        }
       }
       
-      // Ensure loading is false after auth changes
       if (mounted) setLoading(false);
     });
-
-    // Fallback timer: force loading false after 5 seconds if it's still stuck
-    const timeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn("AuthProvider: Loading timeout reached, forcing false");
-        setLoading(false);
-      }
-    }, 5000);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      clearTimeout(timeout);
     };
-  }, []);
+  }, [user?.id]); // Adding user?.id to dependencies to track changes safely
 
   const signOut = async () => {
     await supabase.auth.signOut();
