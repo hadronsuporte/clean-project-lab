@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<"agenda" | "barbeiros" | "servicos">("agenda");
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function Admin() {
   }, [user, profile, loading, navigate]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate("/login");
   };
 
@@ -35,15 +35,6 @@ export default function Admin() {
   }
 
   const barbershopId = profile?.barbershop_id;
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
-
-  if (isLoading) {
-    return <div className="min-h-screen bg-[#1c2333] flex items-center justify-center text-[#c8d4e8]">CARREGANDO...</div>;
-  }
 
   return (
     <div className="min-h-screen bg-[#1c2333] text-[#c8d4e8] flex flex-col items-center font-light pb-24 overflow-x-hidden">
