@@ -56,6 +56,7 @@ export default function SelectBarber() {
           name, 
           bio,
           user_id,
+          photo_url,
           profiles:user_id (
             avatar_url
           )
