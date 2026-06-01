@@ -39,8 +39,8 @@ export default function Login() {
             .from("profiles")
             .insert({
               id: authData.user.id,
-              name: fullName,
-              phone: whatsapp,
+              full_name: fullName,
+              whatsapp: whatsapp,
               role: "client",
               barbershop_id: null,
             });
