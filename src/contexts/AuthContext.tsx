@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
-      console.log("Fetching profile for:", userId);
+      console.log("AuthProvider: Fetching profile for:", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("role, barbershop_id, full_name, avatar_url")
@@ -27,17 +27,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         if (error.code === "PGRST116") {
-          console.log("No profile found in DB for user:", userId);
+          console.log("AuthProvider: No profile found in DB for user:", userId);
           return null;
         }
-        console.error("Error fetching profile from DB:", error);
+        console.error("AuthProvider: Error fetching profile from DB:", error);
         return null;
       }
       
-      console.log("Profile found:", data);
+      console.log("AuthProvider: Profile found:", data);
       return data ? { ...data, name: data.full_name } : null;
     } catch (err) {
-      console.error("Unexpected error in fetchProfile:", err);
+      console.error("AuthProvider: Unexpected error in fetchProfile:", err);
       return null;
     }
   };
@@ -54,25 +54,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initializeAuth() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log("AuthProvider: Initializing...");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("AuthProvider: Session error:", sessionError);
+        }
+
         if (!mounted) return;
 
         if (session?.user) {
+          console.log("AuthProvider: Session found for user:", session.user.id);
           setUser(session.user);
           const p = await fetchProfile(session.user.id);
           if (mounted) setProfile(p);
+        } else {
+          console.log("AuthProvider: No session found during init");
         }
       } catch (err) {
-        console.error("Auth initialization error:", err);
+        console.error("AuthProvider: Auth initialization exception:", err);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          console.log("AuthProvider: Initialization complete, setting loading false");
+          setLoading(false);
+        }
       }
     }
 
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth change event:", event);
+      console.log("AuthProvider: Auth change event:", event);
       if (!mounted) return;
 
       const currentUser = session?.user ?? null;
@@ -85,12 +97,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (mounted) setProfile(null);
       }
       
+      // Ensure loading is false after auth changes
       if (mounted) setLoading(false);
     });
+
+    // Fallback timer: force loading false after 5 seconds if it's still stuck
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("AuthProvider: Loading timeout reached, forcing false");
+        setLoading(false);
+      }
+    }, 5000);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      clearTimeout(timeout);
     };
   }, []);
 
