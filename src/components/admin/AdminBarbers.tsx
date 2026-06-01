@@ -141,6 +141,9 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
 
         if (rpcError) throw rpcError;
         
+        const result = rpcData as { success: boolean; error?: string; barber_id?: string };
+        if (!result.success) throw new Error(result.error || "Erro ao cadastrar barbeiro no banco.");
+
         // 3. Create Auth user
         const { error: signUpError } = await supabase.auth.signUp({
           email: email,
@@ -149,7 +152,8 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             data: {
               name: name,
               role: 'barber',
-              barbershop_id: barbershopId
+              barbershop_id: barbershopId,
+              barber_id: result.barber_id
             }
           }
         });
@@ -157,7 +161,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         if (signUpError) throw signUpError;
         
         toast.success("Barbeiro cadastrado com sucesso!");
-        currentUserId = rpcData; // Assuming RPC returns the barber ID or similar if needed
+        currentUserId = result.barber_id; // Temporary ID association
       } else {
         // Update Profile only if user exists
         if (currentUserId) {
