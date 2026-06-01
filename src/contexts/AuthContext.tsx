@@ -25,6 +25,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
+        if (error.code === "PGRST116") {
+          console.log("No profile found for user");
+          return null;
+        }
         console.error("Error fetching profile:", error);
         return null;
       }
