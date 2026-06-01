@@ -35,9 +35,15 @@ export default function SelectBarber() {
     // Fetch profile for welcome message
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, name, avatar_url, role")
+      .select("id, full_name, avatar_url, role")
       .eq("id", session.user.id)
       .single();
+    
+    // Normalize profile to handle field name differences
+    const normalizedProfile = profile ? {
+      ...profile,
+      name: profile.full_name
+    } : null;
     
     // Set profile data, using auth metadata as fallback for the name
     // We check both "admin" and "owner" as the user might have set either in the DB
