@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminBarbers from "@/components/admin/AdminBarbers";
 import AdminServices from "@/components/admin/AdminServices";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<"agenda" | "barbeiros" | "servicos">("agenda");
