@@ -27,12 +27,12 @@ export default function Admin() {
     }
 
     const { data: profile } = await supabase
-      .from("users")
+      .from("profiles")
       .select("role, barbershop_id")
       .eq("id", session.user.id)
       .single();
 
-    if (!profile || profile.role !== "owner") {
+    if (!profile || (profile.role !== "owner" && profile.role !== "admin")) {
       toast.error("Acesso restrito");
       navigate("/");
       return;
