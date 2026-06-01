@@ -22,36 +22,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isFetchingProfile.current) return null;
     isFetchingProfile.current = true;
     
-    // Create a timeout promise to ensure we don't hang forever
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Profile fetch timeout")), 5000)
-    );
-
     try {
-      console.log("AuthProvider: Fetching profile for:", userId);
+      console.log("AuthProvider: Fetching profile from 'users' for:", userId);
       
-      const fetchPromise = supabase
-        .from("profiles")
-        .select("role, barbershop_id, full_name, avatar_url")
-        .eq("id", userId)
-        .single();
+      const { data, error } = await Promise.race([
+        supabase
+          .from("users")
+          .select("role, barbershop_id, name, avatar_url")
+          .eq("id", userId)
+          .single(),
+        new Promise<any>((_, reject) => 
+          setTimeout(() => reject(new Error("timeout")), 3000)
+        )
+      ]);
 
-      // Race the fetch against the timeout
-      const result = await Promise.race([fetchPromise, timeoutPromise]) as any;
-      const { data, error } = result;
-
-      if (error) {
-        console.error("AuthProvider: Error fetching profile from DB:", error);
-        return { role: 'client', name: 'USUÁRIO' }; // Default to client on error
+      if (error || !data) {
+        console.warn("AuthProvider: Profile error or not found, defaulting to client:", error);
+        return { role: 'client', name: 'USUÁRIO' };
       }
       
-      const normalizedData = data ? { ...data, name: data.full_name } : { role: 'client', name: 'USUÁRIO' };
-      console.log('Perfil do usuário:', normalizedData);
-      console.log('Role:', normalizedData?.role);
-      return normalizedData;
+      console.log('Perfil do usuário:', data);
+      console.log('Role:', data?.role);
+      return data;
     } catch (err) {
-      console.error("AuthProvider: Unexpected error in fetchProfile:", err);
-      return { role: 'client', name: 'USUÁRIO' }; // Default to client on exception
+      console.error("AuthProvider: fetchProfile timeout or exception, defaulting to client");
+      return { role: 'client', name: 'USUÁRIO' };
     } finally {
       isFetchingProfile.current = false;
     }
@@ -72,23 +67,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initialize() {
       try {
-        console.log("AuthProvider: Checking initial session...");
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
         if (sessionError) throw sessionError;
+        
         if (!mounted) return;
 
         if (session?.user) {
           setUser(session.user);
-          // Don't wait for profile to set loading false - point 3 of request
-          setLoading(false); 
+          setLoading(false); // Point 3: Don't block navigation
           const p = await fetchProfileData(session.user.id);
           if (mounted) setProfile(p);
         } else {
           setLoading(false);
         }
       } catch (err) {
-        console.error("AuthProvider: Initialization error", err);
+        console.error("AuthProvider: Init error", err);
         if (mounted) setLoading(false);
       }
     }
@@ -96,7 +89,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initialize();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("AuthProvider: Auth event:", event);
       if (!mounted) return;
 
       const currentUser = session?.user ?? null;
@@ -104,7 +96,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
         if (currentUser) {
-          // Always ensure loading is false even if we're still fetching profile
           setLoading(false);
           const p = await fetchProfileData(currentUser.id);
           if (mounted) setProfile(p);
