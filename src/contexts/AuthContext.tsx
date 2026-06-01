@@ -16,9 +16,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const isFetchingProfile = useRef(false);
+  const initialized = useRef(false);
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    if (isFetchingProfile.current) return;
+  const fetchProfileData = useCallback(async (userId: string) => {
+    if (isFetchingProfile.current) return null;
     isFetchingProfile.current = true;
     
     try {
@@ -46,12 +47,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      const p = await fetchProfile(user.id);
+      const p = await fetchProfileData(user.id);
       setProfile(p);
     }
-  }, [user, fetchProfile]);
+  }, [user, fetchProfileData]);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
     let mounted = true;
 
     async function initialize() {
@@ -62,14 +66,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!mounted) return;
 
         if (session?.user) {
+          console.log("AuthProvider: Session found during init", session.user.id);
           setUser(session.user);
-          const p = await fetchProfile(session.user.id);
+          const p = await fetchProfileData(session.user.id);
           if (mounted) setProfile(p);
+        } else {
+          console.log("AuthProvider: No session found during init");
         }
       } catch (err) {
         console.error("AuthProvider: Initialization error", err);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          console.log("AuthProvider: Init complete, loading -> false");
+          setLoading(false);
+        }
       }
     }
 
@@ -81,17 +91,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const currentUser = session?.user ?? null;
       
-      // Update user state if it changed
-      setUser((prevUser: any) => {
-        if (prevUser?.id === currentUser?.id) return prevUser;
-        return currentUser;
-      });
-
-      if (currentUser) {
-        const p = await fetchProfile(currentUser.id);
-        if (mounted) setProfile(p);
-      } else {
-        if (mounted) setProfile(null);
+      // Update states
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+        setUser(currentUser);
+        if (currentUser) {
+          const p = await fetchProfileData(currentUser.id);
+          if (mounted) setProfile(p);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
       }
       
       if (mounted) setLoading(false);
@@ -101,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchProfileData]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
