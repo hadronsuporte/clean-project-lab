@@ -48,7 +48,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         bio,
         commission_pct,
         photo_url,
-        users:user_id (avatar_url, phone)
+        profiles:user_id (avatar_url, whatsapp)
       `)
       .eq("barbershop_id", barbershopId);
 
@@ -57,11 +57,11 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         id: b.id,
         name: b.name,
         active: b.active,
-        avatar_url: b.users?.avatar_url || b.photo_url,
+        avatar_url: b.profiles?.avatar_url || b.photo_url,
         user_id: b.user_id,
         bio: b.bio,
         commission_pct: b.commission_pct,
-        whatsapp: b.users?.phone
+        whatsapp: b.profiles?.whatsapp
       })));
     }
     setIsLoading(false);
@@ -176,7 +176,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             .from("profiles")
             .update({
               name,
-              phone: whatsapp,
+              whatsapp,
               avatar_url: finalAvatarUrl,
               role: 'barber',
               barbershop_id: barbershopId || undefined
