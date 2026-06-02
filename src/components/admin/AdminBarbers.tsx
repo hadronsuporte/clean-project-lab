@@ -211,15 +211,6 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
 
       const result = data as { success: boolean; error?: string };
       if (result.success) {
-        if (barber.user_id) {
-          try {
-            // @ts-ignore - admin is used here as requested by user
-            await supabase.auth.admin.deleteUser(barber.user_id);
-          } catch (authError) {
-            console.error("Erro ao deletar usuário do Auth:", authError);
-          }
-        }
-        
         toast.success("Barbeiro removido!");
         setBarbers(prev => prev.filter(b => b.id !== id));
       } else {
