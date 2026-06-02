@@ -35,6 +35,23 @@ const Comb = ({ className }: { className?: string }) => (
   />
 );
 
+const ScissorsAndRazor = ({ className }: { className?: string }) => (
+  <div className={`flex items-center justify-center -space-x-1 ${className}`}>
+    <img 
+      src="/tesouras.png" 
+      alt="Tesoura" 
+      className="w-5 h-5 scale-110"
+      style={{ filter: "invert(81%) sepia(35%) saturate(847%) hue-rotate(352deg) brightness(101%) contrast(89%)" }}
+    />
+    <img 
+      src="/navalha.png" 
+      alt="Navalha" 
+      className="w-5 h-5 scale-110"
+      style={{ filter: "invert(81%) sepia(35%) saturate(847%) hue-rotate(352deg) brightness(101%) contrast(89%)" }}
+    />
+  </div>
+);
+
 interface Service {
   id: string;
   name: string;
@@ -121,9 +138,12 @@ export default function Services() {
             const isSelected = selectedServiceId === s.id;
             
             // Determine icon based on service name
-            const Icon = s.name.toLowerCase().includes("barba") 
-              ? Razor 
-              : (s.name.toLowerCase().includes("corte") ? CustomScissors : Comb);
+            const nameLower = s.name.toLowerCase();
+            const Icon = (nameLower.includes("corte") && nameLower.includes("barba"))
+              ? ScissorsAndRazor
+              : nameLower.includes("barba") 
+                ? Razor 
+                : (nameLower.includes("corte") ? CustomScissors : Comb);
 
             return (
               <div 
