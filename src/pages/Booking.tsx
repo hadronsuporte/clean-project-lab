@@ -74,17 +74,32 @@ export default function Booking() {
     try {
       if (!user) throw new Error("Usuário não autenticado");
 
+      // 1. Fetch service details for price and duration
+      const { data: service, error: serviceError } = await supabase
+        .from("services")
+        .select("price, duration_minutes")
+        .eq("id", serviceId)
+        .single();
+
+      if (serviceError || !service) throw new Error("Serviço não encontrado");
+
       const [hours, minutes] = selectedTime.split(":");
-      const appointmentTime = new Date(selectedDate);
-      appointmentTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      const startsAt = new Date(selectedDate);
+      startsAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+      const endsAt = new Date(startsAt.getTime() + service.duration_minutes * 60000);
 
       const { error } = await supabase.from("appointments").insert({
         client_id: user.id,
         barbershop_id: barbershopId,
         service_id: serviceId,
         barber_id: selectedBarberId,
-        appointment_time: appointmentTime.toISOString(),
-        status: 'pending'
+        starts_at: startsAt.toISOString(),
+        ends_at: endsAt.toISOString(),
+        status: "pending",
+        whatsapp_sent: false,
+        confirmed_via_whatsapp: false,
+        price_charged: service.price
       });
 
       if (error) throw error;
