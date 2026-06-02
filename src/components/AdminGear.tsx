@@ -4,16 +4,16 @@ import { Settings, Shield, PlusCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const AdminGear: React.FC = () => {
-  const { profile } = useAuth();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!profile?.isAdmin && !profile?.isSuperAdmin) {
+  if (!isAdmin && !isSuperAdmin) {
     return null;
   }
 
   // Se for apenas admin/owner (não superadmin), redireciona direto
-  if (profile.isAdmin && !profile.isSuperAdmin) {
+  if (isAdmin && !isSuperAdmin) {
     return (
       <button 
         onClick={() => navigate('/admin')}
