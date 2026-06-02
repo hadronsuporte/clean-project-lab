@@ -105,7 +105,20 @@ function AppointmentCard({
         </div>
       </div>
 
-      {!isPast && (
+      {isPast ? (
+        <div className="pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = `/barbers?barbershopId=${appt.barbershop_id}`}
+            className="w-full text-[10px] text-[#f0c040] border-[#f0c040]/30 hover:bg-[#f0c040] hover:text-[#1c2333] uppercase tracking-widest font-bold flex items-center gap-2 transition-all"
+          >
+            <RefreshCcw className="w-3.5 h-3.5" />
+            AGENDAR NOVAMENTE
+          </Button>
+          <p className="text-[8px] text-[#8a9ab5] uppercase tracking-widest mt-2 text-center">Agendamento finalizado</p>
+        </div>
+      ) : (
         <div className="pt-2">
           <Button
             variant="ghost"
