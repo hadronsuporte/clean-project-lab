@@ -8,6 +8,7 @@ import { format, addDays, startOfDay, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminGear } from "@/components/AdminGear";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 export default function Booking() {
   const { id: barbershopId } = useParams();
@@ -224,7 +225,7 @@ export default function Booking() {
           disabled={isSubmitting || !selectedTime}
           className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-7 text-lg rounded-[4px] border-none shadow-none transition-all font-oswald uppercase tracking-[3px]"
         >
-          {isSubmitting ? "PROCESSANDO..." : "CONTINUAR"}
+          {isSubmitting ? <div className="flex items-center gap-2 justify-center w-full"><img src="/tesouras.png" className="w-5 h-5" alt="" style={{ filter: 'brightness(0)' }} /> PROCESSANDO...</div> : "CONTINUAR"}
         </Button>
       </div>
     </div>
