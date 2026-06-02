@@ -49,6 +49,79 @@ interface Appointment {
   service_name?: string;
 }
 
+function AppointmentCard({ 
+  appt, 
+  onCancel, 
+  isPast 
+}: { 
+  appt: Appointment; 
+  onCancel: () => void; 
+  isPast: boolean;
+}) {
+  return (
+    <div className={`bg-[#141b2a] border border-[#2a3347] rounded-[4px] p-5 space-y-4 relative overflow-hidden group ${isPast ? 'opacity-70' : ''}`}>
+      <div className="flex justify-between items-start">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            {!isPast && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
+            <h4 className="text-xs font-bold text-[#f0c040] uppercase tracking-widest font-oswald">
+              {appt.service_name}
+            </h4>
+          </div>
+          <p className="text-[10px] text-[#8a9ab5] uppercase tracking-wider font-medium">
+            {appt.barbershop?.name}
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-lg font-bold text-[#c8d4e8] font-oswald leading-none">
+            R$ {appt.price_charged.toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[#1c2333]">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-[#1c2333] border border-[#2a3347] flex items-center justify-center">
+            <User className="w-4 h-4 text-[#8a9ab5]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] text-[#8a9ab5] uppercase tracking-tighter">BARBEIRO</span>
+            <span className="text-[10px] font-bold text-[#c8d4e8] uppercase truncate max-w-[80px]">
+              {appt.barber_name}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-[#1c2333] border border-[#2a3347] flex items-center justify-center">
+            <Clock className="w-4 h-4 text-[#f0c040]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] text-[#8a9ab5] uppercase tracking-tighter">DATA E HORA</span>
+            <span className="text-[10px] font-bold text-[#c8d4e8] uppercase">
+              {format(new Date(appt.starts_at), "dd/MM 'ÀS' HH:mm", { locale: ptBR })}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {!isPast && (
+        <div className="pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+            className="w-full text-[10px] text-red-500 hover:text-white hover:bg-red-900/50 uppercase tracking-widest font-bold flex items-center gap-2 transition-all border border-red-900/20"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            CANCELAR AGENDAMENTO
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ClientHome() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
