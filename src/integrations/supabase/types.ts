@@ -325,6 +325,7 @@ export type Database = {
         Args: { p_barbershop_id: string; p_owner_user_id: string }
         Returns: Json
       }
+      get_auth_user_id_by_email: { Args: { p_email: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
