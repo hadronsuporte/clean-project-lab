@@ -1,60 +1,79 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, Shield } from "lucide-react";
+import { Settings, Shield, PlusCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export const AdminGear: React.FC = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   if (!profile?.isAdmin && !profile?.isSuperAdmin) {
     return null;
   }
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button 
-          className="p-2 bg-[#141b2a] border border-[#2a3347] rounded-full hover:border-[#f0c040] transition-all group"
-          aria-label="Opções Administrativas"
-        >
-          <Settings size={20} className="text-[#8a9ab5] group-hover:text-[#f0c040]" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-[#141b2a] border-[#2a3347] text-[#c8d4e8] w-56">
-        <DropdownMenuLabel className="text-[#f0c040] font-oswald uppercase tracking-wider">
-          Administração
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-[#2a3347]" />
-        
-        {profile.isAdmin && (
-          <DropdownMenuItem 
-            onClick={() => navigate('/admin')}
-            className="focus:bg-[#1c2333] focus:text-[#f0c040] cursor-pointer gap-2"
-          >
-            <Settings size={16} />
-            <span>Gerenciar Barbearia</span>
-          </DropdownMenuItem>
-        )}
+  // Se for apenas admin/owner (não superadmin), redireciona direto
+  if (profile.isAdmin && !profile.isSuperAdmin) {
+    return (
+      <button 
+        onClick={() => navigate('/admin')}
+        className="p-2 bg-[#141b2a] border border-[#2a3347] rounded-full hover:border-[#f0c040] transition-all group"
+        aria-label="Painel Administrativo"
+      >
+        <Settings size={20} className="text-[#8a9ab5] group-hover:text-[#f0c040]" />
+      </button>
+    );
+  }
 
-        {profile.isSuperAdmin && (
-          <DropdownMenuItem 
-            onClick={() => navigate('/super-admin')}
-            className="focus:bg-[#1c2333] focus:text-[#f0c040] cursor-pointer gap-2"
-          >
-            <Shield size={16} />
-            <span>Cadastrar Barbearia</span>
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+  // Se for superadmin, mostra menu simples ou botões
+  return (
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 bg-[#141b2a] border border-[#2a3347] rounded-full hover:border-[#f0c040] transition-all group"
+        aria-label="Opções Administrativas"
+      >
+        <Settings size={20} className="text-[#8a9ab5] group-hover:text-[#f0c040]" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 mt-2 w-48 bg-[#141b2a] border border-[#2a3347] rounded-md shadow-lg z-50 overflow-hidden">
+          <div className="py-1">
+            {profile.isAdmin && (
+              <button
+                onClick={() => {
+                  navigate('/admin');
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-[#c8d4e8] hover:bg-[#1c2333] hover:text-[#f0c040] flex items-center gap-2"
+              >
+                <Settings size={14} />
+                Gerenciar Barbearia
+              </button>
+            )}
+            {profile.isSuperAdmin && (
+              <button
+                onClick={() => {
+                  navigate('/super-admin');
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-[#c8d4e8] hover:bg-[#1c2333] hover:text-[#f0c040] flex items-center gap-2 border-t border-[#2a3347]"
+              >
+                <PlusCircle size={14} />
+                Cadastrar Barbearia
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Overlay para fechar ao clicar fora */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </div>
   );
 };
