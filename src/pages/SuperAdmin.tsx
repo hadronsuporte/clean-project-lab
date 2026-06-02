@@ -45,7 +45,7 @@ interface Barbershop {
 }
 
 export default function SuperAdmin() {
-  const { profile, loading: authLoading } = useAuth();
+  const { profile, isSuperAdmin, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,10 +62,10 @@ export default function SuperAdmin() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile?.isSuperAdmin) {
+    if (isSuperAdmin) {
       fetchBarbershops();
     }
-  }, [profile]);
+  }, [isSuperAdmin]);
 
   const fetchBarbershops = async () => {
     setIsLoading(true);
@@ -103,7 +103,7 @@ export default function SuperAdmin() {
     );
   }
 
-  if (!profile?.isSuperAdmin) {
+  if (!isSuperAdmin) {
     return <Navigate to="/" />;
   }
 
