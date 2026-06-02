@@ -95,10 +95,10 @@ serve(async (req) => {
       throw aError
     }
 
-    // 6. Create public.users profile for owner
+    // 6. Create/Update public.users profile for owner
     const { error: pError } = await supabaseAdmin
       .from('users')
-      .insert({
+      .upsert({
         id: authUser.user.id,
         name: ownerName,
         phone: ownerPhone,
