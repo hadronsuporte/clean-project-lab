@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Scissors } from "lucide-react";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -130,7 +131,7 @@ export default function Login() {
             className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-7 text-lg rounded-[4px] transition-all font-oswald uppercase tracking-[3px]"
             disabled={isLoading}
           >
-            {isLoading ? "CARREGANDO..." : isSignUp ? "CRIAR CONTA" : "ENTRAR"}
+            {isLoading ? <div className="flex items-center gap-2"><img src="/tesouras.png" className="w-5 h-5 invert brightness-0" alt="" /> CARREGANDO...</div> : isSignUp ? "CRIAR CONTA" : "ENTRAR"}
           </Button>
 
           <div className="flex justify-between items-center px-1">
