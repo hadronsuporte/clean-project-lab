@@ -565,9 +565,24 @@ export default function SuperAdmin() {
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-gray-500">Nome</Label>
-                <Input name="name" defaultValue={editingBarbershop?.name} className="bg-[#0A0A0A] border-[#1F1F1F]" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-gray-500">Nome</Label>
+                  <Input name="name" defaultValue={editingBarbershop?.name} className="bg-[#0A0A0A] border-[#1F1F1F]" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-gray-500">Status Pagamento</Label>
+                  <Select name="payment_status" defaultValue={editingBarbershop?.payment_status || "pending"}>
+                    <SelectTrigger className="bg-[#0A0A0A] border-[#1F1F1F] h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#141414] border-[#1F1F1F] text-white">
+                      <SelectItem value="paid">Em dia</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="overdue">Vencido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase text-gray-500">Endereço</Label>
