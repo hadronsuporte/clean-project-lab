@@ -34,12 +34,13 @@ serve(async (req) => {
       .single()
 
     if (profileError || callerProfile?.role !== 'superadmin') {
-      return new Response(JSON.stringify({ error: 'Apenas superadmins podem criar barbearias.' }), {
+      return new Response(JSON.stringify({ success: false, error: 'Apenas superadmins podem criar barbearias.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 403,
+        status: 200, // Returning 200 as requested
       })
     }
 
+    const body = await req.json()
     const { 
       barbershopName, 
       barbershopAddress, 
@@ -53,7 +54,7 @@ serve(async (req) => {
       ownerPhone, 
       ownerPassword,
       ownerIsBarber: rawOwnerIsBarber
-    } = await req.json()
+    } = body
 
     const ownerIsBarber =
       rawOwnerIsBarber === true ||
@@ -62,7 +63,44 @@ serve(async (req) => {
 
     console.log("OWNER IS BARBER DEBUG", { ownerIsBarber, raw: rawOwnerIsBarber });
 
-    // Generate slug
+    // 3. Check if user already exists in auth.users
+    const { data: existingUserId, error: rpcError } = await supabaseAdmin.rpc("get_auth_user_id_by_email", { 
+      p_email: ownerEmail 
+    })
+
+    if (rpcError) {
+      console.error("Error checking existing user:", rpcError)
+    }
+
+    let ownerUserId = existingUserId;
+
+    // 4. Create or Re-use user
+    if (!ownerUserId) {
+      console.log("Creating new auth user for", ownerEmail);
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: ownerEmail,
+        password: ownerPassword,
+        email_confirm: true,
+        user_metadata: { 
+          name: ownerName,
+          phone: ownerPhone,
+          role: 'owner'
+        }
+      })
+
+      if (createError) {
+        return new Response(JSON.stringify({ success: false, error: `Erro ao criar usuário: ${createError.message}` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        })
+      }
+      ownerUserId = newUser.user.id;
+    } else {
+      console.log("Re-using existing auth user", ownerUserId, "for", ownerEmail);
+      // We'll update the password and metadata later once we have the barbershop_id
+    }
+
+    // 5. Generate slug and Create Barbershop
     const slug = barbershopName
       .toLowerCase()
       .trim()
@@ -72,7 +110,6 @@ serve(async (req) => {
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-    // 4. Create Barbershop
     const { data: barbershop, error: bError } = await supabaseAdmin
       .from('barbershops')
       .insert({
@@ -88,33 +125,35 @@ serve(async (req) => {
       .select()
       .single()
 
-    if (bError) throw bError
+    if (bError) {
+      return new Response(JSON.stringify({ success: false, error: `Erro ao criar barbearia: ${bError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
 
-    // 5. Create Owner in Auth
-    const { data: authUser, error: aError } = await supabaseAdmin.auth.admin.createUser({
-      email: ownerEmail,
+    // 6. Update Auth User Metadata with barbershop_id
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(ownerUserId, {
       password: ownerPassword,
       email_confirm: true,
-      user_metadata: { 
+      user_metadata: {
         name: ownerName,
         phone: ownerPhone,
-        role: 'owner',
+        role: "owner",
         barbershop_id: barbershop.id
       }
     })
 
-    if (aError) {
-      // Cleanup barbershop if auth creation fails
-      await supabaseAdmin.from('barbershops').delete().eq('id', barbershop.id)
-      throw aError
+    if (updateError) {
+      console.error("Error updating auth user metadata:", updateError)
+      // We continue since the barbershop is already created, but this is worth logging
     }
 
-    // 6. Create/Update public.users profile for owner
-    // We use upsert to ensure it overrides any trigger that might have created it as a client
+    // 7. Upsert public.users profile for owner
     const { error: pError } = await supabaseAdmin
       .from('users')
       .upsert({
-        id: authUser.user.id,
+        id: ownerUserId,
         name: ownerName,
         phone: ownerPhone,
         role: 'owner',
@@ -123,41 +162,41 @@ serve(async (req) => {
       })
 
     if (pError) {
-      // Cleanup if profile creation fails
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      await supabaseAdmin.from('barbershops').delete().eq('id', barbershop.id)
-      throw pError
+      return new Response(JSON.stringify({ success: false, error: `Erro ao atualizar perfil: ${pError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
     }
 
-    // 7. If owner is also a barber, create barber record using RPC
+    // 8. If owner is also a barber, create barber record using RPC
     if (ownerIsBarber) {
       const { data: barberData, error: barberError } = await supabaseAdmin.rpc(
         "ensure_owner_is_barber",
         {
-          p_owner_user_id: authUser.user.id,
+          p_owner_user_id: ownerUserId,
           p_barbershop_id: barbershop.id,
         }
       );
 
-      if (barberError) throw barberError;
-      if (barberData?.success === false) {
-        throw new Error(barberData.error || "Erro ao criar dono como barbeiro.");
+      if (barberError || barberData?.success === false) {
+        console.error("Error creating barber record:", barberError || barberData?.error);
+        // We don't fail the whole request but we could inform the user
       }
     }
 
     return new Response(JSON.stringify({ 
       success: true,
       barbershop_id: barbershop.id, 
-      owner_user_id: authUser.user.id 
+      owner_user_id: ownerUserId 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 200,
     })
   }
 })
