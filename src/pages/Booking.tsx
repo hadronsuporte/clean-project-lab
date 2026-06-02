@@ -50,14 +50,14 @@ export default function Booking() {
 
     const { data: appointments } = await supabase
       .from("appointments")
-      .select("appointment_time")
+      .select("starts_at")
       .eq("barber_id", selectedBarberId)
-      .gte("appointment_time", start)
-      .lt("appointment_time", end);
+      .gte("starts_at", start)
+      .lt("starts_at", end);
 
     if (appointments) {
       const slots = appointments.map(a => {
-        const date = new Date(a.appointment_time);
+        const date = new Date(a.starts_at);
         return format(date, "HH:mm");
       });
       setBookedSlots(slots);
