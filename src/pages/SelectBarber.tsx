@@ -9,10 +9,12 @@ import { AdminGear } from "@/components/AdminGear";
 
 interface Barber {
   id: string;
+  user_id: string;
   name: string;
   bio: string;
   avatar_url?: string;
   initials: string;
+  active: boolean;
 }
 
 export default function SelectBarber() {
@@ -34,10 +36,9 @@ export default function SelectBarber() {
     } else if (user) {
       fetchBarbers();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, profile]); // Re-fetch if profile changes
 
   const fetchBarbers = async () => {
-    // Priority: use the barbershop_id from the user's profile, then fallback to the first barbershop
     let bId = profile?.barbershop_id;
     
     if (!bId) {
@@ -50,35 +51,63 @@ export default function SelectBarber() {
     if (bId) {
       setBarbershopId(bId);
 
-      // Fetch barbers joined with their user info
-      const { data: barberData, error } = await supabase
+      // 1. Fetch barbers
+      const { data: barbersData, error: barbersError } = await supabase
         .from("barbers")
-        .select(`
-          id, 
-          name, 
-          bio,
-          user_id,
-          photo_url,
-          users (
-            avatar_url
-          )
-        `)
-        .eq("barbershop_id", bId)
-        .eq("active", true);
-      
-      if (error) {
-        console.error("Error fetching barbers:", error);
+        .select("id, user_id, barbershop_id, bio, active, commission_pct")
+        .eq("barbershop_id", bId);
+
+      if (barbersError) {
+        console.error("Error fetching barbers:", barbersError);
         toast.error("Erro ao carregar barbeiros");
-      } else if (barberData) {
-        const mappedBarbers = barberData.map((b: any) => ({
-          id: b.id,
-          name: b.name,
-          bio: b.bio || "CORTE & BARBA",
-          avatar_url: b.photo_url || b.users?.avatar_url,
-          initials: b.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2)
-        }));
-        setBarbers(mappedBarbers);
+        setIsLoading(false);
+        return;
       }
+
+      // 2. Filter active and get user_ids
+      // Active is true if it's not explicitly false
+      const activeBarbersEntries = (barbersData || []).filter(b => b.active !== false);
+      const userIds = activeBarbersEntries.map(b => b.user_id).filter(Boolean);
+
+      // 3. Fetch users info
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select("id, name, phone, avatar_url, role, barbershop_id")
+        .in("id", userIds);
+
+      if (usersError) {
+        console.error("Error fetching users:", usersError);
+        toast.error("Erro ao carregar dados dos usuários");
+        setIsLoading(false);
+        return;
+      }
+
+      // 4. Map and merge
+      const mappedBarbers = activeBarbersEntries
+        .map(barber => {
+          const userEntry = usersData?.find(u => u.id === barber.user_id);
+          if (!userEntry) return null;
+          
+          return {
+            id: barber.id,
+            user_id: barber.user_id as string,
+            name: userEntry.name,
+            avatar_url: userEntry.avatar_url || undefined,
+            bio: barber.bio || "CORTE & BARBA",
+            active: barber.active !== false,
+            initials: userEntry.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2)
+          } as Barber;
+        })
+        .filter((b): b is Barber => b !== null);
+
+      console.log("BARBERS DEBUG", { 
+        barbershopId: bId, 
+        barbers: barbersData, 
+        users: usersData, 
+        mappedBarbers 
+      });
+
+      setBarbers(mappedBarbers);
     }
     setIsLoading(false);
   };
@@ -91,7 +120,6 @@ export default function SelectBarber() {
     navigate(`/services?barberId=${selectedBarberId}&barbershopId=${barbershopId}`);
   };
 
-  // O AuthProvider agora gerencia o loading global
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#1c2333] flex items-center justify-center text-[#c8d4e8] font-oswald tracking-[0.2em]">
