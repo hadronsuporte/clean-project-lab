@@ -62,10 +62,10 @@ export default function SuperAdmin() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile?.isSuperAdmin) {
+    if (isSuperAdmin) {
       fetchBarbershops();
     }
-  }, [profile]);
+  }, [isSuperAdmin]);
 
   const fetchBarbershops = async () => {
     setIsLoading(true);
