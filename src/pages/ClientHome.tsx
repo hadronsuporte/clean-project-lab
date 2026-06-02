@@ -81,16 +81,21 @@ export default function ClientHome() {
     if (!user) return;
     setIsLoading(true);
     try {
-      // 1. Fetch appointments
+      console.log("MY APPOINTMENTS USER", { userId: user?.id });
+      // 1. Fetch appointments (initially without date filter to diagnose)
       const { data: appts, error } = await supabase
         .from("appointments")
-        .select("id, barbershop_id, barber_id, service_id, starts_at, ends_at, status, price_charged")
+        .select("id, client_id, barbershop_id, barber_id, service_id, starts_at, ends_at, status, price_charged, created_at")
         .eq("client_id", user.id)
         .neq("status", "cancelled")
-        .gte("starts_at", new Date().toISOString())
         .order("starts_at", { ascending: true });
 
-      if (error) throw error;
+      console.log("MY APPOINTMENTS QUERY", { appointments: appts, error });
+
+      if (error) {
+        toast.error(`Erro RLS ou Banco: ${error.message}`);
+        throw error;
+      }
 
       if (!appts || appts.length === 0) {
         setAppointments([]);
