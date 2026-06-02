@@ -11,7 +11,7 @@ interface Stats {
 
 interface Appointment {
   id: string;
-  appointment_time: string;
+  starts_at: string;
   status: string;
   users: { name: string };
   services: { name: string };
