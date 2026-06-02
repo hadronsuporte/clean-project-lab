@@ -532,41 +532,6 @@ export default function SuperAdmin() {
         </section>
       </div>
 
-                    <h3 className="font-oswald uppercase text-white truncate">{shop.name}</h3>
-                    <p className="text-[10px] text-gray-500 uppercase truncate">{shop.address}</p>
-                    <div className="flex items-center gap-1 text-[10px] text-[#C6A355] font-medium">
-                      <User className="w-3 h-3" />
-                      <span className="truncate">{shop.owner?.name || "Sem dono"}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => {
-                        setEditingBarbershop(shop);
-                        setEditLogoPreview(shop.logo_url);
-                      }}
-                      className="h-8 w-8 bg-[#1A1A1A] hover:bg-[#C6A355] hover:text-black transition-colors"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setDeletingId(shop.id)}
-                      className="h-8 w-8 bg-[#1A1A1A] hover:bg-red-900 hover:text-white transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      </div>
-
       {/* Edit Modal */}
       <Dialog open={!!editingBarbershop} onOpenChange={(open) => !open && setEditingBarbershop(null)}>
         <DialogContent className="bg-[#141414] border-[#1F1F1F] text-white">
