@@ -36,17 +36,17 @@ const Comb = ({ className }: { className?: string }) => (
 );
 
 const ScissorsAndRazor = ({ className }: { className?: string }) => (
-  <div className={`flex items-center justify-center -space-x-3 ${className}`}>
+  <div className={`flex items-center justify-center gap-1 ${className}`}>
     <img 
       src="/tesouras.png" 
       alt="Tesoura" 
-      className="w-6 h-6 scale-110 relative z-10"
+      className="w-5 h-5 scale-110"
       style={{ filter: "invert(81%) sepia(35%) saturate(847%) hue-rotate(352deg) brightness(101%) contrast(89%)" }}
     />
     <img 
       src="/navalha.png" 
       alt="Navalha" 
-      className="w-6 h-6 scale-110"
+      className="w-5 h-5 scale-110"
       style={{ filter: "invert(81%) sepia(35%) saturate(847%) hue-rotate(352deg) brightness(101%) contrast(89%)" }}
     />
   </div>
