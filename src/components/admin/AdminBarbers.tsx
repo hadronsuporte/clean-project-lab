@@ -131,6 +131,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         // 2. Use RPC to create barber record
         const { data: rpcData, error: rpcError } = await supabase.rpc('create_barber', {
           p_email: email,
+          p_password: password,
           p_name: name,
           p_phone: whatsapp,
           p_bio: bio,
@@ -144,36 +145,13 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         const result = rpcData as { success: boolean; error?: string; barber_id?: string };
         if (!result.success) throw new Error(result.error || "Erro ao cadastrar barbeiro no banco.");
 
-        // 3. Create Auth user
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-            data: {
-              name: name,
-              role: 'barber',
-              barbershop_id: barbershopId,
-              barber_id: result.barber_id
-            }
-          }
-        });
-        
-        if (signUpError) {
-          if (signUpError.status === 400 || signUpError.message?.toLowerCase().includes("already registered")) {
-            await supabase.auth.resetPasswordForEmail(email);
-            toast.success("Barbeiro cadastrado! Usuário já existia, e-mail de redefinição enviado.");
-          } else {
-            throw signUpError;
-          }
-        } else {
-          toast.success("Barbeiro cadastrado com sucesso!");
-        }
+        toast.success("Barbeiro cadastrado com sucesso!");
         currentUserId = result.barber_id; // Temporary ID association
       } else {
-        // Update Profile only if user exists
+        // Update User only if exists
         if (currentUserId) {
-          const { error: profileError } = await supabase
-            .from("profiles")
+          const { error: userUpdateError } = await supabase
+            .from("users")
             .update({
               name,
               phone: whatsapp,
@@ -183,7 +161,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             })
             .eq("id", currentUserId);
 
-          if (profileError) throw profileError;
+          if (userUpdateError) throw userUpdateError;
         }
 
         // Update Barber entry
@@ -233,15 +211,6 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
 
       const result = data as { success: boolean; error?: string };
       if (result.success) {
-        if (barber.user_id) {
-          try {
-            // @ts-ignore - admin is used here as requested by user
-            await supabase.auth.admin.deleteUser(barber.user_id);
-          } catch (authError) {
-            console.error("Erro ao deletar usuário do Auth:", authError);
-          }
-        }
-        
         toast.success("Barbeiro removido!");
         setBarbers(prev => prev.filter(b => b.id !== id));
       } else {
