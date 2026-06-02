@@ -6,6 +6,7 @@ import { ChevronLeft, User, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminGear } from "@/components/AdminGear";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 interface Barber {
   id: string;
@@ -121,11 +122,7 @@ export default function SelectBarber() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#1c2333] flex items-center justify-center text-[#c8d4e8] font-oswald tracking-[0.2em]">
-        CARREGANDO...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   const firstName = profile?.name?.split(" ")[0] || user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.name?.split(" ")[0] || "USUÁRIO";

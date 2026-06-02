@@ -6,6 +6,7 @@ import { ChevronLeft, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminGear } from "@/components/AdminGear";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 // Custom Icons
 const CustomScissors = ({ className }: { className?: string }) => (
@@ -98,11 +99,7 @@ export default function Services() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#1c2333] flex items-center justify-center text-[#c8d4e8] font-oswald tracking-[0.2em]">
-        CARREGANDO...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
