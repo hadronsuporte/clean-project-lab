@@ -170,13 +170,13 @@ export default function ClientHome() {
     setIsLoading(true);
     try {
       console.log("MY APPOINTMENTS USER", { userId: user?.id });
-      // 1. Fetch appointments (initially without date filter to diagnose)
+      // 1. Fetch appointments
       const { data: appts, error } = await supabase
         .from("appointments")
         .select("id, client_id, barbershop_id, barber_id, service_id, starts_at, ends_at, status, price_charged, created_at")
         .eq("client_id", user.id)
         .neq("status", "cancelled")
-        .order("starts_at", { ascending: true });
+        .order("starts_at", { ascending: false }); // Show most recent first (especially for history)
 
       console.log("MY APPOINTMENTS QUERY", { appointments: appts, error });
 
