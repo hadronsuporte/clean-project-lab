@@ -157,11 +157,11 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
       {isAdding && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-[#1c2333] border border-[#2a3347] w-full max-w-[340px] p-6 rounded-[4px] space-y-6 relative animate-in zoom-in-95 duration-200">
-            <button onClick={() => setIsAdding(false)} className="absolute top-4 right-4 text-[#8a9ab5] hover:text-[#f0c040]">
+            <button onClick={() => { setIsAdding(false); setEditingService(null); setName(""); setPrice(""); setDuration("30"); }} className="absolute top-4 right-4 text-[#8a9ab5] hover:text-[#f0c040]">
               <X className="w-5 h-5" />
             </button>
             
-            <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">NOVO SERVIÇO</h3>
+            <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">{editingService ? "EDITAR SERVIÇO" : "NOVO SERVIÇO"}</h3>
             
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-1">
