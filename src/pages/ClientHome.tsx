@@ -105,7 +105,20 @@ function AppointmentCard({
         </div>
       </div>
 
-      {!isPast && (
+      {isPast ? (
+        <div className="pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = `/barbers?barbershopId=${appt.barbershop_id}`}
+            className="w-full text-[10px] text-[#f0c040] border-[#f0c040]/30 hover:bg-[#f0c040] hover:text-[#1c2333] uppercase tracking-widest font-bold flex items-center gap-2 transition-all"
+          >
+            <RefreshCcw className="w-3.5 h-3.5" />
+            AGENDAR NOVAMENTE
+          </Button>
+          <p className="text-[8px] text-[#8a9ab5] uppercase tracking-widest mt-2 text-center">Agendamento finalizado</p>
+        </div>
+      ) : (
         <div className="pt-2">
           <Button
             variant="ghost"
@@ -157,13 +170,13 @@ export default function ClientHome() {
     setIsLoading(true);
     try {
       console.log("MY APPOINTMENTS USER", { userId: user?.id });
-      // 1. Fetch appointments (initially without date filter to diagnose)
+      // 1. Fetch appointments
       const { data: appts, error } = await supabase
         .from("appointments")
         .select("id, client_id, barbershop_id, barber_id, service_id, starts_at, ends_at, status, price_charged, created_at")
         .eq("client_id", user.id)
         .neq("status", "cancelled")
-        .order("starts_at", { ascending: true });
+        .order("starts_at", { ascending: false }); // Show most recent first (especially for history)
 
       console.log("MY APPOINTMENTS QUERY", { appointments: appts, error });
 
