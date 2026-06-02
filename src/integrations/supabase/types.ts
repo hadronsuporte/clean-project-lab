@@ -115,7 +115,7 @@ export type Database = {
             foreignKeyName: "barbers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -147,7 +147,45 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
+      services: {
+        Row: {
+          barbershop_id: string
+          created_at: string | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          name: string
+          price: number
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
         Row: {
           avatar_url: string | null
           barbershop_id: string | null
@@ -181,44 +219,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_barbershop_id_fkey"
-            columns: ["barbershop_id"]
-            isOneToOne: false
-            referencedRelation: "barbershops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      services: {
-        Row: {
-          barbershop_id: string
-          created_at: string | null
-          description: string | null
-          duration_minutes: number
-          id: string
-          name: string
-          price: number
-        }
-        Insert: {
-          barbershop_id: string
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          name: string
-          price: number
-        }
-        Update: {
-          barbershop_id?: string
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          name?: string
-          price?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "services_barbershop_id_fkey"
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
