@@ -92,11 +92,11 @@ export default function SelectBarber() {
             id: barber.id,
             user_id: barber.user_id as string,
             name: userEntry.name,
-            avatar_url: userEntry.avatar_url,
+            avatar_url: userEntry.avatar_url || undefined,
             bio: barber.bio || "CORTE & BARBA",
             active: barber.active !== false,
             initials: userEntry.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2)
-          };
+          } as Barber;
         })
         .filter((b): b is Barber => b !== null);
 
