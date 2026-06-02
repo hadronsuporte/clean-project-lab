@@ -39,7 +39,7 @@ export const AdminGear: React.FC = () => {
       {isOpen && (
         <div className="absolute left-0 mt-2 w-48 bg-[#141b2a] border border-[#2a3347] rounded-md shadow-lg z-50 overflow-hidden">
           <div className="py-1">
-            {profile.isAdmin && (
+            {isAdmin && (
               <button
                 onClick={() => {
                   navigate('/admin');
@@ -51,7 +51,7 @@ export const AdminGear: React.FC = () => {
                 Gerenciar Barbearia
               </button>
             )}
-            {profile.isSuperAdmin && (
+            {isSuperAdmin && (
               <button
                 onClick={() => {
                   navigate('/super-admin');
