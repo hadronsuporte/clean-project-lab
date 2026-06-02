@@ -142,7 +142,7 @@ export default function AdminDashboard({ barbershopId }: { barbershopId: string 
                 </div>
                 <div className="pt-2 border-t border-[#2a3347]/50 flex justify-between items-center">
                   <span className="text-lg font-bold text-[#f0c040] font-oswald">
-                    {format(new Date(appt.appointment_time), "HH:mm")}
+                    {format(new Date(appt.starts_at), "HH:mm")}
                   </span>
                 </div>
               </div>
