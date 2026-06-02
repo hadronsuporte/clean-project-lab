@@ -277,7 +277,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
           <div className="flex gap-4">
             <div className="flex-1 space-y-1">
               <label className="text-[10px] text-[#8a9ab5] ml-1 uppercase font-bold">COMISSÃO %</label>
-              <Input type="text" value={commission} onChange={e => setCommission(e.target.value)} className="bg-[#141b2a] border-[#2a3347] h-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+              <Input type="text" value={commission} onChange={e => setCommission(e.target.value)} className="bg-[#141b2a] border-[#2a3347] h-12" />
             </div>
             <div className="flex-1 flex flex-col justify-end pb-3">
               <div className="flex items-center gap-2">
