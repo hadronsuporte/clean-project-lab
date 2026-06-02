@@ -52,6 +52,8 @@ export default function SelectBarber() {
         .select("id, user_id, barbershop_id, bio, active, commission_pct")
         .eq("barbershop_id", barbershopId);
 
+      console.log("BARBERS QUERY", { barbershopId, barberData: barbersData, barberError: barbersError });
+
       if (barbersError) {
         console.error("Error fetching barbers:", barbersError);
         toast.error("Erro ao carregar barbeiros");
@@ -69,6 +71,8 @@ export default function SelectBarber() {
         .from("users")
         .select("id, name, phone, avatar_url, role, barbershop_id")
         .in("id", userIds);
+
+      console.log("BARBER USERS QUERY", { userIds, usersData: usersData, usersError: usersError });
 
       if (usersError) {
         console.error("Error fetching users:", usersError);
