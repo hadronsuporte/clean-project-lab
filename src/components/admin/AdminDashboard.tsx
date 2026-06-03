@@ -112,7 +112,7 @@ export default function AdminDashboard({
           { label: "AGENDAMENTOS HOJE", value: stats.appointmentsToday },
           { label: "HORÁRIOS LIVRES", value: stats.freeSlots },
           { label: "BARBEIROS", value: stats.activeBarbers },
-          { label: "FATURAMENTO", value: `R$ ${stats.revenueToday.toFixed(2)}` },
+          { label: "FATURAMENTO", value: new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.revenueToday) },
         ].map((item, idx) => (
           <div key={idx} className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] space-y-2">
             <span className="text-[10px] font-bold text-[#8a9ab5] uppercase tracking-wider block">
