@@ -49,7 +49,10 @@ export default function BarberDashboard() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => navigate("/admin")}
+                onClick={() => {
+                  localStorage.removeItem('force_barber_panel');
+                  navigate("/admin");
+                }}
                 className="bg-[#141b2a] border-[#2a3347] text-[#c8d4e8] hover:border-[#f0c040] text-[10px] h-8 gap-2 font-bold font-oswald tracking-wider"
               >
                 <RefreshCw className="w-3 h-3 text-[#f0c040]" />
