@@ -247,7 +247,6 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
-                initialFocus
                 className="bg-[#1c2333] text-[#c8d4e8]"
               />
             </PopoverContent>
