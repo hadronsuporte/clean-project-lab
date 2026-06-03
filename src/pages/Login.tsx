@@ -36,6 +36,8 @@ export default function Login() {
       }
     }
   }, [user, profile, loading, navigate]);
+
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
