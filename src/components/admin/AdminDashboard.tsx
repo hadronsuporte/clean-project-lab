@@ -24,7 +24,13 @@ interface Appointment {
   serviceName?: string;
 }
 
-export default function AdminDashboard({ barbershopId }: { barbershopId: string | null }) {
+export default function AdminDashboard({ 
+  barbershopId, 
+  profile 
+}: { 
+  barbershopId: string | null;
+  profile: any;
+}) {
   const [stats, setStats] = useState<Stats>({
     appointmentsToday: 0,
     freeSlots: 0,
@@ -40,9 +46,8 @@ export default function AdminDashboard({ barbershopId }: { barbershopId: string 
 
   const fetchDashboardData = async () => {
     try {
-      const today = new Date();
-      const start = startOfDay(today).toISOString();
-      const end = endOfDay(today).toISOString();
+      const start = startOfDay(new Date()).toISOString();
+      const end = endOfDay(new Date()).toISOString();
 
       // 1. Fetch Appointments
       const { data: appts, error } = await supabase
@@ -51,16 +56,24 @@ export default function AdminDashboard({ barbershopId }: { barbershopId: string 
         .eq("barbershop_id", barbershopId)
         .gte("starts_at", start)
         .lte("starts_at", end)
+        .neq("status", "cancelled")
         .order("starts_at", { ascending: true });
 
       if (error) {
-        console.error("DASHBOARD APPOINTMENTS ERROR", error);
+        console.error("OWNER DASHBOARD APPOINTMENTS ERROR", error);
         toast.error(error.message);
         setIsLoading(false);
         return;
       }
 
-      console.log("DASHBOARD DEBUG", { barbershopId, start, end, appts });
+      console.log("OWNER DASHBOARD DEBUG", {
+        ownerProfile: profile,
+        barbershopId,
+        start,
+        end,
+        appts,
+        error
+      });
 
       if (appts) {
         const clientIds = [...new Set(appts.map(a => a.client_id))].filter(Boolean);

@@ -24,23 +24,28 @@ export default function Admin() {
         return;
       }
       
-      if (profile && !isAdmin) {
+      if (profile && !isAdmin && profile.role !== "owner") {
         toast.error("Acesso restrito");
         navigate("/");
         return;
       }
 
       const fetchBarbershopId = async () => {
+        // Se o profile tem barbershop_id, usa ele (regra para owners)
         if (profile?.barbershop_id) {
           setBarbershopId(profile.barbershop_id);
           setLoadingBarbershop(false);
           return;
         }
 
-        const { data } = await supabase.from("barbershops").select("id").limit(1).single();
-        if (data) {
-          setBarbershopId(data.id);
+        // Se for superadmin ou usuário sem barbershop_id, tenta pegar a primeira barbearia (fallback/teste)
+        if (isAdmin) {
+          const { data } = await supabase.from("barbershops").select("id").limit(1).single();
+          if (data) {
+            setBarbershopId(data.id);
+          }
         }
+        
         setLoadingBarbershop(false);
       };
 
@@ -78,7 +83,7 @@ export default function Admin() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "agenda" && <AdminDashboard barbershopId={barbershopId} />}
+        {activeTab === "agenda" && <AdminDashboard barbershopId={barbershopId} profile={profile} />}
         {activeTab === "barbeiros" && <AdminBarbers barbershopId={barbershopId} />}
         {activeTab === "servicos" && <AdminServices barbershopId={barbershopId} />}
       </div>
