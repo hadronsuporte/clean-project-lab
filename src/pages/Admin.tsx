@@ -20,13 +20,13 @@ export default function Admin() {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        navigate("/login");
+        navigate("/login", { replace: true });
         return;
       }
       
       if (profile && !isAdmin && profile.role !== "owner") {
         toast.error("Acesso restrito");
-        navigate("/");
+        navigate("/", { replace: true });
         return;
       }
 
