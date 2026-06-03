@@ -215,7 +215,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
           .update({
             bio,
             active,
-            commission_pct: parseFloat(commission) || 0
+            commission_pct: parsePercentage(commission) || 0
           })
           .eq("id", editingBarber.id);
         
