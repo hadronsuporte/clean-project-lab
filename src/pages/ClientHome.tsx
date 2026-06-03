@@ -43,10 +43,7 @@ interface Appointment {
   status: string;
   price_charged: number;
   created_at: string;
-  barbershop?: {
-    name: string;
-    logo_url: string | null;
-  };
+  barbershop_name?: string;
   barber_name?: string;
   barber_avatar_url?: string | null;
   service_name?: string;
@@ -72,7 +69,7 @@ function AppointmentCard({
             </h4>
           </div>
           <p className="text-[10px] text-[#8a9ab5] uppercase tracking-wider font-medium">
-            {appt.barbershop?.name}
+            {appt.barbershop_name}
           </p>
         </div>
         <div className="text-right">
@@ -150,7 +147,7 @@ export default function ClientHome() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const barbershopId = user ? localStorage.getItem(`selectedBarbershopId:${user.id}`) : null;
+  const barbershopId = profile?.barbershop_id;
   const barbershopName = user ? localStorage.getItem(`selectedBarbershopName:${user.id}`) : null;
 
   useEffect(() => {
@@ -164,21 +161,18 @@ export default function ClientHome() {
       }
 
       if (!profile.barbershop_id) {
-        // Fallback to localStorage if bank is not updated yet, but bank is priority
-        const savedId = localStorage.getItem(`selectedBarbershopId:${user.id}`);
-        if (!savedId) {
-          navigate("/", { replace: true });
-          return;
-        }
-      } else {
-        // Sync local storage with bank
-        localStorage.setItem(`selectedBarbershopId:${user.id}`, profile.barbershop_id);
+        navigate("/", { replace: true });
+        return;
       }
 
       fetchAppointments();
 
       // Recarregar quando a janela ganha foco para refletir finalizações do barbeiro
-      const handleFocus = () => fetchAppointments();
+      const handleFocus = () => {
+        if (!authLoading && user && profile) {
+          fetchAppointments();
+        }
+      };
       window.addEventListener('focus', handleFocus);
       return () => window.removeEventListener('focus', handleFocus);
     }
@@ -189,64 +183,19 @@ export default function ClientHome() {
     if (!user) return;
     setIsLoading(true);
     try {
-      console.log("MY APPOINTMENTS USER", { userId: user?.id });
-      // 1. Fetch appointments
-      const { data: appts, error } = await supabase
-        .from("appointments")
-        .select("id, client_id, barbershop_id, barber_id, service_id, starts_at, ends_at, status, price_charged, created_at")
-        .eq("client_id", user.id)
-        .order("starts_at", { ascending: false });
-
-
-      console.log("MY APPOINTMENTS QUERY", { appointments: appts, error });
+      const { data, error } = await supabase.rpc('get_my_appointments');
 
       if (error) {
-        toast.error(`Erro RLS ou Banco: ${error.message}`);
+        toast.error(`Erro: ${error.message}`);
         throw error;
       }
 
-      if (!appts || appts.length === 0) {
-        setAppointments([]);
-        setIsLoading(false);
-        return;
-      }
-
-      // 2. Fetch complementary data
-      const barbershopIds = [...new Set(appts.map(a => a.barbershop_id))];
-      const barberIds = [...new Set(appts.map(a => a.barber_id))];
-      const serviceIds = [...new Set(appts.map(a => a.service_id))];
-
-      const [
-        { data: shops },
-        { data: barbersData },
-        { data: services }
-      ] = await Promise.all([
-        supabase.from("barbershops").select("id, name, logo_url").in("id", barbershopIds),
-        supabase.from("barbers").select("id, user_id").in("id", barberIds),
-        supabase.from("services").select("id, name").in("id", serviceIds)
-      ]);
-
-      // Fetch user names for barbers
-      const barberUserIds = barbersData?.map(b => b.user_id).filter(Boolean) || [];
-      const { data: barberUsers } = await supabase.from("users").select("id, name, avatar_url").in("id", barberUserIds);
-
-      // 3. Map everything
-      const mapped: Appointment[] = appts.map(a => {
-        const shop = shops?.find(s => s.id === a.barbershop_id);
-        const barber = barbersData?.find(b => b.id === a.barber_id);
-        const barberUser = barberUsers?.find(u => u.id === barber?.user_id);
-        const service = services?.find(s => s.id === a.service_id);
-
-        return {
-          ...a,
-          barbershop: shop,
-          barber_name: barberUser?.name || "Barbeiro",
-          barber_avatar_url: barberUser?.avatar_url,
-          service_name: service?.name || "Serviço"
-        };
-      });
-
-      setAppointments(mapped);
+      const active = (data?.active || []) as any[];
+      const history = (data?.history || []) as any[];
+      
+      // Combine active and history into a single list for the existing component logic if necessary
+      // or adapt the logic. The existing code uses setAppointments(mapped).
+      setAppointments([...active, ...history]);
     } catch (error: any) {
       console.error("Error fetching appointments:", error);
       toast.error("Erro ao carregar agendamentos");
@@ -282,11 +231,7 @@ export default function ClientHome() {
   };
 
   const switchBarbershop = () => {
-    if (user) {
-      localStorage.removeItem(`selectedBarbershopId:${user.id}`);
-      localStorage.removeItem(`selectedBarbershopName:${user.id}`);
-    }
-    navigate("/", { replace: true });
+    navigate("/", { replace: true, state: { select: true } });
   };
 
 
@@ -328,7 +273,7 @@ export default function ClientHome() {
           <div className="flex items-center gap-2">
             <Store className="w-5 h-5 text-[#f0c040]" />
             <span className="text-[10px] font-bold tracking-widest text-[#f0c040] uppercase truncate max-w-[150px]">
-              {barbershopName}
+              {appointments.find(a => a.barbershop_id === barbershopId)?.barbershop_name || barbershopName || "Sua Barbearia"}
             </span>
           </div>
           <div className="flex items-center gap-3">
