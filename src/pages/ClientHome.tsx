@@ -158,9 +158,16 @@ export default function ClientHome() {
         return;
       }
 
-      if (!barbershopId) {
-        navigate("/", { replace: true });
-        return;
+      if (!profile.barbershop_id) {
+        // Fallback to localStorage if bank is not updated yet, but bank is priority
+        const savedId = localStorage.getItem(`selectedBarbershopId:${user.id}`);
+        if (!savedId) {
+          navigate("/", { replace: true });
+          return;
+        }
+      } else {
+        // Sync local storage with bank
+        localStorage.setItem(`selectedBarbershopId:${user.id}`, profile.barbershop_id);
       }
 
       fetchAppointments();
@@ -216,7 +223,7 @@ export default function ClientHome() {
 
       // Fetch user names for barbers
       const barberUserIds = barbersData?.map(b => b.user_id).filter(Boolean) || [];
-      const { data: barberUsers } = await supabase.from("users").select("id, name").in("id", barberUserIds);
+      const { data: barberUsers } = await supabase.from("users").select("id, name, avatar_url").in("id", barberUserIds);
 
       // 3. Map everything
       const mapped: Appointment[] = appts.map(a => {
@@ -229,6 +236,7 @@ export default function ClientHome() {
           ...a,
           barbershop: shop,
           barber_name: barberUser?.name || "Barbeiro",
+          barber_avatar_url: barberUser?.avatar_url,
           service_name: service?.name || "Serviço"
         };
       });
