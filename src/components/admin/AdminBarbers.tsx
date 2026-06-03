@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
 interface Barber {
-  id: string;
+  barber_id: string;
   user_id: string;
   name: string;
   email: string;
@@ -15,6 +15,8 @@ interface Barber {
   bio?: string;
   commission_pct?: number;
   phone?: string;
+  barbershop_id?: string;
+  barbershop_name?: string;
 }
 
 export default function AdminBarbers({ barbershopId }: { barbershopId: string | null }) {
@@ -51,60 +53,25 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
 
   const fetchBarbers = async () => {
     setIsLoading(true);
-    // 1. Fetch barbers entries
-    const { data: barbersData, error: barbersError } = await supabase
-      .from("barbers")
-      .select("id, user_id, barbershop_id, bio, active, commission_pct")
-      .eq("barbershop_id", barbershopId)
-      .eq("active", true);
+    
+    const { data, error } = await supabase.rpc('get_barbers_for_admin', {
+      p_barbershop_id: barbershopId
+    });
 
-    if (barbersError) {
-      console.error("Error fetching barbers:", barbersError);
-      toast.error("Erro ao carregar barbeiros");
+    if (error) {
+      console.error("Error fetching barbers:", error);
+      toast.error(error.message);
       setIsLoading(false);
       return;
     }
 
-    // 2. Get user_ids
-    const userIds = (barbersData || []).map(b => b.user_id).filter(Boolean);
-
-    // 3. Fetch users info
-    const { data: usersData, error: usersError } = await supabase
-      .from("users")
-      .select("id, name, phone, avatar_url, role, barbershop_id, email")
-      .in("id", userIds);
-
-    if (usersError) {
-      console.error("Error fetching users:", usersError);
-      toast.error("Erro ao carregar dados dos usuários");
+    if (data && data.success === false) {
+      toast.error(data.error || "Erro ao carregar barbeiros");
       setIsLoading(false);
       return;
     }
 
-    // 4. Map and merge
-    const mappedBarbers = (barbersData || []).map(barber => {
-      const userEntry = usersData?.find(u => u.id === barber.user_id);
-      return {
-        id: barber.id,
-        user_id: barber.user_id as string,
-        name: userEntry?.name || "Sem Nome",
-        active: barber.active !== false,
-        avatar_url: userEntry?.avatar_url || undefined,
-        email: userEntry?.email || "",
-        bio: barber.bio || "",
-        commission_pct: barber.commission_pct || 0,
-        phone: userEntry?.phone || ""
-      };
-    });
-
-    console.log("BARBERS DEBUG", { 
-      barbershopId, 
-      barbers: barbersData, 
-      users: usersData, 
-      mappedBarbers 
-    });
-
-    setBarbers(mappedBarbers);
+    setBarbers(data?.barbers || []);
     setIsLoading(false);
   };
 
@@ -152,7 +119,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
 
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
-        const identifier = editingBarber?.user_id || editingBarber?.id || Math.random().toString(36).substring(7);
+        const identifier = editingBarber?.user_id || editingBarber?.barber_id || Math.random().toString(36).substring(7);
         const fileName = `${identifier}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
@@ -180,7 +147,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
       };
 
       if (editingBarber) {
-        body.barberId = editingBarber.id;
+        body.barberId = editingBarber.barber_id;
         // Only include email if it changed and is not empty
         if (email && email.trim() && email.trim().toLowerCase() !== editingBarber.email.toLowerCase()) {
           body.email = email.trim().toLowerCase();
@@ -307,7 +274,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
       <div className="space-y-4">
         {barbers.map(barber => (
           <div 
-            key={barber.id} 
+            key={barber.barber_id} 
             onClick={() => handleEdit(barber)}
             className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] flex items-center gap-4 cursor-pointer hover:border-[#f0c040]/50 transition-all"
           >
@@ -320,6 +287,11 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             </div>
             <div className="flex-1">
               <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">{barber.name}</h4>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-[#8a9ab5] uppercase tracking-wider">{barber.phone}</span>
+                <span className="text-[10px] text-[#8a9ab5] lowercase tracking-wider">{barber.email}</span>
+                <span className="text-[10px] text-[#f0c040] font-bold uppercase tracking-widest">COMISSÃO: {barber.commission_pct}%</span>
+              </div>
               <span className={`text-[9px] font-bold uppercase tracking-widest ${barber.active ? "text-green-500" : "text-red-500"}`}>
                 {barber.active ? "ATIVO" : "INATIVO"}
               </span>
@@ -328,7 +300,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
               variant="ghost"
               size="icon"
               type="button"
-              onClick={(e) => handleDelete(barber.id, e)}
+              onClick={(e) => handleDelete(barber.barber_id, e)}
               className="text-[#8a9ab5] hover:text-red-500 transition-colors"
             >
               <Trash2 className="w-5 h-5" />
