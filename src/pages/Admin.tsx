@@ -93,7 +93,7 @@ export default function Admin() {
             activeTab === "agenda" ? "text-[#f0c040]" : "text-[#8a9ab5]"
           }`}
         >
-          <LayoutDashboard className="w-6 h-6" />
+          <Calendar className="w-6 h-6" />
           <span className="text-[10px] font-bold font-oswald tracking-wider uppercase">AGENDA</span>
         </button>
         <button
