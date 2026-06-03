@@ -244,7 +244,7 @@ export default function ClientHome() {
   };
 
   const switchBarbershop = () => {
-    navigate("/", { replace: true, state: { select: true } });
+    navigate("/", { replace: false, state: { select: true } });
   };
 
 
