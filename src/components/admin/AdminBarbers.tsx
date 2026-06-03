@@ -157,25 +157,32 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
 
       if (!editingBarber) {
         // 2. Use Edge Function to create/update barber (Auth + Profile + Barber)
-        const { data: rpcData, error: rpcError } = await supabase.functions.invoke('create-barber', {
+        const { data, error } = await supabase.functions.invoke('create-barber', {
           body: {
-            p_email: email,
-            p_password: password,
-            p_name: name,
-            p_phone: phone,
-            p_bio: bio,
-            p_commission_pct: parseFloat(commission) || 0,
-            p_avatar_url: finalAvatarUrl,
-            p_barbershop_id: barbershopId
+            name,
+            email,
+            phone,
+            password,
+            avatarUrl: finalAvatarUrl,
+            bio,
+            commissionPct: parseFloat(commission) || 0,
+            barbershopId
           }
         });
 
-        if (rpcError) throw rpcError;
-        
-        const result = rpcData as { success: boolean; error?: string; barber_id?: string };
-        if (!result.success) throw new Error(result.error || "Erro ao cadastrar barbeiro no banco.");
+        if (error) {
+          toast.error(error.message);
+          setIsLoading(false);
+          return;
+        }
 
-        toast.success("Barbeiro cadastrado com sucesso!");
+        if (data && data.success === false) {
+          toast.error(data.error || "Erro ao cadastrar barbeiro.");
+          setIsLoading(false);
+          return;
+        }
+
+        toast.success(editingBarber ? "Barbeiro atualizado!" : "Barbeiro cadastrado com sucesso!");
       } else {
         // Update User info in public.users
         if (currentUserId) {
