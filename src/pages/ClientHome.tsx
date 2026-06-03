@@ -154,10 +154,22 @@ export default function ClientHome() {
     if (!authLoading && !user) {
       navigate("/login");
     } else if (user && profile) {
-      if (profile.role !== 'client') {
-        const target = profile.isSuperAdmin ? "/super-admin" : "/admin";
-        navigate(target, { replace: true });
-        return;
+      // Prioritize primary panels if roles are owner/admin/barber
+      // unless they are specifically in client mode (no force flag)
+      const role = String(profile.role || 'client').toLowerCase();
+      const hasForceBarber = localStorage.getItem('force_barber_panel') === 'true';
+
+      if (!hasForceBarber) {
+        if (role === 'superadmin') {
+          navigate("/super-admin", { replace: true });
+          return;
+        } else if (role === 'owner' || role === 'admin') {
+          navigate("/admin", { replace: true });
+          return;
+        } else if (role === 'barber') {
+          navigate("/barber-dashboard", { replace: true });
+          return;
+        }
       }
 
       if (!profile.barbershop_id) {

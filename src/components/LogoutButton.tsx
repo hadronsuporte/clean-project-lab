@@ -30,7 +30,8 @@ export function LogoutButton({ className, showText = false }: LogoutButtonProps)
       if (key && (
         key.startsWith('selectedBarbershop') || 
         key.includes('appointment') || 
-        key.includes('role')
+        key.includes('role') ||
+        key === 'force_barber_panel'
       )) {
         keysToRemove.push(key);
       }
