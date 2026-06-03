@@ -37,6 +37,7 @@ export default function AdminDashboard({
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFreeSlots, setShowFreeSlots] = useState(false);
 
   useEffect(() => {
     if (barbershopId) fetchDashboardData();
