@@ -36,13 +36,13 @@ export default function Booking() {
     if (profile) {
       if (profile.role !== 'client') {
         const target = profile.isSuperAdmin ? "/super-admin" : "/admin";
-        navigate(target);
+        navigate(target, { replace: true });
         return;
       }
     }
 
     if (!serviceId || !barbershopId) {
-      navigate("/");
+      navigate("/", { replace: true });
       return;
     }
   }, [serviceId, barbershopId, navigate, profile]);
@@ -119,7 +119,7 @@ export default function Booking() {
       if (error) throw error;
 
       toast.success("Agendamento realizado com sucesso!");
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error: any) {
       toast.error(error.message);
     } finally {
