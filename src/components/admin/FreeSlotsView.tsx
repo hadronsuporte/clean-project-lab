@@ -275,7 +275,7 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
                     <Clock className="w-4 h-4 text-[#f0c040]" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-[#f0c040] font-oswald">{slot.time}</span>
+                    <span className="text-sm font-bold text-[#f0c040] font-oswald">{slot.time_label}</span>
                     <p className="text-[9px] text-[#8a9ab5] uppercase tracking-widest">{slot.barber_name}</p>
                   </div>
                 </div>
@@ -285,12 +285,8 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
                   className="text-[9px] font-bold uppercase tracking-widest text-[#f0c040] hover:bg-[#f0c040]/10"
                   onClick={() => {
                     setBlockBarberId(slot.barber_id);
-                    setBlockStartTime(slot.time);
-                    // Add 30 mins by default for block end
-                    const [h, m] = slot.time.split(':').map(Number);
-                    const end = new Date();
-                    end.setHours(h, m + parseInt(slotInterval));
-                    setBlockEndTime(format(end, "HH:mm"));
+                    setBlockStartTime(format(new Date(slot.starts_at), "HH:mm"));
+                    setBlockEndTime(format(new Date(slot.ends_at), "HH:mm"));
                     setIsBlockModalOpen(true);
                   }}
                 >
