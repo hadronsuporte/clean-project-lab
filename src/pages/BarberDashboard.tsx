@@ -43,7 +43,16 @@ export default function BarberDashboard() {
             <h1 className="text-xl font-bold uppercase text-[#f0c040] font-oswald tracking-widest leading-tight">
               PAINEL BARBEIRO
             </h1>
-            <LogoutButton showText />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#141b2a] border border-[#f0c040] flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(240,192,64,0.2)]">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-6 h-6 text-[#8a9ab5]" />
+                )}
+              </div>
+              <LogoutButton showText />
+            </div>
           </div>
 
           {profile?.role === 'owner' && (

@@ -307,7 +307,16 @@ export default function SuperAdmin() {
           </div>
 
           <div className="flex items-center gap-4">
-            <LogoutButton showText />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#141414] border border-[#C6A355] flex items-center justify-center overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-6 h-6 text-gray-500" />
+                )}
+              </div>
+              <LogoutButton showText />
+            </div>
           </div>
 
           <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
