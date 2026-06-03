@@ -152,12 +152,12 @@ export default function ClientHome() {
     } else if (user && profile) {
       if (profile.role !== 'client') {
         const target = profile.isSuperAdmin ? "/super-admin" : "/admin";
-        navigate(target);
+        navigate(target, { replace: true });
         return;
       }
 
       if (!barbershopId) {
-        navigate("/");
+        navigate("/", { replace: true });
         return;
       }
 
@@ -265,7 +265,7 @@ export default function ClientHome() {
       localStorage.removeItem(`selectedBarbershopId:${user.id}`);
       localStorage.removeItem(`selectedBarbershopName:${user.id}`);
     }
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   const signOut = async () => {
