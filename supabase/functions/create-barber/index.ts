@@ -58,7 +58,7 @@ serve(async (req) => {
 
     // 3. Check if user already exists in auth.users by email
     const { data: existingUserId } = await supabaseAdmin.rpc("get_auth_user_id_by_email", { 
-      p_email 
+      p_email: email 
     })
 
     let userId = existingUserId
@@ -66,12 +66,12 @@ serve(async (req) => {
     if (!userId) {
       // 4. Create Auth User
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email: p_email,
-        password: p_password,
+        email: email,
+        password: password,
         email_confirm: true,
         user_metadata: { 
-          name: p_name,
-          phone: p_phone,
+          name: name,
+          phone: phone,
           role: 'barber',
           barbershop_id: targetBarbershopId
         }
@@ -82,10 +82,10 @@ serve(async (req) => {
     } else {
       // 5. Update Existing Auth User
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        password: p_password,
+        password: password,
         user_metadata: {
-          name: p_name,
-          phone: p_phone,
+          name: name,
+          phone: phone,
           role: 'barber',
           barbershop_id: targetBarbershopId
         }
@@ -98,11 +98,11 @@ serve(async (req) => {
       .from('users')
       .upsert({
         id: userId,
-        name: p_name,
-        phone: p_phone,
+        name: name,
+        phone: phone,
         role: 'barber',
         barbershop_id: targetBarbershopId,
-        avatar_url: p_avatar_url || null
+        avatar_url: avatarUrl || null
       })
 
     if (userProfileError) throw new Error(`Erro ao atualizar perfil public.users: ${userProfileError.message}`)
@@ -135,7 +135,7 @@ serve(async (req) => {
     console.error("Create Barber Edge Function Error:", error)
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // Returning 200 with success: false is standard for this project
+      status: 200,
     })
   }
 })
