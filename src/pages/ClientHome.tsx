@@ -152,12 +152,12 @@ export default function ClientHome() {
     } else if (user && profile) {
       if (profile.role !== 'client') {
         const target = profile.isSuperAdmin ? "/super-admin" : "/admin";
-        navigate(target);
+        navigate(target, { replace: true });
         return;
       }
 
       if (!barbershopId) {
-        navigate("/");
+        navigate("/", { replace: true });
         return;
       }
 
@@ -265,7 +265,7 @@ export default function ClientHome() {
       localStorage.removeItem(`selectedBarbershopId:${user.id}`);
       localStorage.removeItem(`selectedBarbershopName:${user.id}`);
     }
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   const signOut = async () => {
@@ -277,7 +277,7 @@ export default function ClientHome() {
       // So I will NOT remove it on signOut to maintain the persistence requirement.
     }
     await supabase.auth.signOut();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   if (authLoading || isLoading) {

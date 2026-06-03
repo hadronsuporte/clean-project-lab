@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Scissors } from "lucide-react";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -15,6 +16,26 @@ export default function Login() {
   const [fullName, setFullName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const navigate = useNavigate();
+  const { user, profile, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user && profile) {
+      if (profile.role === "superadmin") {
+        navigate("/super-admin", { replace: true });
+      } else if (profile.role === "owner" || profile.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (profile.role === "barber") {
+        navigate("/barber-dashboard", { replace: true });
+      } else {
+        const savedBarbershopId = localStorage.getItem(`selectedBarbershopId:${user.id}`);
+        if (savedBarbershopId) {
+          navigate("/client-home", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      }
+    }
+  }, [user, profile, loading, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,22 +77,22 @@ export default function Login() {
             .single();
           
           if (profileData?.role === "superadmin") {
-            navigate("/super-admin");
+            navigate("/super-admin", { replace: true });
           } else if (profileData?.role === "owner" || profileData?.role === "admin") {
-            navigate("/admin");
+            navigate("/admin", { replace: true });
           } else if (profileData?.role === "barber") {
-            navigate("/barber-dashboard");
+            navigate("/barber-dashboard", { replace: true });
           } else {
             // Check if there's a saved barbershop to decide where to send the client
             const savedBarbershopId = localStorage.getItem(`selectedBarbershopId:${authUser.id}`);
             if (savedBarbershopId) {
-              navigate("/client-home");
+              navigate("/client-home", { replace: true });
             } else {
-              navigate("/");
+              navigate("/", { replace: true });
             }
           }
         } else {
-          navigate("/");
+          navigate("/", { replace: true });
         }
       }
     } catch (error: any) {

@@ -75,13 +75,13 @@ export default function Services() {
     if (profile) {
       if (profile.role !== 'client') {
         const target = profile.isSuperAdmin ? "/super-admin" : "/admin";
-        navigate(target);
+        navigate(target, { replace: true });
         return;
       }
     }
 
     if (!barberId || !barbershopId) {
-      navigate("/");
+      navigate("/", { replace: true });
       return;
     }
     fetchData();
