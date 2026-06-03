@@ -157,7 +157,7 @@ export default function BarberDashboard({ profile }: { profile: any }) {
 
 function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: { appointments: Appointment[], onWhatsApp: (phone: string) => void, emptyMessage: string, onRefresh: () => void }) {
   const getStatusInfo = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "pending": 
         return { label: "PENDENTE", color: "text-yellow-500 border-yellow-500/30 bg-yellow-500/10" };
       case "confirmed": 
@@ -167,11 +167,13 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
       case "cancelado":
         return { label: "CANCELADO", color: "text-red-500 border-red-500/30 bg-red-500/10" };
       case "completed":
+      case "finalizado":
         return { label: "FINALIZADO", color: "text-blue-500 border-blue-500/30 bg-blue-500/10" };
       default: 
         return { label: status.toUpperCase(), color: "text-gray-500 border-gray-500/30 bg-gray-500/10" };
     }
   };
+
 
   const money = (value: any) => {
     const number = Number(value ?? 0);
@@ -215,9 +217,10 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
   return (
     <div className="space-y-4">
       {appointments.map((appt, i) => {
-        const isFinished = ["completed", "cancelled", "canceled", "cancelado"].includes(appt.status.toLowerCase());
+        const isFinished = ["completed", "finalizado", "cancelled", "canceled", "cancelado"].includes(appt.status.toLowerCase()) || new Date(appt.starts_at) < new Date(new Date().getTime() - 60 * 60 * 1000);
         const price = appt.price ?? appt.price_charged ?? appt.service_price ?? 0;
         const commission = appt.commission_amount ?? appt.commission_value ?? 0;
+
 
         return (
           <div key={i} className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] space-y-4">
