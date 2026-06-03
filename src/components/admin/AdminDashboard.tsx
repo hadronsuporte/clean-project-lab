@@ -125,48 +125,106 @@ export default function AdminDashboard({
         ))}
       </div>
 
-      {/* Appointments List */}
-      <div className="space-y-6">
-        <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">
-          AGENDAMENTOS DE HOJE
-        </h3>
-        
-        <div className="space-y-4">
-          {appointments.length === 0 ? (
-            <p className="text-sm text-[#8a9ab5] text-center py-10 border border-dashed border-[#2a3347] rounded-[4px]">
-              NENHUM AGENDAMENTO PARA HOJE
-            </p>
-          ) : (
-            appointments.map((appt, idx) => (
-              <div key={`${appt.starts_at}-${idx}`} className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">
-                      {appt.client_name}
-                    </h4>
-                    <p className="text-[10px] text-[#8a9ab5] uppercase tracking-widest mt-0.5">
-                      {appt.service_name} • {appt.barber_name}
-                    </p>
-                  </div>
-                  <span className={`text-[9px] font-bold px-2 py-1 rounded-[2px] border uppercase tracking-widest ${getStatusInfo(appt.status).color}`}>
-                    {getStatusInfo(appt.status).label}
-                  </span>
-                </div>
-                <div className="pt-2 border-t border-[#2a3347]/50 flex justify-between items-center">
-                  <span className="text-lg font-bold text-[#f0c040] font-oswald">
-                    {format(new Date(appt.starts_at), "HH:mm")}
-                  </span>
-                  {appt.price_charged !== null && (
-                    <span className="text-[10px] font-bold text-[#8a9ab5]">
-                      {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(appt.price_charged))}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
+      {/* Appointments Sections */}
+      <div className="space-y-10">
+        {/* Upcoming Section */}
+        <div className="space-y-6">
+          <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">
+            HOJE / PRÓXIMOS
+          </h3>
+          
+          <div className="space-y-4">
+            {appointments.filter(a => !["completed", "finalizado", "cancelled", "canceled", "cancelado"].includes(a.status.toLowerCase()) && new Date(a.starts_at) >= new Date(new Date().getTime() - 60 * 60 * 1000)).length === 0 ? (
+              <p className="text-sm text-[#8a9ab5] text-center py-10 border border-dashed border-[#2a3347] rounded-[4px]">
+                NENHUM AGENDAMENTO ATIVO
+              </p>
+            ) : (
+              appointments
+                .filter(a => !["completed", "finalizado", "cancelled", "canceled", "cancelado"].includes(a.status.toLowerCase()) && new Date(a.starts_at) >= new Date(new Date().getTime() - 60 * 60 * 1000))
+                .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+                .map((appt, idx) => (
+                  <AppointmentCard key={`upcoming-${idx}`} appt={appt} />
+                ))
+            )}
+          </div>
+        </div>
+
+        {/* History Section */}
+        <div className="space-y-6">
+          <h3 className="text-xs font-bold tracking-[0.25em] text-[#8a9ab5] font-oswald uppercase">
+            HISTÓRICO / FINALIZADOS
+          </h3>
+          
+          <div className="space-y-4 opacity-70">
+            {appointments.filter(a => ["completed", "finalizado", "cancelled", "canceled", "cancelado"].includes(a.status.toLowerCase()) || new Date(a.starts_at) < new Date(new Date().getTime() - 60 * 60 * 1000)).length === 0 ? (
+              <p className="text-sm text-[#8a9ab5] text-center py-10 border border-dashed border-[#2a3347] rounded-[4px]">
+                NENHUM HISTÓRICO ENCONTRADO
+              </p>
+            ) : (
+              appointments
+                .filter(a => ["completed", "finalizado", "cancelled", "canceled", "cancelado"].includes(a.status.toLowerCase()) || new Date(a.starts_at) < new Date(new Date().getTime() - 60 * 60 * 1000))
+                .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())
+                .map((appt, idx) => (
+                  <AppointmentCard key={`history-${idx}`} appt={appt} />
+                ))
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+function AppointmentCard({ appt }: { appt: Appointment }) {
+  const getStatusInfo = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending": 
+        return { label: "PENDENTE", color: "text-yellow-500 border-yellow-500/30 bg-yellow-500/10" };
+      case "confirmed": 
+        return { label: "CONFIRMADO", color: "text-green-500 border-green-500/30 bg-green-500/10" };
+      case "cancelled": 
+      case "canceled":
+      case "cancelado":
+        return { label: "CANCELADO", color: "text-red-500 border-red-500/30 bg-red-500/10" };
+      case "completed":
+      case "finalizado":
+        return { label: "FINALIZADO", color: "text-blue-500 border-blue-500/30 bg-blue-500/10" };
+      default: 
+        return { label: status.toUpperCase(), color: "text-gray-500 border-gray-500/30 bg-gray-500/10" };
+    }
+  };
+
+  return (
+    <div className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] space-y-3">
+      <div className="flex justify-between items-start">
+        <div>
+          <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">
+            {appt.client_name}
+          </h4>
+          <p className="text-[10px] text-[#8a9ab5] uppercase tracking-widest mt-0.5">
+            {appt.service_name} • {appt.barber_name}
+          </p>
+        </div>
+        <span className={`text-[9px] font-bold px-2 py-1 rounded-[2px] border uppercase tracking-widest ${getStatusInfo(appt.status).color}`}>
+          {getStatusInfo(appt.status).label}
+        </span>
+      </div>
+      <div className="pt-2 border-t border-[#2a3347]/50 flex justify-between items-center">
+        <div className="flex flex-col">
+          <span className="text-lg font-bold text-[#f0c040] font-oswald">
+            {format(new Date(appt.starts_at), "HH:mm")}
+          </span>
+          <span className="text-[9px] text-[#8a9ab5] uppercase tracking-widest">
+            {format(new Date(appt.starts_at), "dd/MM/yyyy")}
+          </span>
+        </div>
+        {appt.price_charged !== null && (
+          <span className="text-[10px] font-bold text-[#c8d4e8]">
+            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(appt.price_charged))}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
