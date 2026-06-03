@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { User, LogOut, MapPin } from "lucide-react";
@@ -22,6 +22,7 @@ export default function SelectBarbershop() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, refreshProfile } = useAuth();
+  const location = useLocation();
   
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -33,22 +34,18 @@ export default function SelectBarbershop() {
       if (!authLoading && !user) {
         navigate("/login", { replace: true });
       } else if (user && profile) {
-        // Source of truth: profile role and barbershop_id
         if (profile.role === 'client' && profile.barbershop_id) {
           const params = new URLSearchParams(window.location.search);
-          const manualSelection = params.get("select") === "true";
+          const manualSelection = params.get("select") === "true" || location.state?.select === true;
           
           if (!manualSelection) {
             navigate("/client-home", { replace: true });
             return;
-          } else {
-            // Se for seleção manual (Trocar estabelecimento), limpar para garantir nova escolha
-            localStorage.removeItem('selectedBarbershopId');
           }
         }
 
         const params = new URLSearchParams(window.location.search);
-        const manualSelection = params.get("select") === "true";
+        const manualSelection = params.get("select") === "true" || location.state?.select === true;
 
         if (!manualSelection) {
           // Se for superadmin, redireciona para o painel do superadmin

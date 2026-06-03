@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       name: panelData.name,
       phone: panelData.phone,
       avatar_url: panelData.avatar_url,
-      barbershop_id: panelData.barbershop_id,
+      barbershop_id: panelData.barbershop_id || null,
       isOwner,
       isAdmin,
       isSuperAdmin,
