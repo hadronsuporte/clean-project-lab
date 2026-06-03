@@ -44,9 +44,12 @@ interface TimeBlock {
 }
 
 interface AvailableSlot {
-  time: string;
   barber_id: string;
   barber_name: string;
+  barber_avatar_url: string | null;
+  starts_at: string;
+  ends_at: string;
+  time_label: string;
 }
 
 export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewProps) {
@@ -73,84 +76,49 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
   const [blockReason, setBlockReason] = useState("");
 
   useEffect(() => {
-    fetchInitialData();
-  }, [barbershopId]);
-
-  useEffect(() => {
     fetchSlotsAndBlocks();
-  }, [selectedDate, selectedBarberId, barbershopId]);
-
-  const fetchInitialData = async () => {
-    try {
-      // Fetch barbers
-      const { data: barbersData, error: barbersError } = await supabase.rpc('get_barbers_for_admin', {
-        p_barbershop_id: barbershopId
-      });
-      if (barbersError) throw barbersError;
-      if (barbersData.success) {
-        setBarbers(barbersData.barbers || []);
-      }
-
-      // Fetch barbershop settings
-      const { data: settings, error: settingsError } = await supabase
-        .from('barbershops')
-        .select('opening_time, closing_time, slot_interval_minutes')
-        .eq('id', barbershopId)
-        .single();
-      
-      if (settingsError) throw settingsError;
-      if (settings) {
-        if (settings.opening_time) setOpeningTime(settings.opening_time.substring(0, 5));
-        if (settings.closing_time) setClosingTime(settings.closing_time.substring(0, 5));
-        if (settings.slot_interval_minutes) setSlotInterval(settings.slot_interval_minutes.toString());
-      }
-    } catch (error: any) {
-      toast.error("Erro ao carregar dados: " + error.message);
-    }
-  };
+  }, [selectedDate, selectedBarberId]);
 
   const fetchSlotsAndBlocks = async () => {
     setIsLoading(true);
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       
-      // Fetch available slots
-      const { data: slotsData, error: slotsError } = await supabase.rpc('get_available_slots', {
-        p_barbershop_id: barbershopId,
-        p_date: dateStr,
-        p_barber_id: selectedBarberId === "all" ? null : selectedBarberId
+      const { data, error } = await supabase.rpc('get_barbershop_available_slots', {
+        p_day: dateStr,
+        p_barber_id: selectedBarberId === "all" ? null : selectedBarberId,
+        p_barbershop_id: null,
+        p_duration_minutes: null
       });
 
-      if (slotsError) throw slotsError;
-      setAvailableSlots(slotsData || []);
+      if (error) {
+        toast.error(error.message);
+        setIsLoading(false);
+        return;
+      }
 
-      // Fetch time blocks for the day
-      const startOfDay = `${dateStr}T00:00:00Z`;
-      const endOfDay = `${dateStr}T23:59:59Z`;
+      if (data.success === false) {
+        toast.error(data.error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Update settings from RPC response
+      if (data.settings) {
+        if (data.settings.opening_time) setOpeningTime(data.settings.opening_time.substring(0, 5));
+        if (data.settings.closing_time) setClosingTime(data.settings.closing_time.substring(0, 5));
+        if (data.settings.slot_interval_minutes) setSlotInterval(data.settings.slot_interval_minutes.toString());
+      }
+
+      setBarbers(data.barbers || []);
+      setAvailableSlots((data.slots || []).sort((a: any, b: any) => a.starts_at.localeCompare(b.starts_at)));
       
-      const { data: blocksData, error: blocksError } = await supabase
-        .from('barbershop_time_blocks')
-        .select(`
-          id, 
-          starts_at, 
-          ends_at, 
-          reason, 
-          barber_id
-        `)
-        .eq('barbershop_id', barbershopId)
-        .gte('starts_at', startOfDay)
-        .lte('starts_at', endOfDay);
-
-      if (blocksError) throw blocksError;
-
-      // Add barber names to blocks
-      const enrichedBlocks = (blocksData || []).map(block => ({
+      const enrichedBlocks = (data.blocks || []).map((block: any) => ({
         ...block,
         barber_name: block.barber_id 
-          ? barbers.find(b => b.barber_id === block.barber_id)?.name || "Barbeiro" 
+          ? data.barbers?.find((b: any) => b.barber_id === block.barber_id)?.name || "Barbeiro" 
           : "Todos"
       }));
-
       setTimeBlocks(enrichedBlocks);
     } catch (error: any) {
       toast.error("Erro ao carregar horários: " + error.message);
