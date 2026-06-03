@@ -39,18 +39,18 @@ serve(async (req) => {
 
     const body = await req.json()
     const { 
-      p_email, 
-      p_password, 
-      p_name, 
-      p_phone, 
-      p_bio, 
-      p_commission_pct, 
-      p_avatar_url,
-      p_barbershop_id 
+      email, 
+      password, 
+      name, 
+      phone, 
+      bio, 
+      commissionPct, 
+      avatarUrl,
+      barbershopId 
     } = body
 
     // Use caller's barbershop_id if not superadmin
-    const targetBarbershopId = callerProfile.role === 'superadmin' ? p_barbershop_id : callerProfile.barbershop_id
+    const targetBarbershopId = callerProfile.role === 'superadmin' ? barbershopId : callerProfile.barbershop_id
 
     if (!targetBarbershopId) {
       throw new Error('ID da barbearia não fornecido.')
@@ -113,8 +113,8 @@ serve(async (req) => {
       .upsert({
         user_id: userId,
         barbershop_id: targetBarbershopId,
-        bio: p_bio || null,
-        commission_pct: p_commission_pct || 0,
+        bio: bio || null,
+        commission_pct: commissionPct || 0,
         active: true
       }, { onConflict: 'user_id' })
       .select()
