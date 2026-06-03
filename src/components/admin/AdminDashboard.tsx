@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import FreeSlotsView from "./FreeSlotsView";
 
 interface Stats {
   appointmentsToday: number;
