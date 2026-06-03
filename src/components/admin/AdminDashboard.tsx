@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import FreeSlotsView from "./FreeSlotsView";
 
 interface Stats {
   appointmentsToday: number;
@@ -35,6 +37,7 @@ export default function AdminDashboard({
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFreeSlots, setShowFreeSlots] = useState(false);
 
   useEffect(() => {
     if (barbershopId) fetchDashboardData();
@@ -105,17 +108,28 @@ export default function AdminDashboard({
 
   if (isLoading) return <div className="text-[#8a9ab5] font-oswald text-xs tracking-widest uppercase">CARREGANDO...</div>;
 
+  if (showFreeSlots && barbershopId) {
+    return <FreeSlotsView barbershopId={barbershopId} onBack={() => setShowFreeSlots(false)} />;
+  }
+
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       {/* Summary Grid */}
       <div className="grid grid-cols-2 gap-4">
         {[
-          { label: "AGENDAMENTOS HOJE", value: stats.appointmentsToday },
-          { label: "HORÁRIOS LIVRES", value: stats.freeSlots },
-          { label: "BARBEIROS", value: stats.activeBarbers },
-          { label: "FATURAMENTO", value: new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.revenueToday) },
+          { label: "AGENDAMENTOS HOJE", value: stats.appointmentsToday, onClick: null },
+          { label: "HORÁRIOS LIVRES", value: stats.freeSlots, onClick: () => setShowFreeSlots(true) },
+          { label: "BARBEIROS", value: stats.activeBarbers, onClick: null },
+          { label: "FATURAMENTO", value: new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.revenueToday), onClick: null },
         ].map((item, idx) => (
-          <div key={idx} className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] space-y-2">
+          <div 
+            key={idx} 
+            onClick={item.onClick || undefined}
+            className={cn(
+              "bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] space-y-2",
+              item.onClick && "cursor-pointer hover:border-[#f0c040] transition-colors"
+            )}
+          >
             <span className="text-[10px] font-bold text-[#8a9ab5] uppercase tracking-wider block">
               {item.label}
             </span>
