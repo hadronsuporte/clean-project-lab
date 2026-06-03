@@ -29,6 +29,17 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
   const [commission, setCommission] = useState("0");
+
+  const formatPercentage = (value: string) => {
+    // Allows only numbers and one comma for decimals
+    const cleanValue = value.replace(/[^\d,]/g, "");
+    return cleanValue;
+  };
+
+  const parsePercentage = (value: string) => {
+    if (!value) return 0;
+    return parseFloat(value.replace(",", "."));
+  };
   const [active, setActive] = useState(true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
