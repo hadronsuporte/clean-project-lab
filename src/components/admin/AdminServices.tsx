@@ -149,7 +149,7 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
             <div>
               <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">{service.name}</h4>
               <p className="text-[10px] text-[#8a9ab5] uppercase tracking-widest mt-0.5">
-                {service.duration_minutes} MINutos • R$ {service.price.toFixed(2)}
+                {service.duration_minutes} MINutos • {money(service.price)}
               </p>
             </div>
             <div className="flex items-center gap-2">
