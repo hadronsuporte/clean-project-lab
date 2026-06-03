@@ -106,14 +106,14 @@ export default function Login() {
     <div className="min-h-screen relative flex flex-col items-center justify-center p-6 font-light overflow-hidden">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat brightness-125 contrast-110"
         style={{ 
           backgroundImage: "url('/login-bg.png')",
         }}
       />
       
       {/* Dark Overlay for Readability */}
-      <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[1px]" />
+      <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-[1px]" />
 
       <div className="w-full max-w-[390px] space-y-12 relative z-20">
         {/* Empty space for where the logo was, as it's now the background */}
