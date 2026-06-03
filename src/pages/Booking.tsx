@@ -115,19 +115,15 @@ export default function Booking() {
     try {
       if (!user) throw new Error("Usuário não autenticado");
       
-      const price = Number(service?.price ?? 0);
-
       const { error } = await supabase.from("appointments").insert({
         client_id: user.id,
         barbershop_id: barbershopId,
         service_id: serviceId,
-        barber_id: selectedBarberId,
+        barber_id: selectedSlot.barber_id,
         starts_at: selectedSlot.starts_at,
         ends_at: selectedSlot.ends_at,
         status: "pending",
-        whatsapp_sent: false,
-        confirmed_via_whatsapp: false,
-        price_charged: price
+        price_charged: Number(service?.price ?? 0)
       });
 
       if (error) throw error;
