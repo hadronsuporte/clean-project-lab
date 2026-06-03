@@ -12,6 +12,13 @@ interface Service {
   price: number;
 }
 
+const money = (value: number) => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+};
+
 export default function AdminServices({ barbershopId }: { barbershopId: string | null }) {
   const [services, setServices] = useState<Service[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -23,6 +30,21 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
   const [name, setName] = useState("");
   const [duration, setDuration] = useState("30");
   const [price, setPrice] = useState("");
+  
+  const formatPrice = (value: string) => {
+    const cleanValue = value.replace(/\D/g, "");
+    if (!cleanValue) return "";
+    const numberValue = parseInt(cleanValue) / 100;
+    return new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numberValue);
+  };
+
+  const parsePrice = (value: string) => {
+    if (!value) return 0;
+    return parseFloat(value.replace(/\./g, "").replace(",", "."));
+  };
 
   useEffect(() => {
     if (barbershopId) fetchServices();
@@ -44,7 +66,7 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
     setEditingService(service);
     setName(service.name);
     setDuration(service.duration_minutes.toString());
-    setPrice(service.price.toString());
+    setPrice(formatPrice((service.price * 100).toFixed(0)));
     setIsAdding(true);
   };
 
@@ -84,7 +106,7 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
           .update({
             name,
             duration_minutes: parseInt(duration),
-            price: parseFloat(price)
+            price: parsePrice(price)
           })
           .eq("id", editingService.id);
 
@@ -97,7 +119,7 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
             barbershop_id: barbershopId,
             name,
             duration_minutes: parseInt(duration),
-            price: parseFloat(price)
+            price: parsePrice(price)
           });
 
         if (error) throw error;
@@ -127,7 +149,7 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
             <div>
               <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">{service.name}</h4>
               <p className="text-[10px] text-[#8a9ab5] uppercase tracking-widest mt-0.5">
-                {service.duration_minutes} MINutos • R$ {service.price.toFixed(2)}
+                {service.duration_minutes} MINutos • {money(service.price)}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -182,7 +204,14 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
                 </div>
                 <div className="flex-1 space-y-1">
                   <label className="text-[10px] text-[#8a9ab5] ml-1 uppercase font-bold tracking-widest">PREÇO (R$)</label>
-                  <Input type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
+                  <Input 
+                    type="text" 
+                    value={price} 
+                    onChange={e => setPrice(formatPrice(e.target.value))} 
+                    required 
+                    className="bg-[#141b2a] border-[#2a3347] h-12" 
+                    placeholder="0,00"
+                  />
                 </div>
               </div>
 

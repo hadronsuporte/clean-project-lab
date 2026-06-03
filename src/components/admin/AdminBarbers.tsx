@@ -29,6 +29,17 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
   const [commission, setCommission] = useState("0");
+
+  const formatPercentage = (value: string) => {
+    // Allows only numbers and one comma for decimals
+    const cleanValue = value.replace(/[^\d,]/g, "");
+    return cleanValue;
+  };
+
+  const parsePercentage = (value: string) => {
+    if (!value) return 0;
+    return parseFloat(value.replace(",", "."));
+  };
   const [active, setActive] = useState(true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -100,7 +111,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
     setName(barber.name);
     setPhone(barber.phone || "");
     setBio(barber.bio || "");
-    setCommission(barber.commission_pct?.toString() || "0");
+    setCommission(barber.commission_pct?.toString().replace(".", ",") || "0");
     setActive(barber.active);
     setAvatarPreview(barber.avatar_url || null);
     setIsAdding(true);
@@ -165,7 +176,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
             password,
             avatarUrl: finalAvatarUrl,
             bio,
-            commissionPct: parseFloat(commission) || 0,
+            commissionPct: parsePercentage(commission) || 0,
             barbershopId
           }
         });
@@ -204,7 +215,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
           .update({
             bio,
             active,
-            commission_pct: parseFloat(commission) || 0
+            commission_pct: parsePercentage(commission) || 0
           })
           .eq("id", editingBarber.id);
         
@@ -288,7 +299,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
           <div className="flex gap-4">
             <div className="flex-1 space-y-1">
               <label className="text-[10px] text-[#8a9ab5] ml-1 uppercase font-bold">COMISSÃO %</label>
-              <Input type="text" value={commission} onChange={e => setCommission(e.target.value)} className="bg-[#141b2a] border-[#2a3347] h-12" />
+              <Input type="text" value={commission} onChange={e => setCommission(formatPercentage(e.target.value))} className="bg-[#141b2a] border-[#2a3347] h-12" />
             </div>
             <div className="flex-1 flex flex-col justify-end pb-3">
               <div className="flex items-center gap-2">
