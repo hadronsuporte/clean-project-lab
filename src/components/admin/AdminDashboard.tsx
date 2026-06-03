@@ -13,15 +13,11 @@ interface Stats {
 interface Appointment {
   id: string;
   starts_at: string;
-  ends_at: string;
   status: string;
   price_charged: number | null;
-  client_id: string;
-  barber_id: string;
-  service_id: string;
-  clientName?: string;
-  barberName?: string;
-  serviceName?: string;
+  client_name: string;
+  barber_name: string;
+  service_name: string;
 }
 
 export default function AdminDashboard({ 
@@ -46,25 +42,18 @@ export default function AdminDashboard({
 
   const fetchDashboardData = async () => {
     try {
+      setIsLoading(true);
       const start = startOfDay(new Date()).toISOString();
       const end = endOfDay(new Date()).toISOString();
 
-      // 1. Fetch Appointments
       const { data: appts, error } = await supabase
-        .from("appointments")
-        .select("id, client_id, barber_id, service_id, starts_at, ends_at, status, price_charged")
+        .from("owner_appointments_view")
+        .select("*")
         .eq("barbershop_id", barbershopId)
         .gte("starts_at", start)
         .lte("starts_at", end)
         .neq("status", "cancelled")
         .order("starts_at", { ascending: true });
-
-      if (error) {
-        console.error("OWNER DASHBOARD APPOINTMENTS ERROR", error);
-        toast.error(error.message);
-        setIsLoading(false);
-        return;
-      }
 
       console.log("OWNER DASHBOARD DEBUG", {
         ownerProfile: profile,
@@ -75,47 +64,25 @@ export default function AdminDashboard({
         error
       });
 
+      if (error) {
+        console.error("OWNER DASHBOARD ERROR", error);
+        toast.error("Erro ao carregar agendamentos");
+        setIsLoading(false);
+        return;
+      }
+
       if (appts) {
-        const clientIds = [...new Set(appts.map(a => a.client_id))].filter(Boolean);
-        const barberIds = [...new Set(appts.map(a => a.barber_id))].filter(Boolean);
-        const serviceIds = [...new Set(appts.map(a => a.service_id))].filter(Boolean);
-
-        // 2. Fetch related data separately
-        const [clientsRes, barbersRes, servicesRes] = await Promise.all([
-          supabase.from("users").select("id, name").in("id", clientIds),
-          supabase.from("barbers").select("id, user_id").in("id", barberIds),
-          supabase.from("services").select("id, name, price").in("id", serviceIds)
-        ]);
-
-        // For barbers, we need another step to get their user names
-        const barberUserIds = (barbersRes.data || []).map(b => b.user_id).filter(Boolean);
-        const barberUsersRes = await supabase.from("users").select("id, name").in("id", barberUserIds);
-
-        const clientsMap = Object.fromEntries((clientsRes.data || []).map(c => [c.id, c.name]));
-        const barberConfigMap = Object.fromEntries((barbersRes.data || []).map(b => [b.id, b.user_id]));
-        const barberUsersMap = Object.fromEntries((barberUsersRes.data || []).map(u => [u.id, u.name]));
-        const servicesMap = Object.fromEntries((servicesRes.data || []).map(s => [s.id, s.name]));
-        const servicePriceMap = Object.fromEntries((servicesRes.data || []).map(s => [s.id, s.price]));
-
-        const mappedAppts: Appointment[] = appts.map(a => ({
-          ...a,
-          clientName: clientsMap[a.client_id] || "Cliente",
-          barberName: barberUsersMap[barberConfigMap[a.barber_id]] || "Barbeiro",
-          serviceName: servicesMap[a.service_id] || "Serviço"
-        }));
-
-        setAppointments(mappedAppts);
+        setAppointments(appts as Appointment[]);
         
-        const revenue = appts
-          .filter(a => a.status !== 'cancelled')
-          .reduce((acc, a) => acc + (a.price_charged || servicePriceMap[a.service_id] || 0), 0);
+        const revenue = appts.reduce((acc, a) => acc + (Number(a.price_charged) || 0), 0);
         
-        // 3. Active Barbers (Total in shop for now)
+        // Mantendo busca de barbeiros para o card de estatísticas
         const { count: barberCount } = await supabase
           .from("barbers")
           .select("id", { count: "exact", head: true })
           .eq("barbershop_id", barbershopId);
 
+        // Estimativa simples de slots (considerando 18 slots por barbeiro)
         const totalPossibleSlots = (barberCount || 0) * 18;
         const freeSlots = Math.max(0, totalPossibleSlots - appts.length);
 
@@ -128,6 +95,7 @@ export default function AdminDashboard({
       }
     } catch (err: any) {
       console.error("DASHBOARD FATAL ERROR", err);
+      toast.error("Ocorreu um erro inesperado");
     } finally {
       setIsLoading(false);
     }
@@ -186,10 +154,10 @@ export default function AdminDashboard({
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">
-                      {appt.clientName}
+                      {appt.client_name}
                     </h4>
                     <p className="text-[10px] text-[#8a9ab5] uppercase tracking-widest mt-0.5">
-                      {appt.serviceName} • {appt.barberName}
+                      {appt.service_name} • {appt.barber_name}
                     </p>
                   </div>
                   <span className={`text-[9px] font-bold px-2 py-1 rounded-[2px] border uppercase tracking-widest ${getStatusInfo(appt.status).color}`}>
@@ -200,6 +168,11 @@ export default function AdminDashboard({
                   <span className="text-lg font-bold text-[#f0c040] font-oswald">
                     {format(new Date(appt.starts_at), "HH:mm")}
                   </span>
+                  {appt.price_charged !== null && (
+                    <span className="text-[10px] font-bold text-[#8a9ab5]">
+                      R$ {Number(appt.price_charged).toFixed(2)}
+                    </span>
+                  )}
                 </div>
               </div>
             ))
