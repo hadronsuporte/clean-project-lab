@@ -158,7 +158,7 @@ export default function AdminDashboard({
                   </span>
                   {appt.price_charged !== null && (
                     <span className="text-[10px] font-bold text-[#8a9ab5]">
-                      R$ {Number(appt.price_charged).toFixed(2)}
+                      {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(appt.price_charged))}
                     </span>
                   )}
                 </div>
