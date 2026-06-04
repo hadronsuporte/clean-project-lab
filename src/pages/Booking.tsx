@@ -9,8 +9,10 @@ import { format, addDays, startOfDay, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminGear } from "@/components/AdminGear";
+import { UserAvatar } from "@/components/UserAvatar";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { money } from "@/utils/format";
+
 
 export default function Booking() {
   const { id: barbershopId } = useParams();
@@ -162,13 +164,14 @@ export default function Booking() {
             <AdminGear />
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#141b2a] border border-[#2a3347] flex items-center justify-center overflow-hidden">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-6 h-6 text-[#8a9ab5]" />
-              )}
-            </div>
+            <UserAvatar 
+              name={profile?.name} 
+              email={user?.email} 
+              avatarUrl={profile?.avatar_url} 
+              size="md" 
+              className="bg-[#141b2a] border border-[#2a3347]" 
+            />
+
             <LogoutButton showText />
           </div>
         </div>

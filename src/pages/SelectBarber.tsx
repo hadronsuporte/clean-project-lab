@@ -7,7 +7,9 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminGear } from "@/components/AdminGear";
+import { UserAvatar } from "@/components/UserAvatar";
 import { LoadingScreen } from "@/components/LoadingScreen";
+
 
 interface Barber {
   id: string;
@@ -151,13 +153,14 @@ export default function SelectBarber() {
             <AdminGear />
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#141b2a] border border-[#2a3347] flex items-center justify-center overflow-hidden">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-6 h-6 text-[#8a9ab5]" />
-              )}
-            </div>
+            <UserAvatar 
+              name={profile?.name} 
+              email={user?.email} 
+              avatarUrl={profile?.avatar_url} 
+              size="md" 
+              className="bg-[#141b2a] border border-[#2a3347]" 
+            />
+
             <LogoutButton showText />
           </div>
         </div>
@@ -198,15 +201,13 @@ export default function SelectBarber() {
               }`}
             >
               {/* Barber Photo */}
-              <div className="w-20 h-20 rounded-full border-2 border-[#f0c040] flex items-center justify-center overflow-hidden mb-4">
-                {barber.avatar_url ? (
-                  <img src={barber.avatar_url} alt={barber.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-[#f0c040] flex items-center justify-center text-[#1c2333] font-bold text-xl font-oswald">
-                    {barber.initials}
-                  </div>
-                )}
-              </div>
+              <UserAvatar 
+                name={barber.name} 
+                avatarUrl={barber.avatar_url} 
+                size="lg" 
+                className="w-20 h-20 border-2 border-[#f0c040] mb-4 shadow-[0_0_15px_rgba(240,192,64,0.2)]" 
+              />
+
 
               {/* Barber Info */}
               <h4 className={`text-sm font-bold tracking-wider font-oswald text-center uppercase mb-1 ${
