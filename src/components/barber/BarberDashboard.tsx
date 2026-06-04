@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { money } from "@/utils/format";
+import { Lock } from "lucide-react";
+import { UserAvatar } from "@/components/UserAvatar";
+import { toSaoPauloDateKey, isFinished, isCanceled } from "@/lib/utils";
+import FreeSlotsView from "../admin/FreeSlotsView";
+
 
 interface DashboardSummary {
   appointments_today: number;
