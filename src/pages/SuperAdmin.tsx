@@ -14,6 +14,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { getInitial } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ProfileModal } from "@/components/ProfileModal";
 import {
   Select,
   SelectContent,
@@ -58,7 +60,7 @@ interface Barbershop {
 
 export default function SuperAdmin() {
   const navigate = useNavigate();
-  const { profile, isSuperAdmin, loading: authLoading } = useAuth();
+  const { user, profile, isSuperAdmin, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +69,7 @@ export default function SuperAdmin() {
   const [ownerIsBarber, setOwnerIsBarber] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Edit State
   const [editingBarbershop, setEditingBarbershop] = useState<Barbershop | null>(null);
@@ -308,13 +311,20 @@ export default function SuperAdmin() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#141414] border border-[#C6A355] flex items-center justify-center overflow-hidden">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-6 h-6 text-gray-500" />
-                )}
-              </div>
+              <button 
+                onClick={() => setIsProfileModalOpen(true)}
+                className="transition-transform active:scale-95 outline-none"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#141414] border border-[#C6A355] flex items-center justify-center overflow-hidden hover:scale-105 transition-all">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <AvatarFallback className="bg-[#141414]">
+                      {getInitial(profile?.name, user?.email)}
+                    </AvatarFallback>
+                  )}
+                </div>
+              </button>
               <LogoutButton showText />
             </div>
           </div>
@@ -650,6 +660,11 @@ export default function SuperAdmin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ProfileModal 
+        isOpen={isProfileModalOpen} 
+        onOpenChange={setIsProfileModalOpen} 
+      />
     </div>
   );
 }
