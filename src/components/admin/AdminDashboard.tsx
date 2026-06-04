@@ -110,7 +110,6 @@ export default function AdminDashboard({
         // Ordenação garantida conforme solicitado:
         // Hoje e Próximos: starts_at ASC
         // Histórico: starts_at DESC
-        setAppointments({
         const allCombined = [
           ...(data.today || []),
           ...(data.upcoming || []),
@@ -129,7 +128,6 @@ export default function AdminDashboard({
             .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()),
         });
 
-        });
       }
     } catch (err: any) {
       console.error("DASHBOARD FATAL ERROR", err);
