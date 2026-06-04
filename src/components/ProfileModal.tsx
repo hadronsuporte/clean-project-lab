@@ -63,7 +63,11 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
         });
         
         if (emailError) {
-          toast.error(emailError.message);
+          if (emailError.message.toLowerCase().includes("oauth") || emailError.message.toLowerCase().includes("google")) {
+            toast.error("Esta conta usa login com Google. Altere o e-mail pela sua conta Google ou entre com e-mail e senha.");
+          } else {
+            toast.error(emailError.message);
+          }
         } else {
           toast.info("Enviamos um e-mail de confirmação para concluir a alteração do e-mail.");
         }
@@ -86,7 +90,15 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
           password: password,
         });
 
-        if (passwordError) throw passwordError;
+        if (passwordError) {
+          if (passwordError.message.toLowerCase().includes("oauth") || passwordError.message.toLowerCase().includes("google")) {
+            toast.error("Esta conta usa login com Google. Altere o e-mail pela sua conta Google ou entre com e-mail e senha.");
+          } else {
+            toast.error(passwordError.message);
+          }
+          setLoading(false);
+          return;
+        }
         toast.success("Senha atualizada com sucesso.");
         setPassword("");
         setConfirmPassword("");
@@ -94,9 +106,6 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
 
       await refreshProfile();
       toast.success("Perfil atualizado com sucesso!");
-      
-      // Keep open if email was changed to show the info message, otherwise we could close it
-      // but usually keeping it open for feedback is fine.
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast.error(error.message || "Erro ao atualizar perfil");
