@@ -67,7 +67,7 @@ export default function Services() {
   const [searchParams] = useSearchParams();
   const barberId = searchParams.get("barberId");
   const barbershopId = searchParams.get("barbershopId");
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   
   const [services, setServices] = useState<Service[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
