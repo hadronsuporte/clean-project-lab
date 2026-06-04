@@ -15,8 +15,9 @@ import {
   Scissors
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/UserAvatar";
 import { ProfileModal } from "@/components/ProfileModal";
-import { getInitial } from "@/lib/utils";
+
 import { LogoutButton } from "@/components/LogoutButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -85,12 +86,13 @@ function AppointmentCard({
 
       <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[#1c2333]">
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 border border-[#2a3347]">
-            <AvatarImage src={appt.barber_avatar_url || undefined} alt={appt.barber_name} className="object-cover" />
-            <AvatarFallback className="text-[10px]">
-              {getInitial(appt.barber_name)}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar 
+            name={appt.barber_name} 
+            avatarUrl={appt.barber_avatar_url} 
+            size="sm" 
+            className="border-[#2a3347]" 
+          />
+
           <div className="flex flex-col">
             <span className="text-[8px] text-[#8a9ab5] uppercase tracking-tighter">BARBEIRO</span>
             <span className="text-[10px] font-bold text-[#c8d4e8] uppercase truncate max-w-[80px]">
@@ -297,12 +299,14 @@ export default function ClientHome() {
               onClick={() => setIsProfileModalOpen(true)}
               className="transition-transform active:scale-95 outline-none"
             >
-              <Avatar className="w-10 h-10 border border-[#2a3347] hover:border-[#f0c040] transition-colors">
-                <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" className="object-cover" />
-                <AvatarFallback>
-                  {getInitial(profile?.name, user?.email)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar 
+                name={profile?.name} 
+                email={user?.email} 
+                avatarUrl={profile?.avatar_url} 
+                size="md" 
+                className="border-[#2a3347] hover:border-[#f0c040] transition-colors" 
+              />
+
             </button>
             <LogoutButton showText />
           </div>

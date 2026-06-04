@@ -7,7 +7,9 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminGear } from "@/components/AdminGear";
+import { UserAvatar } from "@/components/UserAvatar";
 import { LoadingScreen } from "@/components/LoadingScreen";
+
 
 // Custom Icons
 const CustomScissors = ({ className }: { className?: string }) => (
@@ -65,7 +67,7 @@ export default function Services() {
   const [searchParams] = useSearchParams();
   const barberId = searchParams.get("barberId");
   const barbershopId = searchParams.get("barbershopId");
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   
   const [services, setServices] = useState<Service[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -125,13 +127,14 @@ export default function Services() {
             <AdminGear />
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#141b2a] border border-[#2a3347] flex items-center justify-center overflow-hidden">
-               {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-6 h-6 text-[#8a9ab5]" />
-              )}
-            </div>
+            <UserAvatar 
+              name={profile?.name} 
+              email={user?.email} 
+              avatarUrl={profile?.avatar_url} 
+              size="md" 
+              className="bg-[#141b2a] border border-[#2a3347]" 
+            />
+
             <LogoutButton showText />
           </div>
         </div>

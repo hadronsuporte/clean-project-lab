@@ -3,11 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { cn, toSaoPauloDateKey, isFinished, isCanceled } from "@/lib/utils";
 import { money } from "@/utils/format";
-import { getInitial } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitial, isFinished as isFinishedOld, isCanceled as isCanceledOld } from "@/lib/utils";
+import { Lock } from "lucide-react";
+
+import { UserAvatar } from "@/components/UserAvatar";
 import FreeSlotsView from "./FreeSlotsView";
+
 
 interface Stats {
   appointmentsToday: number;
@@ -128,7 +131,25 @@ export default function AdminDashboard({
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
+
+      {/* Horários Livres Card */}
+      <div 
+        onClick={() => setShowFreeSlots(true)}
+        className="bg-[#141b2a] border border-[#f0c040]/30 p-4 rounded-[4px] cursor-pointer hover:border-[#f0c040] transition-all flex items-center justify-between group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="bg-[#f0c040]/10 p-2 rounded group-hover:bg-[#f0c040]/20 transition-colors">
+            <Lock className="w-5 h-5 text-[#f0c040]" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-[#f0c040] font-oswald tracking-widest uppercase">HORÁRIOS LIVRES / BLOQUEIOS</h4>
+            <p className="text-[10px] text-[#8a9ab5] uppercase tracking-widest">Configurar disponibilidade da barbearia</p>
+          </div>
+        </div>
+      </div>
+
       {/* Summary Grid */}
+
       <div className="grid grid-cols-2 gap-4">
         {[
           { label: "AGENDAMENTOS HOJE", value: stats.appointmentsToday, onClick: null },
@@ -219,6 +240,7 @@ export default function AdminDashboard({
   );
 }
 
+
 function AppointmentCard({ appt }: { appt: Appointment }) {
   const getStatusInfo = (status: string) => {
     switch (status.toLowerCase()) {
@@ -242,20 +264,17 @@ function AppointmentCard({ appt }: { appt: Appointment }) {
     <div className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] space-y-3">
       <div className="flex justify-between items-start">
         <div className="flex gap-3 items-center">
-          <Avatar className="w-8 h-8 border border-[#f0c040]/30">
-            <AvatarImage 
-              src={appt.barber_avatar_url || undefined} 
-              alt={appt.barber_name} 
-              className="object-cover"
-            />
-            <AvatarFallback className="text-[10px]">
-              {getInitial(appt.barber_name)}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar 
+            name={appt.client_name} 
+            avatarUrl={null} 
+            size="sm" 
+            className="border-[#f0c040]/30" 
+          />
           <div>
             <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">
               {appt.client_name}
             </h4>
+
             {appt.client_phone && (
               <p className="text-[10px] text-[#8a9ab5] tracking-widest">
                 {appt.client_phone}
