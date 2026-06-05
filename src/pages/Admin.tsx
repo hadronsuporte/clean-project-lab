@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Scissors, LogOut, ArrowLeft, RefreshCw, User, MessageSquare } from "lucide-react";
+import { Calendar, Users, Scissors, LogOut, ArrowLeft, RefreshCw, User, MessageSquare, TrendingUp } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileModal } from "@/components/ProfileModal";
 import { LogoutButton } from "@/components/LogoutButton";
