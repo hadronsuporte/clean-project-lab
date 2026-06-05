@@ -71,8 +71,9 @@ function AppointmentCard({
   onCancel: () => void; 
   isPast: boolean;
 }) {
-  const priceValue = appt.price_charged || appt.price || appt.service_price || appt.services?.price;
-  const formattedPrice = Number(priceValue || 0).toLocaleString('pt-BR', { 
+  const rawPrice = appt.price_charged ?? appt.services?.price ?? 0;
+  const price = Number(rawPrice);
+  const formattedPrice = price.toLocaleString('pt-BR', { 
     style: 'currency', 
     currency: 'BRL' 
   });
@@ -237,9 +238,13 @@ export default function ClientHome() {
       const { data, error } = await supabase
         .from('appointments')
         .select(`
-          *,
-          barbershops(name),
+          id, 
+          status, 
+          starts_at, 
+          price_charged,
+          barbershop_id,
           services(name, price),
+          barbershops(name),
           profiles:barber_id(name, avatar_url)
         `)
         .eq('client_id', user.id)
