@@ -402,6 +402,14 @@ export type Database = {
         }
       }
       get_barber_dashboard: { Args: { p_day: string }; Returns: Json }
+      get_financial_report: {
+        Args: {
+          p_barbershop_id: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: Json
+      }
       get_owner_dashboard_appointments: {
         Args: { p_day: string }
         Returns: {
