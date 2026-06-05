@@ -769,10 +769,6 @@ export default function SuperAdmin() {
                 <Input name="address" defaultValue={editingBarbershop?.address || ""} className="bg-[#0A0A0A] border-[#1F1F1F]" />
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-gray-500">Telefone</Label>
-                <Input name="phone" defaultValue={editingBarbershop?.phone || ""} className="bg-[#0A0A0A] border-[#1F1F1F]" />
-              </div>
-              <div className="space-y-1">
                 <Label className="text-[10px] uppercase text-gray-500">Descrição</Label>
                 <Textarea name="description" defaultValue={editingBarbershop?.description || ""} className="bg-[#0A0A0A] border-[#1F1F1F] resize-none h-24" />
               </div>
