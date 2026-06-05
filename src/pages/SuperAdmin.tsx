@@ -694,6 +694,7 @@ export default function SuperAdmin() {
                             onClick={() => {
                               setEditingBarbershop(shop);
                               setEditLogoPreview(shop.logo_url);
+                              setEditMonthlyPrice(formatCurrencyInput(shop.monthly_price));
                             }}
                             className="h-9 w-9 bg-[#1A1A1A] hover:bg-[#C6A355] hover:text-black transition-colors"
                           >
