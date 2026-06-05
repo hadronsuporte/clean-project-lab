@@ -134,15 +134,15 @@ export default function Admin() {
       </div>
 
       {/* Bottom Menu */}
-      <div className="fixed bottom-0 w-full max-w-[390px] grid grid-cols-4 bg-[#141b2a] border-t border-[#2a3347] py-4 px-2">
+      <div className="fixed bottom-0 w-full max-w-[390px] grid grid-cols-5 bg-[#141b2a] border-t border-[#2a3347] py-4 px-1">
         <button
           onClick={() => setActiveTab("agenda")}
           className={`flex flex-col items-center gap-1 transition-all ${
             activeTab === "agenda" ? "text-[#f0c040]" : "text-[#8a9ab5]"
           }`}
         >
-          <Calendar className="w-6 h-6" />
-          <span className="text-[10px] font-bold font-oswald tracking-wider uppercase">AGENDA</span>
+          <Calendar className="w-5 h-5" />
+          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">AGENDA</span>
         </button>
         <button
           onClick={() => setActiveTab("barbeiros")}
@@ -150,8 +150,8 @@ export default function Admin() {
             activeTab === "barbeiros" ? "text-[#f0c040]" : "text-[#8a9ab5]"
           }`}
         >
-          <Users className="w-6 h-6" />
-          <span className="text-[10px] font-bold font-oswald tracking-wider uppercase">BARBEIROS</span>
+          <Users className="w-5 h-5" />
+          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">BARBEIROS</span>
         </button>
         <button
           onClick={() => setActiveTab("servicos")}
@@ -159,8 +159,8 @@ export default function Admin() {
             activeTab === "servicos" ? "text-[#f0c040]" : "text-[#8a9ab5]"
           }`}
         >
-          <Scissors className="w-6 h-6" />
-          <span className="text-[10px] font-bold font-oswald tracking-wider uppercase">SERVIÇOS</span>
+          <Scissors className="w-5 h-5" />
+          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">SERVIÇOS</span>
         </button>
         <button
           onClick={() => setActiveTab("whatsapp")}
@@ -168,8 +168,17 @@ export default function Admin() {
             activeTab === "whatsapp" ? "text-[#f0c040]" : "text-[#8a9ab5]"
           }`}
         >
-          <MessageSquare className="w-6 h-6" />
-          <span className="text-[10px] font-bold font-oswald tracking-wider uppercase">WHATSAPP</span>
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">WHATSAPP</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("financeiro")}
+          className={`flex flex-col items-center gap-1 transition-all ${
+            activeTab === "financeiro" ? "text-[#f0c040]" : "text-[#8a9ab5]"
+          }`}
+        >
+          <TrendingUp className="w-5 h-5" />
+          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">FINANCEIRO</span>
         </button>
       </div>
 
