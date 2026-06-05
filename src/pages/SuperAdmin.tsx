@@ -15,7 +15,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { UserAvatar } from "@/components/UserAvatar";
-import { getInitial, money } from "@/lib/utils";
+import { getInitial } from "@/lib/utils";
+import { money } from "@/utils/format";
 import { format } from "date-fns";
 
 import {
