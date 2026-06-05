@@ -28,7 +28,7 @@ export function PhoneGate({ children }: { children: React.ReactNode }) {
         user?.identities?.some((i: any) => i.provider === 'google');
 
       const phoneMissing = !profile?.phone || String(profile.phone).trim() === '';
-      const isSuperAdmin = profile?.role === 'superadmin';
+      const isSuperAdmin = profile?.role?.toLowerCase() === 'superadmin';
 
       const shouldAskPhone = isGoogleLogin && !isSuperAdmin && phoneMissing;
 
