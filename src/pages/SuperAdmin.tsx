@@ -66,6 +66,33 @@ interface Barbershop {
   };
 }
 
+const STATUS_TRANSLATIONS: Record<string, string> = {
+  trialing: "Período de teste",
+  active: "Ativa",
+  past_due: "Vencida",
+  blocked: "Bloqueada",
+  cancelled: "Cancelada"
+};
+
+const parseCurrency = (value: string): number => {
+  if (!value) return 0;
+  // Remove R$, spaces, and thousands separator (dot), then replace decimal separator (comma) with dot
+  const cleanValue = value
+    .replace(/R\$/g, "")
+    .replace(/\s/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+  return parseFloat(cleanValue) || 0;
+};
+
+const formatCurrencyInput = (value: number | string | null | undefined): string => {
+  if (value === null || value === undefined) return "";
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value));
+};
+
 export default function SuperAdmin() {
   const navigate = useNavigate();
   const { user, profile, isSuperAdmin, loading: authLoading } = useAuth();
