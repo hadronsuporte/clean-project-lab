@@ -484,8 +484,8 @@ export default function SuperAdmin() {
                           <Input id="barbershop_phone" name="barbershop_phone" required className="bg-[#0A0A0A] border-[#1F1F1F] h-10" />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor="monthly_price" className="text-[10px] uppercase text-gray-500 tracking-widest">Valor Mensal (R$)</Label>
-                          <Input id="monthly_price" name="monthly_price" type="number" step="0.01" defaultValue="0" className="bg-[#0A0A0A] border-[#1F1F1F] h-10" />
+                          <Label htmlFor="monthly_price" className="text-[10px] uppercase text-gray-500 tracking-widest">Valor Mensal</Label>
+                          <Input id="monthly_price" name="monthly_price" type="text" placeholder="0,00" className="bg-[#0A0A0A] border-[#1F1F1F] h-10" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -496,11 +496,9 @@ export default function SuperAdmin() {
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent className="bg-[#141414] border-[#1F1F1F] text-white">
-                              <SelectItem value="trialing">Trialing</SelectItem>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="past_due">Past Due</SelectItem>
-                              <SelectItem value="blocked">Blocked</SelectItem>
-                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                              {Object.entries(STATUS_TRANSLATIONS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>{label}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
