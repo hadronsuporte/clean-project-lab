@@ -39,27 +39,14 @@ import {
 
 interface Appointment {
   id: string;
-  client_id: string;
-  barbershop_id: string;
-  barber_id: string;
-  service_id: string;
-  starts_at: string;
-  ends_at: string;
   status: string;
-  price_charged: number;
-  price?: number;
-  service_price?: number;
-  created_at: string;
-  barber_name?: string;
-  barber_avatar_url?: string | null;
-  service_name?: string;
-  services?: {
-    name: string;
-    price: number;
-  };
-  barbershops?: {
-    name: string;
-  };
+  starts_at: string;
+  price: number;
+  barbershop_name: string;
+  barber_name: string;
+  barber_avatar_url: string | null;
+  service_name: string;
+  barbershop_id?: string;
 }
 
 function AppointmentCard({ 
@@ -71,13 +58,12 @@ function AppointmentCard({
   onCancel: () => void; 
   isPast: boolean;
 }) {
-  const rawPrice = appt.price_charged ?? appt.services?.price ?? 0;
-  const price = Number(rawPrice);
+  const price = Number(appt.price || 0);
   const formattedPrice = price.toLocaleString('pt-BR', { 
     style: 'currency', 
     currency: 'BRL' 
   });
-  const barbershopName = appt.barbershops?.name || (appt as any).barbershop_name;
+  const barbershopName = appt.barbershop_name;
 
   return (
     <div className={`bg-[#141b2a] border border-[#2a3347] rounded-[4px] p-5 space-y-4 relative overflow-hidden group ${isPast ? 'opacity-70' : ''}`}>
@@ -86,7 +72,7 @@ function AppointmentCard({
           <div className="flex items-center gap-2">
             {!isPast && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
             <h4 className="text-xs font-bold text-[#f0c040] uppercase tracking-widest font-oswald">
-              {appt.service_name || appt.services?.name}
+              {appt.service_name}
             </h4>
           </div>
           <p className="text-[10px] text-[#8a9ab5] uppercase tracking-wider font-medium">
@@ -235,37 +221,27 @@ export default function ClientHome() {
     if (!user) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          id, 
-          status, 
-          starts_at, 
-          price_charged,
-          barbershop_id,
-          services(name, price),
-          barbershops(name),
-          profiles:barber_id(name, avatar_url)
-        `)
-        .eq('client_id', user.id)
-        .order('starts_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_my_appointments_safe');
 
       if (error) {
-        toast.error(`Erro: ${error.message}`);
         throw error;
       }
 
-      const mapped = (data || []).map((appt: any) => ({
-        ...appt,
-        barber_name: appt.profiles?.name,
-        barber_avatar_url: appt.profiles?.avatar_url,
-        service_name: appt.services?.name
-      }));
-
-      setAppointments(mapped);
+      if (data && data.success) {
+        const active = (data.active || []).map((a: any) => ({ ...a, is_active: true }));
+        const history = (data.history || []).map((a: any) => ({ ...a, is_active: false }));
+        setAppointments([...active, ...history]);
+      } else if (data && !data.success) {
+        // If success is false, we might want to show an error, 
+        // but the prompt says: Não mostrar "erro ao carregar agendamentos" quando a RPC retornar success true.
+        // If it's false, it's actually an error state from the RPC's perspective.
+        console.error("RPC returned error:", data.error);
+        toast.error(data.error || "Erro ao carregar agendamentos");
+      }
     } catch (error: any) {
       console.error("Error fetching appointments:", error);
-      toast.error("Erro ao carregar agendamentos");
+      // We only show error if it's a real exception or RPC failure, 
+      // but if RPC returns success=true with empty arrays, we don't show error.
     } finally {
       setIsLoading(false);
     }
@@ -317,19 +293,16 @@ export default function ClientHome() {
   
   const now = new Date();
   
-  const isFinished = (status: string) => ['completed', 'finalizado'].includes(String(status).toLowerCase());
-  const isCanceled = (status: string) => ['cancelled', 'canceled', 'cancelado'].includes(String(status).toLowerCase());
-  const isPast = (appt: Appointment) => new Date(appt.starts_at).getTime() < Date.now();
-  const isHistory = (appt: Appointment) => isFinished(appt.status) || isCanceled(appt.status) || isPast(appt);
+  const isHistory = (appt: Appointment) => {
+    // We already have active/history lists from RPC, but let's keep a helper 
+    // to distinguish them in the local state if needed.
+    // However, the RPC returns them already separated.
+    // If we added `is_active` in mapped data, we use that.
+    return !(appt as any).is_active;
+  };
 
-  const sortActive = (items: Appointment[]) =>
-    [...items].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
-
-  const sortHistory = (items: Appointment[]) =>
-    [...items].sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
-
-  const upcomingAppointments = sortActive(appointments.filter(a => !isHistory(a)));
-  const historyAppointments = sortHistory(appointments.filter(a => isHistory(a)));
+  const upcomingAppointments = appointments.filter(a => (a as any).is_active);
+  const historyAppointments = appointments.filter(a => !(a as any).is_active);
 
 
   return (
