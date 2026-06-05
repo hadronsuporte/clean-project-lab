@@ -851,8 +851,12 @@ export default function SuperAdmin() {
               <Input 
                 type="text" 
                 value={paymentValue} 
-                onChange={(e) => setPaymentValue(e.target.value)}
-                placeholder="0,00"
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  const numberValue = value ? parseInt(value) / 100 : 0;
+                  setPaymentValue(formatCurrencyInput(numberValue));
+                }}
+                placeholder="R$ 0,00"
                 className="bg-[#0A0A0A] border-[#1F1F1F]"
               />
             </div>
