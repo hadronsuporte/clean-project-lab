@@ -72,7 +72,7 @@ function AppointmentCard({
           <div className="flex items-center gap-2">
             {!isPast && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
             <h4 className="text-xs font-bold text-[#f0c040] uppercase tracking-widest font-oswald">
-              {appt.service_name || appt.services?.name}
+              {appt.service_name}
             </h4>
           </div>
           <p className="text-[10px] text-[#8a9ab5] uppercase tracking-wider font-medium">
