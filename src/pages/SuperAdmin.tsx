@@ -183,9 +183,10 @@ export default function SuperAdmin() {
     
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.rpc('mark_barbershop_paid', {
+      const { error } = await supabase.rpc('mark_barbershop_paid', {
         p_barbershop_id: paymentModalShop.id,
-        p_paid_until: paidUntil
+        p_paid_until: paidUntil,
+        p_amount: parseCurrency(paymentValue)
       });
 
       if (error) throw error;
@@ -194,6 +195,7 @@ export default function SuperAdmin() {
       setPaymentModalShop(null);
       fetchBarbershops();
     } catch (error: any) {
+      console.error("Error marking as paid:", error);
       toast.error("Erro ao registrar pagamento");
     } finally {
       setIsSubmitting(false);
