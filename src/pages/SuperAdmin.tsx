@@ -820,9 +820,10 @@ export default function SuperAdmin() {
             <div className="space-y-1">
               <Label className="text-[10px] uppercase text-gray-500">Valor Mensal (Atual: {money(paymentModalShop?.monthly_price)})</Label>
               <Input 
-                type="number" 
+                type="text" 
                 value={paymentValue} 
                 onChange={(e) => setPaymentValue(e.target.value)}
+                placeholder="0,00"
                 className="bg-[#0A0A0A] border-[#1F1F1F]"
               />
             </div>
