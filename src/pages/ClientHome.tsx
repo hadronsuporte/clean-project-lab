@@ -58,13 +58,12 @@ function AppointmentCard({
   onCancel: () => void; 
   isPast: boolean;
 }) {
-  const rawPrice = appt.price_charged ?? appt.services?.price ?? 0;
-  const price = Number(rawPrice);
+  const price = Number(appt.price || 0);
   const formattedPrice = price.toLocaleString('pt-BR', { 
     style: 'currency', 
     currency: 'BRL' 
   });
-  const barbershopName = appt.barbershops?.name || (appt as any).barbershop_name;
+  const barbershopName = appt.barbershop_name;
 
   return (
     <div className={`bg-[#141b2a] border border-[#2a3347] rounded-[4px] p-5 space-y-4 relative overflow-hidden group ${isPast ? 'opacity-70' : ''}`}>
