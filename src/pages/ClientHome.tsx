@@ -47,11 +47,19 @@ interface Appointment {
   ends_at: string;
   status: string;
   price_charged: number;
+  price?: number;
+  service_price?: number;
   created_at: string;
-  barbershop_name?: string;
   barber_name?: string;
   barber_avatar_url?: string | null;
   service_name?: string;
+  services?: {
+    name: string;
+    price: number;
+  };
+  barbershops?: {
+    name: string;
+  };
 }
 
 function AppointmentCard({ 
@@ -63,6 +71,13 @@ function AppointmentCard({
   onCancel: () => void; 
   isPast: boolean;
 }) {
+  const priceValue = appt.price_charged || appt.price || appt.service_price || appt.services?.price;
+  const formattedPrice = Number(priceValue || 0).toLocaleString('pt-BR', { 
+    style: 'currency', 
+    currency: 'BRL' 
+  });
+  const barbershopName = appt.barbershops?.name || (appt as any).barbershop_name;
+
   return (
     <div className={`bg-[#141b2a] border border-[#2a3347] rounded-[4px] p-5 space-y-4 relative overflow-hidden group ${isPast ? 'opacity-70' : ''}`}>
       <div className="flex justify-between items-start">
@@ -70,16 +85,16 @@ function AppointmentCard({
           <div className="flex items-center gap-2">
             {!isPast && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
             <h4 className="text-xs font-bold text-[#f0c040] uppercase tracking-widest font-oswald">
-              {appt.service_name}
+              {appt.service_name || appt.services?.name}
             </h4>
           </div>
           <p className="text-[10px] text-[#8a9ab5] uppercase tracking-wider font-medium">
-            {appt.barbershop_name}
+            {barbershopName}
           </p>
         </div>
         <div className="text-right">
           <div className="text-lg font-bold text-[#c8d4e8] font-oswald leading-none">
-            {money(appt.price_charged)}
+            {formattedPrice}
           </div>
         </div>
       </div>
@@ -148,13 +163,13 @@ export default function ClientHome() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [currentBarbershop, setCurrentBarbershop] = useState<{ name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const barbershopId = profile?.barbershop_id;
-  const barbershopName = user ? localStorage.getItem(`selectedBarbershopName:${user.id}`) : null;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -183,6 +198,7 @@ export default function ClientHome() {
         return;
       }
 
+      fetchBarbershop();
       fetchAppointments();
 
       // Recarregar quando a janela ganha foco para refletir finalizações do barbeiro
@@ -197,23 +213,51 @@ export default function ClientHome() {
   }, [user, profile, authLoading, navigate, barbershopId]);
 
 
+  const fetchBarbershop = async () => {
+    if (!barbershopId) return;
+    try {
+      const { data, error } = await supabase
+        .from('barbershops')
+        .select('name')
+        .eq('id', barbershopId)
+        .maybeSingle();
+      
+      if (!error && data) {
+        setCurrentBarbershop(data);
+      }
+    } catch (err) {
+      console.error("Error fetching barbershop:", err);
+    }
+  };
+
   const fetchAppointments = async () => {
     if (!user) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_my_appointments');
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          barbershops(name),
+          services(name, price),
+          profiles:barber_id(name, avatar_url)
+        `)
+        .eq('client_id', user.id)
+        .order('starts_at', { ascending: false });
 
       if (error) {
         toast.error(`Erro: ${error.message}`);
         throw error;
       }
 
-      const active = (data?.active || []) as any[];
-      const history = (data?.history || []) as any[];
-      
-      // Combine active and history into a single list for the existing component logic if necessary
-      // or adapt the logic. The existing code uses setAppointments(mapped).
-      setAppointments([...active, ...history]);
+      const mapped = (data || []).map((appt: any) => ({
+        ...appt,
+        barber_name: appt.profiles?.name,
+        barber_avatar_url: appt.profiles?.avatar_url,
+        service_name: appt.services?.name
+      }));
+
+      setAppointments(mapped);
     } catch (error: any) {
       console.error("Error fetching appointments:", error);
       toast.error("Erro ao carregar agendamentos");
@@ -291,7 +335,7 @@ export default function ClientHome() {
           <div className="flex items-center gap-2">
             <Store className="w-5 h-5 text-[#f0c040]" />
             <span className="text-[10px] font-bold tracking-widest text-[#f0c040] uppercase truncate max-w-[150px]">
-              {appointments.find(a => a.barbershop_id === barbershopId)?.barbershop_name || barbershopName || "Sua Barbearia"}
+              {currentBarbershop?.name || "Sua Barbearia"}
             </span>
           </div>
           <div className="flex items-center gap-3">
