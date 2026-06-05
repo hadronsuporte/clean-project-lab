@@ -242,6 +242,7 @@ export default function ClientHome() {
           status, 
           starts_at, 
           price_charged,
+          barbershop_id,
           services(name, price),
           barbershops(name),
           profiles:barber_id(name, avatar_url)
