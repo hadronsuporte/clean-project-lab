@@ -52,7 +52,7 @@ export default function AdminWhatsApp() {
     if (connection?.status === 'pairing' || connection?.status === 'pairing_requested') {
       interval = setInterval(() => {
         fetchConnection(true);
-      }, 3000);
+      }, 2000);
     }
 
     return () => {
@@ -107,15 +107,17 @@ export default function AdminWhatsApp() {
           </div>
           <div>
             <h3 className="text-xl font-bold text-green-500 font-oswald tracking-widest uppercase">WhatsApp Conectado</h3>
+            {connection.phone && (
+              <p className="text-lg font-bold text-[#c8d4e8] mt-2 font-mono tracking-widest">{connection.phone}</p>
+            )}
             <p className="text-sm text-[#8a9ab5] mt-2">Sua barbearia já está enviando notificações automáticas.</p>
           </div>
           <Button 
             variant="outline" 
-            onClick={() => fetchConnection()}
-            className="mt-4 border-[#2a3347] text-[#8a9ab5] hover:text-[#f0c040] hover:border-[#f0c040]"
+            onClick={() => setConnection({ status: 'disconnected' })}
+            className="mt-4 border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-[10px] font-bold uppercase tracking-widest"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar Status
+            Desconectar e trocar número
           </Button>
         </div>
       );
@@ -126,7 +128,7 @@ export default function AdminWhatsApp() {
         <div className="bg-[#141b2a] border border-[#f0c040]/30 p-8 rounded-[4px] flex flex-col items-center text-center space-y-6 animate-in fade-in duration-500">
           <div className="space-y-2">
             <h3 className="text-xl font-bold text-[#f0c040] font-oswald tracking-widest uppercase">Código de Pareamento</h3>
-            <p className="text-sm text-[#8a9ab5]">Abra o WhatsApp no seu celular {'>'} Aparelhos conectados {'>'} Conectar um aparelho {'>'} Conectar com número de telefone.</p>
+            <p className="text-sm text-[#8a9ab5]">No WhatsApp, vá em Aparelhos conectados {'>'} Conectar com número de telefone e digite este código.</p>
           </div>
 
           <div className="bg-[#1c2333] border-2 border-dashed border-[#f0c040] p-6 rounded-[4px] w-full max-w-[280px]">
@@ -211,7 +213,7 @@ export default function AdminWhatsApp() {
                 GERANDO...
               </>
             ) : (
-              "GERAR CÓDIGO DE PAREAMENTO"
+              connection?.status === 'disconnected' || connection?.status === 'error' ? "GERAR NOVO CÓDIGO" : "GERAR CÓDIGO DE PAREAMENTO"
             )}
           </Button>
 
