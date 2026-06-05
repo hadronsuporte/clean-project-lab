@@ -111,6 +111,10 @@ export default function SuperAdmin() {
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
 
+  // Create/Edit Form State
+  const [createMonthlyPrice, setCreateMonthlyPrice] = useState("");
+  const [editMonthlyPrice, setEditMonthlyPrice] = useState("");
+
   // Delete State
   const [deletingId, setDeletingId] = useState<string | null>(null);
   
@@ -300,6 +304,7 @@ export default function SuperAdmin() {
         setLogoFile(null);
         setLogoPreview(null);
         setOwnerIsBarber(false);
+        setCreateMonthlyPrice("");
         fetchBarbershops();
       }
     } catch (error: any) {
@@ -487,7 +492,19 @@ export default function SuperAdmin() {
                         </div>
                         <div className="space-y-1">
                           <Label htmlFor="monthly_price" className="text-[10px] uppercase text-gray-500 tracking-widest">Valor Mensal</Label>
-                          <Input id="monthly_price" name="monthly_price" type="text" placeholder="0,00" className="bg-[#0A0A0A] border-[#1F1F1F] h-10" />
+                          <Input 
+                            id="monthly_price" 
+                            name="monthly_price" 
+                            type="text" 
+                            placeholder="R$ 0,00" 
+                            value={createMonthlyPrice}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, "");
+                              const numberValue = value ? parseInt(value) / 100 : 0;
+                              setCreateMonthlyPrice(formatCurrencyInput(numberValue));
+                            }}
+                            className="bg-[#0A0A0A] border-[#1F1F1F] h-10" 
+                          />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -677,6 +694,7 @@ export default function SuperAdmin() {
                             onClick={() => {
                               setEditingBarbershop(shop);
                               setEditLogoPreview(shop.logo_url);
+                              setEditMonthlyPrice(formatCurrencyInput(shop.monthly_price));
                             }}
                             className="h-9 w-9 bg-[#1A1A1A] hover:bg-[#C6A355] hover:text-black transition-colors"
                           >
@@ -740,7 +758,18 @@ export default function SuperAdmin() {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase text-gray-500">Valor Mensal</Label>
-                  <Input name="monthly_price" type="text" placeholder="0,00" defaultValue={formatCurrencyInput(editingBarbershop?.monthly_price)} className="bg-[#0A0A0A] border-[#1F1F1F]" />
+                  <Input 
+                    name="monthly_price" 
+                    type="text" 
+                    placeholder="R$ 0,00" 
+                    value={editMonthlyPrice}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      const numberValue = value ? parseInt(value) / 100 : 0;
+                      setEditMonthlyPrice(formatCurrencyInput(numberValue));
+                    }}
+                    className="bg-[#0A0A0A] border-[#1F1F1F]" 
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase text-gray-500">Status Assinatura</Label>
@@ -822,8 +851,12 @@ export default function SuperAdmin() {
               <Input 
                 type="text" 
                 value={paymentValue} 
-                onChange={(e) => setPaymentValue(e.target.value)}
-                placeholder="0,00"
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  const numberValue = value ? parseInt(value) / 100 : 0;
+                  setPaymentValue(formatCurrencyInput(numberValue));
+                }}
+                placeholder="R$ 0,00"
                 className="bg-[#0A0A0A] border-[#1F1F1F]"
               />
             </div>
