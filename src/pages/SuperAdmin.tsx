@@ -249,11 +249,19 @@ export default function SuperAdmin() {
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
+    const paidUntilValue = formData.get("paid_until") as string;
+    const monthlyPriceValue = parseCurrency(formData.get("monthly_price") as string);
     
     try {
       let logoUrl = "";
       if (logoFile) {
         logoUrl = await uploadLogo(logoFile);
+      }
+
+      // Logic for subscription status based on paid_until
+      let subscriptionStatus = (formData.get("subscription_status") as string) || "trialing";
+      if (paidUntilValue) {
+        subscriptionStatus = "active";
       }
 
       const { data: response, error } = await supabase.functions.invoke("create-barbershop-with-owner", {
@@ -263,9 +271,9 @@ export default function SuperAdmin() {
           phone: formData.get("barbershop_phone") as string,
           logoUrl,
           description: formData.get("description") as string,
-          subscriptionStatus: (formData.get("subscription_status") as string) || "trialing",
-          monthlyPrice: Number(formData.get("monthly_price") || 0),
-          paidUntil: formData.get("paid_until") as string,
+          subscriptionStatus: subscriptionStatus,
+          monthlyPrice: monthlyPriceValue,
+          paidUntil: paidUntilValue,
           ownerName: formData.get("owner_name") as string,
           ownerEmail: formData.get("owner_email") as string,
           ownerPhone: formData.get("owner_phone") as string,
