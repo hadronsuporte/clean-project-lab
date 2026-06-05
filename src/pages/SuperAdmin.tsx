@@ -66,6 +66,33 @@ interface Barbershop {
   };
 }
 
+const STATUS_TRANSLATIONS: Record<string, string> = {
+  trialing: "Período de teste",
+  active: "Ativa",
+  past_due: "Vencida",
+  blocked: "Bloqueada",
+  cancelled: "Cancelada"
+};
+
+const parseCurrency = (value: string): number => {
+  if (!value) return 0;
+  // Remove R$, spaces, and thousands separator (dot), then replace decimal separator (comma) with dot
+  const cleanValue = value
+    .replace(/R\$/g, "")
+    .replace(/\s/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+  return parseFloat(cleanValue) || 0;
+};
+
+const formatCurrencyInput = (value: number | string | null | undefined): string => {
+  if (value === null || value === undefined) return "";
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(Number(value));
+};
+
 export default function SuperAdmin() {
   const navigate = useNavigate();
   const { user, profile, isSuperAdmin, loading: authLoading } = useAuth();
@@ -156,9 +183,10 @@ export default function SuperAdmin() {
     
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.rpc('mark_barbershop_paid', {
+      const { error } = await supabase.rpc('mark_barbershop_paid', {
         p_barbershop_id: paymentModalShop.id,
-        p_paid_until: paidUntil
+        p_paid_until: paidUntil,
+        p_amount: parseCurrency(paymentValue)
       });
 
       if (error) throw error;
@@ -167,6 +195,7 @@ export default function SuperAdmin() {
       setPaymentModalShop(null);
       fetchBarbershops();
     } catch (error: any) {
+      console.error("Error marking as paid:", error);
       toast.error("Erro ao registrar pagamento");
     } finally {
       setIsSubmitting(false);
@@ -222,11 +251,19 @@ export default function SuperAdmin() {
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
+    const paidUntilValue = formData.get("paid_until") as string;
+    const monthlyPriceValue = parseCurrency(formData.get("monthly_price") as string);
     
     try {
       let logoUrl = "";
       if (logoFile) {
         logoUrl = await uploadLogo(logoFile);
+      }
+
+      // Logic for subscription status based on paid_until
+      let subscriptionStatus = (formData.get("subscription_status") as string) || "trialing";
+      if (paidUntilValue) {
+        subscriptionStatus = "active";
       }
 
       const { data: response, error } = await supabase.functions.invoke("create-barbershop-with-owner", {
@@ -236,9 +273,9 @@ export default function SuperAdmin() {
           phone: formData.get("barbershop_phone") as string,
           logoUrl,
           description: formData.get("description") as string,
-          subscriptionStatus: (formData.get("subscription_status") as string) || "trialing",
-          monthlyPrice: Number(formData.get("monthly_price") || 0),
-          paidUntil: formData.get("paid_until") as string,
+          subscriptionStatus: subscriptionStatus,
+          monthlyPrice: monthlyPriceValue,
+          paidUntil: paidUntilValue,
           ownerName: formData.get("owner_name") as string,
           ownerEmail: formData.get("owner_email") as string,
           ownerPhone: formData.get("owner_phone") as string,
@@ -279,6 +316,20 @@ export default function SuperAdmin() {
     
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
+    const paidUntilValue = formData.get("paid_until") as string;
+    const monthlyPriceValue = parseCurrency(formData.get("monthly_price") as string);
+    let subscriptionStatus = formData.get("subscription_status") as string;
+    let blocked = editingBarbershop.blocked;
+
+    if (paidUntilValue) {
+      const paidUntilDate = new Date(paidUntilValue);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      if (paidUntilDate >= now) {
+        subscriptionStatus = 'active';
+        blocked = false;
+      }
+    }
 
     try {
       let logoUrl = editingBarbershop.logo_url;
@@ -293,11 +344,20 @@ export default function SuperAdmin() {
           address: formData.get("address") as string,
           phone: formData.get("phone") as string,
           description: formData.get("description") as string,
-          subscription_status: formData.get("subscription_status") as string,
-          monthly_price: Number(formData.get("monthly_price")),
+          subscription_status: subscriptionStatus,
+          monthly_price: monthlyPriceValue,
+          paid_until: paidUntilValue,
+          blocked: blocked,
           logo_url: logoUrl
         })
         .eq("id", editingBarbershop.id);
+
+      if (error) throw error;
+
+      // Se a data estiver vencida, garantir que o status seja atualizado
+      if (paidUntilValue) {
+        await supabase.rpc('refresh_barbershop_payment_status');
+      }
 
       if (error) throw error;
 
@@ -426,8 +486,8 @@ export default function SuperAdmin() {
                           <Input id="barbershop_phone" name="barbershop_phone" required className="bg-[#0A0A0A] border-[#1F1F1F] h-10" />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor="monthly_price" className="text-[10px] uppercase text-gray-500 tracking-widest">Valor Mensal (R$)</Label>
-                          <Input id="monthly_price" name="monthly_price" type="number" step="0.01" defaultValue="0" className="bg-[#0A0A0A] border-[#1F1F1F] h-10" />
+                          <Label htmlFor="monthly_price" className="text-[10px] uppercase text-gray-500 tracking-widest">Valor Mensal</Label>
+                          <Input id="monthly_price" name="monthly_price" type="text" placeholder="0,00" className="bg-[#0A0A0A] border-[#1F1F1F] h-10" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -438,11 +498,9 @@ export default function SuperAdmin() {
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent className="bg-[#141414] border-[#1F1F1F] text-white">
-                              <SelectItem value="trialing">Trialing</SelectItem>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="past_due">Past Due</SelectItem>
-                              <SelectItem value="blocked">Blocked</SelectItem>
-                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                              {Object.entries(STATUS_TRANSLATIONS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>{label}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -567,13 +625,31 @@ export default function SuperAdmin() {
                             "text-[10px] font-bold uppercase",
                             shop.blocked ? "text-red-500" : "text-green-500"
                           )}>
-                            {shop.subscription_status || "Trialing"} {shop.blocked && "(BLOQUEADO)"}
+                            {STATUS_TRANSLATIONS[shop.subscription_status || "trialing"] || shop.subscription_status}
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[9px] uppercase text-gray-600 tracking-tighter">Vencimento</Label>
+                          <Label className="text-[9px] uppercase text-gray-600 tracking-tighter">Valor Mensal</Label>
+                          <div className="text-[10px] text-gray-300 font-medium">
+                            {money(shop.monthly_price)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <Label className="text-[9px] uppercase text-gray-600 tracking-tighter">Vencimento (Pago Até)</Label>
                           <div className="text-[10px] text-gray-300">
                             {shop.paid_until ? format(new Date(shop.paid_until), "dd/MM/yyyy") : "Não definido"}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[9px] uppercase text-gray-600 tracking-tighter">Bloqueada</Label>
+                          <div className={cn(
+                            "text-[10px] font-bold uppercase",
+                            shop.blocked ? "text-red-500" : "text-green-500"
+                          )}>
+                            {shop.blocked ? "Sim" : "Não"}
                           </div>
                         </div>
                       </div>
@@ -585,7 +661,7 @@ export default function SuperAdmin() {
                             size="sm" 
                             onClick={() => {
                               setPaymentModalShop(shop);
-                              setPaymentValue(String(shop.monthly_price || ""));
+                              setPaymentValue(formatCurrencyInput(shop.monthly_price));
                               setPaidUntil(shop.paid_until || "");
                             }}
                             className="h-8 text-[10px] uppercase font-bold bg-[#C6A355] text-black border-none hover:bg-[#D4B466] w-full"
@@ -663,8 +739,8 @@ export default function SuperAdmin() {
                   <Input name="name" defaultValue={editingBarbershop?.name} className="bg-[#0A0A0A] border-[#1F1F1F]" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[10px] uppercase text-gray-500">Valor Mensal (R$)</Label>
-                  <Input name="monthly_price" type="number" step="0.01" defaultValue={editingBarbershop?.monthly_price || 0} className="bg-[#0A0A0A] border-[#1F1F1F]" />
+                  <Label className="text-[10px] uppercase text-gray-500">Valor Mensal</Label>
+                  <Input name="monthly_price" type="text" placeholder="0,00" defaultValue={formatCurrencyInput(editingBarbershop?.monthly_price)} className="bg-[#0A0A0A] border-[#1F1F1F]" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase text-gray-500">Status Assinatura</Label>
@@ -673,22 +749,26 @@ export default function SuperAdmin() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#141414] border-[#1F1F1F] text-white">
-                      <SelectItem value="trialing">Trialing</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="past_due">Past Due</SelectItem>
-                      <SelectItem value="blocked">Blocked</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      {Object.entries(STATUS_TRANSLATIONS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-gray-500">Pago Até (Vencimento)</Label>
+                  <Input name="paid_until" type="date" defaultValue={editingBarbershop?.paid_until || ""} className="bg-[#0A0A0A] border-[#1F1F1F]" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-gray-500">Telefone</Label>
+                  <Input name="phone" defaultValue={editingBarbershop?.phone || ""} className="bg-[#0A0A0A] border-[#1F1F1F]" />
                 </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase text-gray-500">Endereço</Label>
                 <Input name="address" defaultValue={editingBarbershop?.address || ""} className="bg-[#0A0A0A] border-[#1F1F1F]" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-gray-500">Telefone</Label>
-                <Input name="phone" defaultValue={editingBarbershop?.phone || ""} className="bg-[#0A0A0A] border-[#1F1F1F]" />
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase text-gray-500">Descrição</Label>
@@ -740,9 +820,10 @@ export default function SuperAdmin() {
             <div className="space-y-1">
               <Label className="text-[10px] uppercase text-gray-500">Valor Mensal (Atual: {money(paymentModalShop?.monthly_price)})</Label>
               <Input 
-                type="number" 
+                type="text" 
                 value={paymentValue} 
                 onChange={(e) => setPaymentValue(e.target.value)}
+                placeholder="0,00"
                 className="bg-[#0A0A0A] border-[#1F1F1F]"
               />
             </div>
