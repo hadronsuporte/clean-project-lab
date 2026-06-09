@@ -63,7 +63,7 @@ export default function AdminDashboard({
   profile 
 }: { 
   barbershopId: string | null;
-  profile: any;
+  profile?: any;
 }) {
   const [stats, setStats] = useState<Stats>({
     appointmentsToday: 0,
