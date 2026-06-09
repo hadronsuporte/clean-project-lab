@@ -7,142 +7,100 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [hasInitialized, setHasInitialized] = useState(false)
 
-  const loadProfile = async (userId: string, isUpdate = false) => {
-    // Only show loading if we haven't initialized yet and it's not an update
-    if (!isUpdate && !hasInitialized) {
-      setLoading(true);
-    }
+  const loadProfile = async (userId: string) => {
+    // 1. Fetch user profile from public.users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
 
-    try {
-      // 1. Fetch user profile from public.users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (userError) {
-        console.error("Error loading profile from public.users:", userError);
-        setLoading(false);
-        setHasInitialized(true);
-        return;
-      }
-
-      if (!userData) {
-        console.error("No user data found in public.users");
-        setLoading(false);
-        setHasInitialized(true);
-        return;
-      }
-
-      // 2. Fetch panel info via RPC to determine roles and flags
-      const { data: panelData, error: panelError } = await supabase.rpc('get_my_app_panels');
-      
-      if (panelError) {
-        console.error("Error loading panels:", panelError);
-      }
-
-      const role = String(userData.role || 'client').toLowerCase();
-      const isSuperAdmin = role === 'superadmin';
-      const isOwner = role === 'owner';
-      const isBarber = role === 'barber';
-      const isAdmin = isSuperAdmin || isOwner || role === 'admin';
-      
-      if (isOwner) {
-        localStorage.removeItem('force_barber_panel');
-      }
-
-      const finalProfile = {
-        id: userId,
-        role,
-        name: userData.name,
-        phone: userData.phone,
-        avatar_url: userData.avatar_url,
-        barbershop_id: userData.barbershop_id || null,
-        isOwner,
-        isAdmin,
-        isSuperAdmin,
-        isBarber,
-        has_barber_panel: panelData?.has_barber_panel || false
-      };
-      
-      // Update state only if changed or initial
-      setProfile(finalProfile);
-    } catch (e) {
-      console.error("Unexpected error in loadProfile:", e);
-    } finally {
+    if (userError) {
+      console.error("Error loading profile from public.users:", userError);
       setLoading(false);
-      setHasInitialized(true);
+      return;
     }
+
+    if (!userData) {
+      console.error("No user data found in public.users");
+      setLoading(false);
+      return;
+    }
+
+    // 2. Fetch panel info via RPC to determine roles and flags
+    const { data: panelData, error: panelError } = await supabase.rpc('get_my_app_panels');
+    
+    if (panelError) {
+      console.error("Error loading panels:", panelError);
+      // We still have userData, so we can continue with basic role if panel fails
+    }
+
+    const role = String(userData.role || 'client').toLowerCase();
+    const isSuperAdmin = role === 'superadmin';
+    const isOwner = role === 'owner';
+    const isBarber = role === 'barber';
+    const isAdmin = isSuperAdmin || isOwner || role === 'admin';
+    
+    if (isOwner) {
+      localStorage.removeItem('force_barber_panel');
+    }
+
+    const finalProfile = {
+      id: userId,
+      role,
+      name: userData.name,
+      phone: userData.phone,
+      avatar_url: userData.avatar_url,
+      barbershop_id: userData.barbershop_id || null,
+      isOwner,
+      isAdmin,
+      isSuperAdmin,
+      isBarber,
+      has_barber_panel: panelData?.has_barber_panel || false
+    };
+    
+    console.log("AUTH PROFILE DEBUG (public.users)", {
+      userId,
+      profile: finalProfile
+    });
+
+    setProfile(finalProfile);
+    setLoading(false);
   }
 
   useEffect(() => {
-    let mounted = true;
-
-    const initialize = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(session.user);
-        await loadProfile(session.user.id);
+        setUser(session.user)
+        loadProfile(session.user.id)
       } else {
-        setLoading(false);
-        setHasInitialized(true);
+        setLoading(false)
       }
-    };
-
-    initialize();
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        console.log("AUTH EVENT:", event);
-
-        // Don't trigger loading for focus/refresh events if we already have data
-        const isUpdateEvent = event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED';
-        const hasSession = !!session?.user;
-        const alreadyLoaded = hasInitialized && !!user;
-
-        // Special case: ignore focus/refresh if we're already settled
-        if (isUpdateEvent && alreadyLoaded) {
-          if (session?.user) setUser(session.user);
-          await loadProfile(session.user.id, true);
-          return;
-        }
-
-        // For other events, update user state
-        setUser(session?.user ?? null);
+      (event, session) => {
+        setUser(session?.user ?? null)
         
         if (session?.user) {
-          // Only show loading if we really don't have a profile yet
-          const shouldShowLoading = !hasInitialized;
-          await loadProfile(session.user.id, !shouldShowLoading);
+          loadProfile(session.user.id)
         } else {
-          setProfile(null);
-          setLoading(false);
-          setHasInitialized(true);
+          setProfile(null)
+          setLoading(false)
         }
       }
     )
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    }
-  }, []);
+    return () => subscription.unsubscribe()
+  }, [])
 
   return (
     <AuthContext.Provider value={{ 
       user, 
       profile, 
       loading,
-      hasInitialized,
-      setLoading,
-      refreshProfile: () => user && loadProfile(user.id, true),
+      refreshProfile: () => user && loadProfile(user.id),
       isSuperAdmin: profile?.isSuperAdmin || false,
       isOwner: profile?.isOwner || false,
       isAdmin: profile?.isAdmin || false,

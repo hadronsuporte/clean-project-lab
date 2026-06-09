@@ -162,9 +162,7 @@ export default function ClientHome() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      if (window.location.pathname !== "/login") {
-        navigate("/login");
-      }
+      navigate("/login");
     } else if (user && profile) {
       // Prioritize primary panels if roles are owner/admin/barber
       // unless they are specifically in client mode (no force flag)
@@ -172,19 +170,19 @@ export default function ClientHome() {
       const hasForceBarber = localStorage.getItem('force_barber_panel') === 'true';
 
       if (!hasForceBarber) {
-        if (role === 'superadmin' && window.location.pathname !== "/super-admin") {
+        if (role === 'superadmin') {
           navigate("/super-admin", { replace: true });
           return;
-        } else if ((role === 'owner' || role === 'admin') && window.location.pathname !== "/admin") {
+        } else if (role === 'owner' || role === 'admin') {
           navigate("/admin", { replace: true });
           return;
-        } else if (role === 'barber' && window.location.pathname !== "/barber-dashboard") {
+        } else if (role === 'barber') {
           navigate("/barber-dashboard", { replace: true });
           return;
         }
       }
 
-      if (!profile.barbershop_id && window.location.pathname !== "/") {
+      if (!profile.barbershop_id) {
         navigate("/", { replace: true });
         return;
       }
@@ -297,16 +295,7 @@ export default function ClientHome() {
   };
 
 
-  console.log('loading gate client home', {
-    authLoading,
-    profile: !!profile,
-    profileId: profile?.id,
-    barbershopId,
-    isLoading,
-    hasInitialized: !!profile,
-  });
-
-  if ((authLoading && !profile) || (isLoading && !profile)) {
+  if (authLoading || isLoading) {
     return <LoadingScreen />;
   }
 

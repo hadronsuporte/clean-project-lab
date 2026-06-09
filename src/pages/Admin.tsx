@@ -27,25 +27,19 @@ export default function Admin() {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        if (window.location.pathname !== "/login") {
-          navigate("/login", { replace: true });
-        }
+        navigate("/login", { replace: true });
         return;
       }
       
       if (profile && !isAdmin && profile.role !== "owner") {
         toast.error("Acesso restrito");
-        if (window.location.pathname !== "/") {
-          navigate("/", { replace: true });
-        }
+        navigate("/", { replace: true });
         return;
       }
 
       // Check if user should be in barber panel instead
       if (profile?.role === 'owner' && localStorage.getItem('force_barber_panel') === 'true' && profile.has_barber_panel) {
-        if (window.location.pathname !== "/barber-dashboard") {
-          navigate("/barber-dashboard", { replace: true });
-        }
+        navigate("/barber-dashboard", { replace: true });
         return;
       }
 
@@ -72,13 +66,7 @@ export default function Admin() {
   }, [user, profile, authLoading, navigate]);
 
 
-  console.log('loading gate admin', {
-    authLoading,
-    profile: !!profile,
-    loadingBarbershop,
-  });
-
-  if ((authLoading && !profile) || (loadingBarbershop && !profile)) {
+  if (authLoading || loadingBarbershop) {
     return <LoadingScreen />;
   }
 

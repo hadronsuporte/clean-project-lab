@@ -34,15 +34,13 @@ export default function SelectBarbershop() {
   useEffect(() => {
     const checkSavedBarbershop = async () => {
       if (!authLoading && !user) {
-        if (window.location.pathname !== "/login") {
-          navigate("/login", { replace: true });
-        }
+        navigate("/login", { replace: true });
       } else if (user && profile) {
         if (profile.role === 'client' && profile.barbershop_id) {
           const params = new URLSearchParams(window.location.search);
           const manualSelection = params.get("select") === "true" || location.state?.select === true;
           
-          if (!manualSelection && window.location.pathname !== "/client-home") {
+          if (!manualSelection) {
             navigate("/client-home", { replace: true });
             return;
           }
@@ -53,19 +51,19 @@ export default function SelectBarbershop() {
 
         if (!manualSelection) {
           // Se for superadmin, redireciona para o painel do superadmin
-          if (profile.isSuperAdmin && window.location.pathname !== "/super-admin") {
+          if (profile.isSuperAdmin) {
             navigate("/super-admin", { replace: true });
             return;
           }
           
           // Se for dono (owner) ou admin, redireciona para o painel admin
-          if ((profile.isOwner || profile.role === 'admin') && window.location.pathname !== "/admin") {
+          if (profile.isOwner || profile.role === 'admin') {
             navigate("/admin", { replace: true });
             return;
           }
 
           // Se for barbeiro
-          if (profile.role === 'barber' && window.location.pathname !== "/barber-dashboard") {
+          if (profile.role === 'barber') {
             navigate("/barber-dashboard", { replace: true });
             return;
           }
@@ -131,13 +129,7 @@ export default function SelectBarbershop() {
     }
   };
 
-  console.log('loading gate select barbershop', {
-    authLoading,
-    profile: !!profile,
-    isLoading,
-  });
-
-  if ((authLoading && !profile) || (isLoading && !profile)) {
+  if (isLoading || authLoading) {
     return <LoadingScreen />;
   }
 

@@ -26,16 +26,16 @@ export default function Login() {
 
       const role = String(profileData.role || 'client').toLowerCase();
       
-      if (role === "superadmin" && window.location.pathname !== "/super-admin") {
+      if (role === "superadmin") {
         navigate("/super-admin", { replace: true });
-      } else if ((role === "owner" || role === "admin") && window.location.pathname !== "/admin") {
+      } else if (role === "owner" || role === "admin") {
         navigate("/admin", { replace: true });
-      } else if (role === "barber" && window.location.pathname !== "/barber-dashboard") {
+      } else if (role === "barber") {
         navigate("/barber-dashboard", { replace: true });
-      } else if (role === "client") {
-        if (profileData.barbershop_id && window.location.pathname !== "/client-home") {
+      } else {
+        if (profileData.barbershop_id) {
           navigate("/client-home", { replace: true });
-        } else if (!profileData.barbershop_id && window.location.pathname !== "/") {
+        } else {
           navigate("/", { replace: true });
         }
       }
