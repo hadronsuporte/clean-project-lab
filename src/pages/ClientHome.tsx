@@ -22,7 +22,6 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { AuthErrorScreen } from "@/components/AuthErrorScreen";
 import { money } from "@/utils/format";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -150,7 +149,7 @@ function AppointmentCard({
 
 export default function ClientHome() {
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading, initError } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [currentBarbershop, setCurrentBarbershop] = useState<{ name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -296,15 +295,7 @@ export default function ClientHome() {
   };
 
 
-  if (initError && !profile) {
-    return <AuthErrorScreen error={initError} />;
-  }
-
-  if (authLoading && !profile) {
-    return <LoadingScreen />;
-  }
-
-  if (isLoading && !appointments.length) {
+  if (authLoading || isLoading) {
     return <LoadingScreen />;
   }
 

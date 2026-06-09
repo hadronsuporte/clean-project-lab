@@ -18,8 +18,6 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { getInitial } from "@/lib/utils";
 import { money } from "@/utils/format";
 import { format } from "date-fns";
-import { LoadingScreen } from "@/components/LoadingScreen";
-import { AuthErrorScreen } from "@/components/AuthErrorScreen";
 
 import {
   Dialog,
@@ -97,7 +95,7 @@ const formatCurrencyInput = (value: number | string | null | undefined): string 
 
 export default function SuperAdmin() {
   const navigate = useNavigate();
-  const { user, profile, isSuperAdmin, loading: authLoading, initError } = useAuth();
+  const { user, profile, isSuperAdmin, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,11 +127,7 @@ export default function SuperAdmin() {
     if (isSuperAdmin) {
       fetchBarbershops();
     }
-    
-    if (!authLoading && !user) {
-      navigate("/login", { replace: true });
-    }
-  }, [isSuperAdmin, user, authLoading, navigate]);
+  }, [isSuperAdmin]);
 
   const fetchBarbershops = async () => {
     setIsLoading(true);
@@ -212,12 +206,13 @@ export default function SuperAdmin() {
     }
   };
 
-  if (initError && !profile) {
-    return <AuthErrorScreen error={initError} />;
-  }
-
-  if (authLoading && !profile) {
-    return <LoadingScreen />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-4">
+        <Scissors className="w-12 h-12 text-[#C6A355] animate-bounce mb-4" />
+        <p className="text-white font-oswald tracking-widest uppercase">Carregando...</p>
+      </div>
+    );
   }
 
   if (!isSuperAdmin) {

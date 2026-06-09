@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AdminGear } from "@/components/AdminGear";
 import { UserAvatar } from "@/components/UserAvatar";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { AuthErrorScreen } from "@/components/AuthErrorScreen";
 
 import { toast } from "sonner";
 
@@ -24,7 +23,7 @@ export default function SelectBarbershop() {
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading, refreshProfile, initError } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const location = useLocation();
   
   const signOut = async () => {
@@ -33,47 +32,39 @@ export default function SelectBarbershop() {
   };
 
   useEffect(() => {
-    if (authLoading) return;
-
     const checkSavedBarbershop = async () => {
-      if (!user) {
+      if (!authLoading && !user) {
         navigate("/login", { replace: true });
-        return;
-      }
-
-      if (profile) {
-        const params = new URLSearchParams(window.location.search);
-        const manualSelection = params.get("select") === "true" || location.state?.select === true;
-        
-        if (!manualSelection) {
-          if (profile.role === 'client' && profile.barbershop_id) {
-            if (window.location.pathname !== "/client-home") {
-              navigate("/client-home", { replace: true });
-            }
+      } else if (user && profile) {
+        if (profile.role === 'client' && profile.barbershop_id) {
+          const params = new URLSearchParams(window.location.search);
+          const manualSelection = params.get("select") === "true" || location.state?.select === true;
+          
+          if (!manualSelection) {
+            navigate("/client-home", { replace: true });
             return;
           }
+        }
 
+        const params = new URLSearchParams(window.location.search);
+        const manualSelection = params.get("select") === "true" || location.state?.select === true;
+
+        if (!manualSelection) {
           // Se for superadmin, redireciona para o painel do superadmin
           if (profile.isSuperAdmin) {
-            if (window.location.pathname !== "/super-admin") {
-              navigate("/super-admin", { replace: true });
-            }
+            navigate("/super-admin", { replace: true });
             return;
           }
           
           // Se for dono (owner) ou admin, redireciona para o painel admin
           if (profile.isOwner || profile.role === 'admin') {
-            if (window.location.pathname !== "/admin") {
-              navigate("/admin", { replace: true });
-            }
+            navigate("/admin", { replace: true });
             return;
           }
 
           // Se for barbeiro
           if (profile.role === 'barber') {
-            if (window.location.pathname !== "/barber-dashboard") {
-              navigate("/barber-dashboard", { replace: true });
-            }
+            navigate("/barber-dashboard", { replace: true });
             return;
           }
         }
@@ -83,7 +74,7 @@ export default function SelectBarbershop() {
     };
 
     checkSavedBarbershop();
-  }, [user, profile, authLoading, navigate, location.pathname, location.state]);
+  }, [user, profile, authLoading, navigate]);
 
   const fetchBarbershops = async () => {
     setIsLoading(true);
@@ -138,11 +129,7 @@ export default function SelectBarbershop() {
     }
   };
 
-  if (initError && !profile) {
-    return <AuthErrorScreen error={initError} />;
-  }
-
-  if (authLoading && !profile) {
+  if (isLoading || authLoading) {
     return <LoadingScreen />;
   }
 

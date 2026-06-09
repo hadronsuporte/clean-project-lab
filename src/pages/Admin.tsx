@@ -15,69 +15,58 @@ import AdminWhatsApp from "@/components/admin/AdminWhatsApp";
 import AdminFinancial from "@/components/admin/AdminFinancial";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { AuthErrorScreen } from "@/components/AuthErrorScreen";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<"agenda" | "barbeiros" | "servicos" | "whatsapp" | "financeiro">("agenda");
   const [barbershopId, setBarbershopId] = useState<string | null>(null);
   const [loadingBarbershop, setLoadingBarbershop] = useState(true);
-  const { user, profile, isAdmin, loading: authLoading, initError } = useAuth();
+  const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      navigate("/login", { replace: true });
-      return;
-    }
-    
-    if (profile && !isAdmin && profile.role !== "owner") {
-      toast.error("Acesso restrito");
-      navigate("/", { replace: true });
-      return;
-    }
-
-    // Check if user should be in barber panel instead
-    if (profile?.role === 'owner' && localStorage.getItem('force_barber_panel') === 'true' && profile.has_barber_panel) {
-      if (window.location.pathname !== "/barber-dashboard") {
-        navigate("/barber-dashboard", { replace: true });
+    if (!authLoading) {
+      if (!user) {
+        navigate("/login", { replace: true });
+        return;
       }
-      return;
-    }
-
-    const fetchBarbershopId = async () => {
-      if (profile?.barbershop_id) {
-        setBarbershopId(profile.barbershop_id);
-        setLoadingBarbershop(false);
+      
+      if (profile && !isAdmin && profile.role !== "owner") {
+        toast.error("Acesso restrito");
+        navigate("/", { replace: true });
         return;
       }
 
-      if (profile?.isSuperAdmin) {
-        // Fallback for superadmin who doesn't have a barbershop_id linked
-        const { data } = await supabase.from("barbershops").select("id").limit(1).maybeSingle();
-        if (data) {
-          setBarbershopId(data.id);
-        }
+      // Check if user should be in barber panel instead
+      if (profile?.role === 'owner' && localStorage.getItem('force_barber_panel') === 'true' && profile.has_barber_panel) {
+        navigate("/barber-dashboard", { replace: true });
+        return;
       }
-      
-      setLoadingBarbershop(false);
-    };
 
-    fetchBarbershopId();
-  }, [user, profile, authLoading, isAdmin, navigate]);
+      const fetchBarbershopId = async () => {
+        if (profile?.barbershop_id) {
+          setBarbershopId(profile.barbershop_id);
+          setLoadingBarbershop(false);
+          return;
+        }
+
+        if (profile?.isSuperAdmin) {
+          // Fallback for superadmin who doesn't have a barbershop_id linked
+          const { data } = await supabase.from("barbershops").select("id").limit(1).maybeSingle();
+          if (data) {
+            setBarbershopId(data.id);
+          }
+        }
+        
+        setLoadingBarbershop(false);
+      };
+
+      fetchBarbershopId();
+    }
+  }, [user, profile, authLoading, navigate]);
 
 
-  if (initError && !profile) {
-    return <AuthErrorScreen error={initError} />;
-  }
-
-  if (authLoading && !profile) {
-    return <LoadingScreen />;
-  }
-
-  if (loadingBarbershop && !barbershopId) {
+  if (authLoading || loadingBarbershop) {
     return <LoadingScreen />;
   }
 
