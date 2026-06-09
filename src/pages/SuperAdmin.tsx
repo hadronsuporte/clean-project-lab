@@ -14,6 +14,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getInitial } from "@/lib/utils";
 import { money } from "@/utils/format";
