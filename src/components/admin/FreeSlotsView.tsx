@@ -4,6 +4,7 @@ import { format, startOfDay, addMinutes, isBefore, isAfter, parseISO } from "dat
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TimePicker } from "@/components/ui/TimePicker";
 import { Calendar as CalendarIcon, Clock, Lock, Settings, Trash2, ArrowLeft, User } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
 interface FreeSlotsViewProps {
   barbershopId: string;
   onBack: () => void;
+  profile?: any;
 }
 
 interface Barber {
@@ -52,7 +54,7 @@ interface AvailableSlot {
   time_label: string;
 }
 
-export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewProps) {
+export default function FreeSlotsView({ barbershopId, onBack, profile }: FreeSlotsViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedBarberId, setSelectedBarberId] = useState<string>("all");
   const [barbers, setBarbers] = useState<Barber[]>([]);
@@ -60,6 +62,10 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  const canManageSchedule = 
+    profile?.role === 'owner' || 
+    profile?.role === 'superadmin';
+
   // Modals state
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -296,14 +302,16 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
             <Lock className="w-4 h-4 mr-2" />
             BLOQUEAR
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsConfigModalOpen(true)}
-            className="bg-[#141b2a] border-[#2a3347] border-dashed text-[#8a9ab5] hover:text-[#f0c040] hover:border-[#f0c040]"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            CONFIGURAR
-          </Button>
+          {canManageSchedule && (
+            <Button 
+              variant="outline" 
+              onClick={() => setIsConfigModalOpen(true)}
+              className="bg-[#141b2a] border-[#2a3347] border-dashed text-[#8a9ab5] hover:text-[#f0c040] hover:border-[#f0c040]"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              CONFIGURAR
+            </Button>
+          )}
         </div>
       </div>
 
@@ -399,14 +407,16 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
             <DialogTitle className="font-oswald uppercase tracking-widest text-[#f0c040]">CONFIGURAR HORÁRIOS</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#8a9ab5] uppercase tracking-wider">Abertura</label>
-              <Input type="time" value={openingTime} onChange={e => setOpeningTime(e.target.value)} className="bg-[#141b2a] border-[#2a3347]" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#8a9ab5] uppercase tracking-wider">Fechamento</label>
-              <Input type="time" value={closingTime} onChange={e => setClosingTime(e.target.value)} className="bg-[#141b2a] border-[#2a3347]" />
-            </div>
+            <TimePicker 
+              label="Abertura" 
+              value={openingTime} 
+              onChange={setOpeningTime} 
+            />
+            <TimePicker 
+              label="Fechamento" 
+              value={closingTime} 
+              onChange={setClosingTime} 
+            />
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-[#8a9ab5] uppercase tracking-wider">Intervalo (minutos)</label>
               <Select value={slotInterval} onValueChange={setSlotInterval}>
@@ -480,32 +490,18 @@ export default function FreeSlotsView({ barbershopId, onBack }: FreeSlotsViewPro
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-[#8a9ab5] uppercase tracking-wider">Início</label>
-                <Select value={blockStartTime} onValueChange={handleStartTimeChange}>
-                  <SelectTrigger className="bg-[#141b2a] border-[#2a3347] h-11 text-xs">
-                    <SelectValue placeholder="Início" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1c2333] border-[#2a3347] text-[#c8d4e8] max-h-[200px]">
-                    {generateTimeOptions().map(time => (
-                      <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-[#8a9ab5] uppercase tracking-wider">Fim</label>
-                <Select value={blockEndTime} onValueChange={setBlockEndTime}>
-                  <SelectTrigger className="bg-[#141b2a] border-[#2a3347] h-11 text-xs">
-                    <SelectValue placeholder="Fim" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1c2333] border-[#2a3347] text-[#c8d4e8] max-h-[200px]">
-                    {generateTimeOptions().map(time => (
-                      <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <TimePicker 
+                label="Início" 
+                value={blockStartTime} 
+                onChange={handleStartTimeChange} 
+                minutesStep={5}
+              />
+              <TimePicker 
+                label="Fim" 
+                value={blockEndTime} 
+                onChange={setBlockEndTime} 
+                minutesStep={5}
+              />
             </div>
 
             <div className="space-y-1.5">
