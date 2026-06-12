@@ -140,7 +140,7 @@ export default function AdminDashboard({
             .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
           upcoming: unique.filter(a => isAfterTodayBR(a.starts_at) && !isFinished(a.status) && !isCanceled(a.status))
             .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
-          history: unique.filter(a => isFinished(a.status) || isCanceled(a.status) || new Date(a.starts_at).getTime() < Date.now())
+          history: unique.filter(a => isFinished(a.status) || isCanceled(a.status) || a.status.toLowerCase() === 'no_show' || new Date(a.starts_at).getTime() < Date.now())
             .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()),
         });
 
@@ -278,8 +278,12 @@ function AppointmentCard({ appt, onCancelSuccess }: { appt: Appointment, onCance
   const [isCancelling, setIsCancelling] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
 
-  const getStatusInfo = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusInfo = (status: string, client_attended?: boolean) => {
+    const s = status.toLowerCase();
+    if (s === "no_show" || (s === "completed" && client_attended === false)) {
+      return { label: "NÃO COMPARECEU", color: "text-orange-500 border-orange-500/30 bg-orange-500/10" };
+    }
+    switch (s) {
       case "pending": 
         return { label: "PENDENTE", color: "text-yellow-500 border-yellow-500/30 bg-yellow-500/10" };
       case "confirmed": 
@@ -296,11 +300,12 @@ function AppointmentCard({ appt, onCancelSuccess }: { appt: Appointment, onCance
     }
   };
 
-  const handleFinish = async () => {
+  const handleFinish = async (attended: boolean) => {
     try {
       setIsFinishing(true);
       const { data, error } = await supabase.rpc("finish_appointment_by_owner", {
-        p_appointment_id: appt.id
+        p_appointment_id: appt.id,
+        p_attended: attended
       });
 
       if (error) throw error;
@@ -310,7 +315,7 @@ function AppointmentCard({ appt, onCancelSuccess }: { appt: Appointment, onCance
         return;
       }
 
-      toast.success("Atendimento finalizado com sucesso!");
+      toast.success(attended ? "Atendimento finalizado com sucesso!" : "Registrado como não comparecimento");
       setIsFinishModalOpen(false);
       onCancelSuccess?.();
     } catch (err: any) {
@@ -347,7 +352,7 @@ function AppointmentCard({ appt, onCancelSuccess }: { appt: Appointment, onCance
     }
   };
 
-  const isCancelable = !isFinished(appt.status) && !isCanceled(appt.status) && new Date(appt.starts_at).getTime() > Date.now();
+  const isCancelable = !isFinished(appt.status) && !isCanceled(appt.status) && appt.status.toLowerCase() !== 'no_show' && new Date(appt.starts_at).getTime() > Date.now();
   const canBeFinished = ["pending", "confirmed"].includes(appt.status.toLowerCase());
 
   return (
@@ -373,8 +378,8 @@ function AppointmentCard({ appt, onCancelSuccess }: { appt: Appointment, onCance
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span className={`text-[9px] font-bold px-2 py-1 rounded-[2px] border uppercase tracking-widest ${getStatusInfo(appt.status).color}`}>
-            {getStatusInfo(appt.status).label}
+          <span className={`text-[9px] font-bold px-2 py-1 rounded-[2px] border uppercase tracking-widest ${getStatusInfo(appt.status, (appt as any).client_attended).color}`}>
+            {getStatusInfo(appt.status, (appt as any).client_attended).label}
           </span>
           {isCancelable && (
             <Button
@@ -426,24 +431,34 @@ function AppointmentCard({ appt, onCancelSuccess }: { appt: Appointment, onCance
         <AlertDialogContent className="bg-[#141b2a] border-[#2a3347] text-[#c8d4e8]">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-oswald uppercase text-[#f0c040] tracking-widest">
-              FINALIZAR ATENDIMENTO?
+              O CLIENTE COMPARECEU?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[#8a9ab5] text-[10px] uppercase tracking-widest leading-relaxed">
-              Deseja marcar este atendimento como concluído e calcular a comissão?
+              Selecione se o cliente realizou o serviço ou se não compareceu ao horário agendado.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="bg-transparent border-[#2a3347] text-[#8a9ab5] hover:bg-[#1c2333] hover:text-white font-oswald uppercase text-xs tracking-widest rounded-none h-12">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="bg-transparent border-[#2a3347] text-[#8a9ab5] hover:bg-[#1c2333] hover:text-white font-oswald uppercase text-xs tracking-widest rounded-none h-12 w-full sm:w-auto">
               VOLTAR
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleFinish}
-              disabled={isFinishing}
-              className="bg-green-600 hover:bg-green-700 text-white font-oswald uppercase text-xs tracking-widest rounded-none h-12 border-none"
-            >
-              {isFinishing ? "FINALIZANDO..." : "CONFIRMAR FINALIZAÇÃO"}
-            </AlertDialogAction>
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+              <Button
+                onClick={() => handleFinish(false)}
+                disabled={isFinishing}
+                variant="outline"
+                className="bg-transparent border-red-500/50 text-red-400 hover:bg-red-500/10 font-oswald uppercase text-xs tracking-widest rounded-none h-12 w-full"
+              >
+                NÃO COMPARECEU
+              </Button>
+              <Button
+                onClick={() => handleFinish(true)}
+                disabled={isFinishing}
+                className="bg-green-600 hover:bg-green-700 text-white font-oswald uppercase text-xs tracking-widest rounded-none h-12 w-full"
+              >
+                {isFinishing ? "PROCESSANDO..." : "SIM, COMPARECEU"}
+              </Button>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
