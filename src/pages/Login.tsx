@@ -242,7 +242,7 @@ export default function Login() {
           </div>
         </section>
 
-        <form onSubmit={handleAuth} className="relative z-20 -mt-1 rounded-t-[24px] bg-white px-6 pb-7 pt-6 shadow-[0_-12px_28px_rgba(10,30,80,0.08)]">
+        <form onSubmit={handleAuth} className="relative z-20 -mt-1 rounded-t-[24px] bg-white px-6 pb-5 pt-5 shadow-[0_-12px_28px_rgba(10,30,80,0.08)]">
           <div>
             <h2 className="text-[24px] font-black leading-none tracking-normal text-[#101a3d] normal-case">
               {isSignUp ? "Criar conta" : "Entrar"}
