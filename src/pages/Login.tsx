@@ -3,14 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import {
-  Car,
+  Eye,
+  EyeOff,
   HeartPulse,
   Lock,
   Mail,
   Phone,
   Scissors,
   Sparkles,
+  Store,
   User,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +24,8 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -80,6 +85,12 @@ export default function Login() {
 
         if (error) throw error;
 
+        if (rememberMe) {
+          localStorage.setItem("gohub_login_email", email);
+        } else {
+          localStorage.removeItem("gohub_login_email");
+        }
+
         const { data: panelData } = await supabase.rpc("get_my_app_panels");
 
         if (panelData) {
@@ -122,6 +133,13 @@ export default function Login() {
     }
   };
 
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("gohub_login_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
+
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
@@ -155,195 +173,228 @@ export default function Login() {
   };
 
   const serviceHighlights = [
-    { icon: Scissors, label: "Barba" },
+    { icon: Scissors, label: "Barbearias" },
+    { icon: HeartPulse, label: "Clinicas" },
     { icon: Sparkles, label: "Beleza" },
-    { icon: Car, label: "Auto" },
-    { icon: HeartPulse, label: "Saude" },
+    { icon: Wrench, label: "Servicos" },
   ];
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#f7f8fc] font-sans text-slate-950">
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col">
-        <div className="absolute inset-x-0 top-0 h-[410px] overflow-hidden rounded-b-[38px] bg-gradient-to-br from-[#22005d] via-[#1c32a0] to-[#0aa7ff]">
-          <div className="absolute -left-16 top-12 h-44 w-44 rounded-full bg-white/10" />
-          <div className="absolute -right-20 top-24 h-56 w-56 rounded-full bg-[#00d1ff]/25" />
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/20 to-transparent" />
-        </div>
+    <div className="min-h-screen overflow-y-auto bg-[#eef4ff] font-sans text-[#101a3d]">
+      <div className="mx-auto min-h-screen w-full max-w-[430px] bg-white shadow-2xl sm:my-4 sm:min-h-[calc(100vh-2rem)] sm:overflow-hidden sm:rounded-[28px]">
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#24008f] via-[#0444da] to-[#05a8ff] px-5 pb-5 pt-8 text-white">
+          <div className="absolute -left-16 top-8 h-36 w-36 rounded-full bg-white/10" />
+          <div className="absolute -right-20 top-10 h-48 w-48 rounded-full bg-[#1bb6ff]/35" />
+          <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#0068e8]/70 to-transparent" />
+          <div className="absolute bottom-24 left-9 right-9 h-28 rounded-t-[44px] border border-white/10 bg-white/5 opacity-60" />
+          <div className="absolute bottom-20 left-14 h-20 w-10 rounded-t-2xl bg-white/8" />
+          <div className="absolute bottom-20 left-28 h-32 w-12 rounded-t-2xl bg-white/8" />
 
-        <div className="relative z-10 flex flex-1 flex-col px-6 pb-6 pt-10">
-          <div className="flex items-center justify-between">
+          <div className="relative z-10">
             <img
               src="/Logo-GoHub.png"
               alt="GoHub"
-              className="h-12 w-auto rounded-2xl bg-white px-3 py-2 shadow-lg"
+              className="h-14 w-14 rounded-2xl bg-white object-contain p-2 shadow-lg"
             />
-            <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
-              agenda local
-            </span>
-          </div>
 
-          <div className="mt-10 max-w-[300px] text-white">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-sky-100">GoHub Brasil</p>
-            <h1 className="mt-2 text-4xl font-black leading-tight tracking-tight">
-              Encontre servicos perto de voce
-            </h1>
-            <p className="mt-3 text-sm leading-relaxed text-white/80">
-              Barbearias, beleza, clinicas e servicos locais em uma unica agenda.
+            <div className="mt-10 grid grid-cols-[1fr_128px] items-center gap-2">
+              <div>
+                <p className="text-[12px] font-black uppercase tracking-[0.24em] text-[#4de0ff]">
+                  GoHub Brasil
+                </p>
+                <h1 className="mt-3 max-w-[210px] text-[32px] font-black leading-[1.06] tracking-normal text-white normal-case">
+                  Encontre servicos perto de voce
+                </h1>
+                <p className="mt-4 max-w-[205px] text-[13px] font-semibold leading-relaxed text-white/82">
+                  Barbearias, clinicas, beleza, automotivos e muito mais em so um lugar.
+                </p>
+              </div>
+
+              <div className="relative h-36">
+                <div className="absolute left-4 top-2 h-24 w-24 rounded-full bg-white/10 blur-sm" />
+                <div className="absolute left-4 top-4 flex h-[108px] w-[92px] items-center justify-center rounded-[48px_48px_52px_52px] bg-gradient-to-b from-[#5aa2ff] to-[#083bff] shadow-[0_18px_30px_rgba(0,0,0,0.25)]">
+                  <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white shadow-[inset_0_-8px_14px_rgba(17,96,255,0.12)]">
+                    <Store className="h-9 w-9 text-[#0847ff]" />
+                  </div>
+                </div>
+                <div className="absolute bottom-1 left-12 h-4 w-12 rounded-full bg-black/20 blur-md" />
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-4 gap-2 rounded-[20px] bg-white/95 p-2 shadow-[0_18px_35px_rgba(6,25,89,0.25)] backdrop-blur">
+              {serviceHighlights.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl bg-[#f6f8ff] px-1 text-[#1235cf] active:scale-95"
+                  >
+                    <Icon className="h-6 w-6" />
+                    <span className="max-w-full truncate text-[9px] font-extrabold text-[#101a3d]">
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <form onSubmit={handleAuth} className="relative z-20 -mt-1 rounded-t-[24px] bg-white px-6 pb-7 pt-6 shadow-[0_-12px_28px_rgba(10,30,80,0.08)]">
+          <div>
+            <h2 className="text-[24px] font-black leading-none tracking-normal text-[#101a3d] normal-case">
+              {isSignUp ? "Criar conta" : "Entrar"}
+            </h2>
+            <p className="mt-2 text-[13px] font-semibold text-[#7b89a8]">
+              {isSignUp ? "Comece a usar sua conta GoHub" : "Acesse sua conta para continuar"}
             </p>
           </div>
 
-          <div className="mt-7 grid grid-cols-4 gap-2">
-            {serviceHighlights.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div key={item.label} className="rounded-2xl bg-white/95 px-2 py-3 text-center shadow-lg">
-                  <Icon className="mx-auto h-5 w-5 text-[#22005d]" />
-                  <span className="mt-2 block text-[10px] font-extrabold text-slate-700">{item.label}</span>
+          <div className="mt-5 space-y-3">
+            {isSignUp && (
+              <>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8fa0bf]" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Nome completo"
+                    className="h-12 rounded-xl border-[#dfe7f5] bg-[#fbfcff] pl-11 text-[#101a3d] placeholder:text-[#8fa0bf] focus-visible:ring-[#064dff]"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
                 </div>
-              );
-            })}
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8fa0bf]" />
+                  <Input
+                    id="whatsapp"
+                    type="tel"
+                    placeholder="WhatsApp"
+                    className="h-12 rounded-xl border-[#dfe7f5] bg-[#fbfcff] pl-11 text-[#101a3d] placeholder:text-[#8fa0bf] focus-visible:ring-[#064dff]"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8fa0bf]" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="E-mail"
+                className="h-12 rounded-xl border-[#dfe7f5] bg-[#fbfcff] pl-11 text-[#101a3d] placeholder:text-[#8fa0bf] focus-visible:ring-[#064dff]"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8fa0bf]" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Senha"
+                className="h-12 rounded-xl border-[#dfe7f5] bg-[#fbfcff] pl-11 pr-11 text-[#101a3d] placeholder:text-[#8fa0bf] focus-visible:ring-[#064dff]"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8fa0bf]"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
-          <form onSubmit={handleAuth} className="mt-7 space-y-3 rounded-[28px] bg-white p-5 shadow-2xl">
-            <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
-                {isSignUp ? "Criar conta" : "Entrar"}
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {isSignUp ? "Comece a usar o GoHub agora." : "Acesse sua agenda e seus servicos."}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              {isSignUp && (
-                <>
-                  <div className="relative">
-                    <User className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Nome completo"
-                      className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 text-slate-950 placeholder:text-slate-400 focus-visible:ring-[#119cff]"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="relative">
-                    <Phone className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      id="whatsapp"
-                      type="tel"
-                      placeholder="WhatsApp"
-                      className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 text-slate-950 placeholder:text-slate-400 focus-visible:ring-[#119cff]"
-                      value={whatsapp}
-                      onChange={(e) => setWhatsapp(e.target.value)}
-                      required
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="E-mail"
-                  className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 text-slate-950 placeholder:text-slate-400 focus-visible:ring-[#119cff]"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+          {!isSignUp && (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-[11px] font-bold text-[#101a3d]">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) => setRememberMe(event.target.checked)}
+                  className="h-4 w-4 rounded border-[#c8d4ea] accent-[#064dff]"
                 />
-              </div>
-
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Senha"
-                  className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 text-slate-950 placeholder:text-slate-400 focus-visible:ring-[#119cff]"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full rounded-2xl bg-[#119cff] py-6 text-base font-extrabold text-white shadow-lg shadow-blue-500/25 hover:bg-[#0b80d0]"
-              disabled={isLoading}
-            >
-              {isLoading ? "Carregando..." : isSignUp ? "Criar conta" : "Entrar"}
-            </Button>
-
-            <div className="flex items-center justify-between px-1">
+                Lembrar meus dados
+              </label>
               <button
                 type="button"
                 onClick={() => navigate("/forgot-password")}
-                className="text-xs font-semibold text-slate-500"
+                className="text-[11px] font-extrabold text-[#064dff]"
               >
-                Esqueceu a senha?
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-xs font-semibold text-slate-500"
-              >
-                {isSignUp ? (
-                  <>
-                    Ja tem conta? <span className="text-[#119cff]">Entrar</span>
-                  </>
-                ) : (
-                  <>
-                    Novo aqui? <span className="text-[#119cff]">Cadastrar</span>
-                  </>
-                )}
+                Esqueci minha senha
               </button>
             </div>
+          )}
 
-            <div className="relative pt-5">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-xs font-semibold">
-                <span className="bg-white px-3 text-slate-400">ou continue com</span>
-              </div>
+          <Button
+            type="submit"
+            className="mt-5 h-12 w-full rounded-xl bg-[#064dff] text-[14px] font-extrabold text-white shadow-[0_10px_22px_rgba(6,77,255,0.28)] hover:bg-[#053ed0]"
+            disabled={isLoading}
+          >
+            {isLoading ? "Carregando..." : isSignUp ? "Criar conta" : "Entrar"}
+          </Button>
+
+          <div className="relative mt-5">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-[#e5ebf5]" />
             </div>
+            <div className="relative flex justify-center text-[11px] font-semibold">
+              <span className="bg-white px-4 text-[#9aa8c0]">ou continue com</span>
+            </div>
+          </div>
 
-            <Button
+          <Button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            variant="outline"
+            className="mt-4 flex h-12 w-full items-center justify-center gap-3 rounded-xl border-[#dfe7f5] bg-white text-[13px] font-extrabold text-[#101a3d] shadow-sm hover:bg-[#f8fbff]"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Entrar com Google
+          </Button>
+
+          <div className="mt-5 text-center text-[13px] font-semibold text-[#101a3d]">
+            {isSignUp ? "Ja tem conta?" : "Novo por aqui?"}{" "}
+            <button
               type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              variant="outline"
-              className="flex w-full items-center justify-center gap-3 rounded-2xl border-slate-200 bg-white py-6 font-bold text-slate-700 transition-all hover:bg-slate-50"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="font-extrabold text-[#064dff]"
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Entrar com Google
-            </Button>
-          </form>
-        </div>
+              {isSignUp ? "Entrar" : "Cadastrar"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
