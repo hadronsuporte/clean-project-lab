@@ -123,9 +123,10 @@ export default function AdminDashboard({
           revenueToday: data.summary.revenue_today,
         });
 
-        // Ordenação garantida conforme solicitado:
-        // Hoje e Próximos: starts_at ASC
-        // Histórico: starts_at DESC
+        // Nova separação conforme solicitado:
+        // Aba Hoje: dia atual, diferente de completed, no_show, canceled, attended não false
+        // Aba Próximos: futuro, diferente de completed, no_show, canceled, attended não false
+        // Aba Histórico: completed, no_show, canceled ou attended false
         const allCombined = [
           ...(data.today || []),
           ...(data.upcoming || []),
@@ -133,14 +134,25 @@ export default function AdminDashboard({
         ];
         
         // Remove duplicates by ID
-        const unique = Array.from(new Map(allCombined.map(a => [(a as any).id || Math.random(), a])).values());
+        const unique = Array.from(new Map(allCombined.map(appt => [appt.id, appt])).values());
+
+        const isToday = (date: string) => isTodayBR(date);
+        const isFuture = (date: string) => isAfterTodayBR(date);
+        const isHistorical = (appt: Appointment) => {
+          const status = appt.status.toLowerCase();
+          const canceledStatuses = ['cancelled', 'canceled', 'cancelado'];
+          return status === 'completed' || 
+                 status === 'no_show' || 
+                 canceledStatuses.includes(status) || 
+                 (appt as any).client_attended === false;
+        };
 
         setAppointments({
-          today: unique.filter(a => isTodayBR(a.starts_at) && !isFinished(a.status) && !isCanceled(a.status))
+          today: unique.filter(appt => isToday(appt.starts_at) && !isHistorical(appt))
             .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
-          upcoming: unique.filter(a => isAfterTodayBR(a.starts_at) && !isFinished(a.status) && !isCanceled(a.status))
+          upcoming: unique.filter(appt => isFuture(appt.starts_at) && !isHistorical(appt))
             .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
-          history: unique.filter(a => isFinished(a.status) || isCanceled(a.status) || a.status.toLowerCase() === 'no_show' || new Date(a.starts_at).getTime() < Date.now())
+          history: unique.filter(appt => isHistorical(appt))
             .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()),
         });
 

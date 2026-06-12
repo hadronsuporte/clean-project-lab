@@ -301,10 +301,13 @@ export type Database = {
         Row: {
           barber_name: string | null
           barbershop_id: string | null
+          client_attended: boolean | null
           client_name: string | null
+          client_phone: string | null
           id: string | null
           price_charged: number | null
           service_name: string | null
+          service_price: number | null
           starts_at: string | null
           status: string | null
         }
@@ -425,7 +428,10 @@ export type Database = {
         Args: { p_day: string }
         Returns: {
           barber_name: string
+          client_attended: boolean
           client_name: string
+          client_phone: string
+          id: string
           price_charged: number
           service_name: string
           starts_at: string
