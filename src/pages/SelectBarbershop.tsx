@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
+  Bell,
   Car,
+  Gift,
   ChevronRight,
   HeartPulse,
   LocateFixed,
@@ -140,11 +142,6 @@ export default function SelectBarbershop() {
 
     if (!profile) return;
 
-    if (profile.role === "client" && profile.barbershop_id && !manualSelection) {
-      navigate("/client-home", { replace: true });
-      return;
-    }
-
     if (!manualSelection) {
       if (profile.isSuperAdmin) {
         navigate("/super-admin", { replace: true });
@@ -279,80 +276,96 @@ export default function SelectBarbershop() {
   const nearbyCount = businesses.filter((business) => business.distance_km !== null).length;
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-slate-950 pb-24 font-sans">
-      <div className="mx-auto w-full max-w-[430px]">
-        <header className="bg-white px-5 pt-5 pb-4 border-b border-slate-100 sticky top-0 z-20">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <AdminGear />
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-slate-500">Entrega de horario no capricho</p>
-                <button
-                  type="button"
-                  onClick={requestLocation}
-                  className="flex max-w-[210px] items-center gap-1 text-sm font-bold text-slate-950"
-                >
-                  <MapPin className="h-4 w-4 shrink-0 text-[#119CFF]" />
-                  <span className="truncate">{coords ? "Perto de voce" : "Usar minha localizacao"}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-                </button>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#f4f5f8] pb-24 font-sans text-slate-950">
+      <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f4f5f8]">
+        <section className="relative min-h-[290px] overflow-hidden bg-gradient-to-br from-[#e90046] via-[#ed174f] to-[#8d35ff] px-5 pb-16 pt-7 text-white">
+          <div className="absolute -left-20 top-8 h-44 w-44 rounded-full bg-white/10" />
+          <div className="absolute -right-16 top-20 h-56 w-56 rounded-full bg-black/10" />
+          <div className="absolute bottom-4 right-5 flex h-28 w-28 rotate-6 items-center justify-center rounded-[32px] bg-white/15 backdrop-blur">
+            <img src="/Logo-GoHub.png" alt="GoHub" className="w-24 rounded-2xl bg-white p-2 shadow-xl" />
+          </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+          <div className="relative z-10 flex items-center justify-between">
+            <img src="/Logo-GoHub.png" alt="GoHub" className="h-10 rounded-2xl bg-white px-3 py-2" />
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(true)}
-                className="rounded-full outline-none active:scale-95"
+                className="rounded-full bg-white/15 p-1 active:scale-95"
               >
                 <UserAvatar
                   name={profile?.name}
                   email={user?.email}
                   avatarUrl={profile?.avatar_url}
                   size="md"
-                  className="border border-slate-200 bg-white shadow-sm"
+                  className="border border-white/40 bg-white"
                 />
               </button>
               <LogoutButton showText={false} />
             </div>
           </div>
 
-          <div className="mt-5">
-            <p className="text-xs font-semibold text-slate-500">Ola, {firstName}</p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
-              Do que voce precisa hoje?
+          <div className="relative z-10 mt-10 max-w-[250px]">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-white/80">GoHub chegou</p>
+            <h1 className="mt-2 text-4xl font-black leading-[0.95] tracking-tight">
+              servicos perto de voce
             </h1>
+            <p className="mt-3 text-sm font-semibold leading-relaxed text-white/90">
+              Encontre empresas locais, escolha um servico e agende em poucos toques.
+            </p>
+          </div>
+        </section>
+
+        <main className="relative -mt-10 rounded-t-[34px] bg-white px-5 pb-8 pt-6 shadow-[0_-12px_30px_rgba(15,23,42,0.08)]">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm text-slate-500">Boa tarde, {firstName}</p>
+              <button
+                type="button"
+                onClick={requestLocation}
+                className="mt-1 flex max-w-[260px] items-center gap-1 text-left text-base font-black text-slate-950"
+              >
+                <MapPin className="h-4 w-4 shrink-0 text-[#ed174f]" />
+                <span className="truncate">{coords ? "Empresas perto de voce" : "Usar minha localizacao"}</span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+              </button>
+            </div>
+            <button
+              type="button"
+              className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-900"
+              aria-label="Notificacoes"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ed174f] px-1 text-[10px] font-black text-white">
+                1
+              </span>
+            </button>
           </div>
 
-          <div className="relative mt-4">
+          <div className="mt-5 rounded-[22px] bg-[#f7e8ff] px-4 py-3 text-[#8d35ff]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white">
+                  <Gift className="h-5 w-5" />
+                </span>
+                <p className="text-sm font-extrabold">Voce ganhou uma nova forma de agendar!</p>
+              </div>
+              <span className="text-lg font-bold leading-none">x</span>
+            </div>
+          </div>
+
+          <div className="relative mt-5">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar corte, barba, estetica, consulta..."
-              className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 pr-4 text-[15px] text-slate-950 placeholder:text-slate-400 focus-visible:ring-[#119CFF]"
+              className="h-13 rounded-2xl border-slate-200 bg-slate-50 py-6 pl-11 pr-4 text-[15px] font-semibold text-slate-950 placeholder:text-slate-400 focus-visible:ring-[#ed174f]"
             />
           </div>
-        </header>
 
-        <main className="space-y-6 px-5 py-5">
-          <section>
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-slate-950">Categorias</h2>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={requestLocation}
-                disabled={isLocating}
-                className="h-8 rounded-full px-3 text-xs font-bold text-[#119CFF] hover:bg-blue-50 hover:text-[#0b80d0]"
-              >
-                <LocateFixed className={cn("mr-1 h-4 w-4", isLocating && "animate-pulse")} />
-                {coords ? "Atualizar" : "Perto de mim"}
-              </Button>
-            </div>
-
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <section className="mt-6">
+            <div className="grid grid-cols-3 gap-x-3 gap-y-5">
               {categories.map((category) => {
                 const Icon = category.icon;
                 const selected = selectedCategory === category.id;
@@ -362,16 +375,18 @@ export default function SelectBarbershop() {
                     key={category.id}
                     type="button"
                     onClick={() => setSelectedCategory(category.id)}
-                    className={cn(
-                      "flex min-w-[78px] flex-col items-center gap-2 rounded-2xl border bg-white px-3 py-3 shadow-sm transition active:scale-95",
-                      selected ? "border-[#119CFF] ring-2 ring-[#119CFF]/15" : "border-slate-100",
-                    )}
+                    className="flex flex-col items-center gap-2 active:scale-95"
                   >
-                    <span className={cn("flex h-11 w-11 items-center justify-center rounded-2xl", category.color)}>
-                      <Icon className="h-5 w-5" />
+                    <span
+                      className={cn(
+                        "flex h-[62px] w-[62px] items-center justify-center rounded-3xl border shadow-sm",
+                        selected ? "border-[#ed174f] bg-[#fff1f5]" : "border-slate-100 bg-slate-50",
+                      )}
+                    >
+                      <Icon className={cn("h-7 w-7", selected ? "text-[#ed174f]" : "text-slate-700")} />
                     </span>
-                    <span className="max-w-[70px] truncate text-xs font-bold text-slate-700">
-                      {category.shortLabel}
+                    <span className="max-w-[92px] truncate text-center text-xs font-extrabold text-slate-800">
+                      {category.label}
                     </span>
                   </button>
                 );
@@ -379,41 +394,49 @@ export default function SelectBarbershop() {
             </div>
           </section>
 
-          <section className="rounded-[28px] bg-gradient-to-br from-[#0f172a] via-[#18213b] to-[#123d68] p-5 text-white shadow-lg">
-            <div className="flex items-start justify-between gap-4">
+          <section className="mt-7 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#c77dff] to-[#8d35ff] p-5 text-white">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">GoHub perto de voce</p>
-                <h2 className="mt-2 text-2xl font-black leading-tight">Agenda local em poucos toques</h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                  Compare servicos, escolha a empresa e reserve seu horario.
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-white/75">GoHub Pro</p>
+                <h2 className="mt-1 text-2xl font-black leading-tight">Agende sem ligar</h2>
+                <p className="mt-2 text-sm font-semibold text-white/85">
+                  Horarios disponiveis, empresas perto de voce e lembretes automaticos.
                 </p>
               </div>
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10">
-                <Navigation className="h-7 w-7 text-[#38bdf8]" />
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-white/18">
+                <Sparkles className="h-8 w-8" />
               </div>
             </div>
           </section>
 
-          <section>
+          <section className="mt-7">
             <div className="flex items-end justify-between gap-3">
               <div>
-                <h2 className="text-base font-extrabold text-slate-950">
+                <h2 className="text-lg font-black text-slate-950">
                   {search ? "Resultado da busca" : "Estabelecimentos"}
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs font-semibold text-slate-500">
                   {coords && nearbyCount > 0
-                    ? `${nearbyCount} com distancia calculada. Todos continuam aparecendo.`
-                    : "Permita localizacao para ordenar os mais proximos."}
+                    ? `${nearbyCount} com distancia calculada. Todos aparecem.`
+                    : "Ative a localizacao para ver os mais proximos primeiro."}
                 </p>
               </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500 shadow-sm">
-                {businesses.length}
-              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={requestLocation}
+                disabled={isLocating}
+                className="h-9 rounded-full px-3 text-xs font-black text-[#ed174f] hover:bg-pink-50 hover:text-[#ed174f]"
+              >
+                <LocateFixed className={cn("mr-1 h-4 w-4", isLocating && "animate-pulse")} />
+                Perto
+              </Button>
             </div>
 
             <div className="mt-4 space-y-4">
               {isLoading && (
-                <div className="rounded-3xl bg-white p-5 text-sm font-semibold text-slate-500 shadow-sm">
+                <div className="rounded-3xl bg-slate-50 p-5 text-sm font-bold text-slate-500">
                   Buscando os melhores horarios...
                 </div>
               )}
@@ -429,7 +452,7 @@ export default function SelectBarbershop() {
                     key={business.id}
                     onClick={() => handleSelect(business)}
                     onContextMenu={(event) => event.preventDefault()}
-                    className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition active:scale-[0.99]"
+                    className="overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition active:scale-[0.99]"
                   >
                     <div className="relative h-28 bg-slate-200">
                       {business.cover_url || business.logo_url ? (
@@ -439,13 +462,13 @@ export default function SelectBarbershop() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 to-sky-800">
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#22005d] to-[#119cff]">
                           <Store className="h-9 w-9 text-white/80" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
-                      <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-white shadow-md">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-white shadow-md">
                           {business.logo_url ? (
                             <img src={business.logo_url} alt={business.name} className="h-full w-full object-cover" />
                           ) : (
@@ -454,7 +477,7 @@ export default function SelectBarbershop() {
                         </div>
                         <div className="min-w-0 text-white">
                           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/80">{label}</p>
-                          <h3 className="max-w-[245px] truncate text-lg font-black">{business.name}</h3>
+                          <h3 className="truncate text-lg font-black">{business.name}</h3>
                         </div>
                       </div>
                     </div>
@@ -471,14 +494,14 @@ export default function SelectBarbershop() {
                             {minPrice && <span>A partir de {minPrice}</span>}
                           </div>
                           {business.address && (
-                            <p className="mt-2 line-clamp-1 text-xs text-slate-500">{business.address}</p>
+                            <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-500">{business.address}</p>
                           )}
                         </div>
 
                         <button
                           type="button"
                           onClick={(event) => openMaps(business, event)}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#119CFF] active:scale-95"
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#119cff] active:scale-95"
                           aria-label="Abrir no mapa"
                         >
                           <MapPin className="h-5 w-5" />
@@ -506,7 +529,7 @@ export default function SelectBarbershop() {
 
                       <Button
                         type="button"
-                        className="h-11 w-full rounded-2xl bg-[#119CFF] text-sm font-extrabold text-white hover:bg-[#0b80d0]"
+                        className="h-11 w-full rounded-2xl bg-[#ed174f] text-sm font-extrabold text-white hover:bg-[#c81042]"
                       >
                         Ver horarios
                       </Button>
@@ -516,8 +539,8 @@ export default function SelectBarbershop() {
               })}
 
               {!isLoading && businesses.length === 0 && (
-                <div className="rounded-3xl bg-white p-8 text-center shadow-sm">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                <div className="rounded-3xl bg-slate-50 p-8 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white">
                     <Search className="h-7 w-7 text-slate-400" />
                   </div>
                   <h3 className="mt-4 text-lg font-black text-slate-950">Nada encontrado</h3>
@@ -529,6 +552,45 @@ export default function SelectBarbershop() {
             </div>
           </section>
         </main>
+
+        <nav className="fixed bottom-0 left-1/2 z-30 grid w-full max-w-[430px] -translate-x-1/2 grid-cols-4 border-t border-slate-200 bg-white px-4 py-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)]">
+          <button type="button" className="flex flex-col items-center gap-1 text-[#ed174f]">
+            <Store className="h-6 w-6" />
+            <span className="text-[11px] font-black">Inicio</span>
+          </button>
+          <button type="button" className="flex flex-col items-center gap-1 text-slate-400">
+            <Search className="h-6 w-6" />
+            <span className="text-[11px] font-black">Busca</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (profile?.barbershop_id) {
+                navigate("/client-home");
+              } else {
+                toast.info("Escolha um estabelecimento para ver sua agenda.");
+              }
+            }}
+            className="flex flex-col items-center gap-1 text-slate-400"
+          >
+            <Scissors className="h-6 w-6" />
+            <span className="text-[11px] font-black">Agenda</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex flex-col items-center gap-1 text-slate-400"
+          >
+            <UserAvatar
+              name={profile?.name}
+              email={user?.email}
+              avatarUrl={profile?.avatar_url}
+              size="sm"
+              className="border border-slate-200"
+            />
+            <span className="text-[11px] font-black">Perfil</span>
+          </button>
+        </nav>
       </div>
 
       <ProfileModal
