@@ -78,6 +78,12 @@ function AppointmentCard({
               {(appt.status.toLowerCase() === 'no_show' || (appt as any).client_attended === false) && (
                 <span className="ml-2 text-orange-500">(NÃO COMPARECEU)</span>
               )}
+              {(appt.status.toLowerCase() === 'cancelled' || appt.status.toLowerCase() === 'canceled' || appt.status.toLowerCase() === 'cancelado') && (
+                <span className="ml-2 text-red-500">(CANCELADO)</span>
+              )}
+              {(appt.status.toLowerCase() === 'completed' && (appt as any).client_attended !== false) && (
+                <span className="ml-2 text-blue-500">(FINALIZADO)</span>
+              )}
             </h4>
           </div>
           <p className="text-[10px] text-[#8a9ab5] uppercase tracking-wider font-medium">
@@ -319,16 +325,17 @@ export default function ClientHome() {
   
   const now = new Date();
   
-  const isHistory = (appt: Appointment) => {
-    // We already have active/history lists from RPC, but let's keep a helper 
-    // to distinguish them in the local state if needed.
-    // However, the RPC returns them already separated.
-    // If we added `is_active` in mapped data, we use that.
-    return !(appt as any).is_active;
+  const isHistorical = (appt: Appointment) => {
+    const status = appt.status.toLowerCase();
+    const canceledStatuses = ['cancelled', 'canceled', 'cancelado'];
+    return status === 'completed' || 
+           status === 'no_show' || 
+           canceledStatuses.includes(status) || 
+           (appt as any).client_attended === false;
   };
 
-  const upcomingAppointments = appointments.filter(a => (a as any).is_active);
-  const historyAppointments = appointments.filter(a => !(a as any).is_active);
+  const upcomingAppointments = appointments.filter(a => !isHistorical(a));
+  const historyAppointments = appointments.filter(a => isHistorical(a));
 
 
   return (

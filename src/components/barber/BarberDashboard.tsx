@@ -109,16 +109,25 @@ export default function BarberDashboard({ profile }: { profile: any }) {
   // Remover duplicatas por ID caso existam
   const uniqueAppointments = Array.from(new Map(allAppointments.map(a => [a.id, a])).values());
 
+  const isHistorical = (appt: Appointment) => {
+    const status = appt.status.toLowerCase();
+    const canceledStatuses = ['cancelled', 'canceled', 'cancelado'];
+    return status === 'completed' || 
+           status === 'no_show' || 
+           canceledStatuses.includes(status) || 
+           (appt as any).client_attended === false;
+  };
+
   const todayAppointments = uniqueAppointments
-    .filter(a => isTodayBR(a.starts_at) && !isFinished(a.status) && !isCanceled(a.status))
+    .filter(a => isTodayBR(a.starts_at) && !isHistorical(a))
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
   const nextAppointments = uniqueAppointments
-    .filter(a => isAfterTodayBR(a.starts_at) && !isFinished(a.status) && !isCanceled(a.status))
+    .filter(a => isAfterTodayBR(a.starts_at) && !isHistorical(a))
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
   const historyAppointments = uniqueAppointments
-    .filter(a => isFinished(a.status) || isCanceled(a.status) || new Date(a.starts_at).getTime() < Date.now())
+    .filter(a => isHistorical(a))
     .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
 
 
