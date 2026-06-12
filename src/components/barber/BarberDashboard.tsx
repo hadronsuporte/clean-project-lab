@@ -11,6 +11,15 @@ import { Lock } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getDateKeyBR, isTodayBR, isAfterTodayBR, isFinished, isCanceled } from "@/lib/utils";
 import FreeSlotsView from "../admin/FreeSlotsView";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 interface DashboardSummary {
@@ -240,8 +249,12 @@ export default function BarberDashboard({ profile }: { profile: any }) {
 }
 
 function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: { appointments: Appointment[], onWhatsApp: (phone: string) => void, emptyMessage: string, onRefresh: () => void }) {
-  const getStatusInfo = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusInfo = (status: string, client_attended?: boolean) => {
+    const s = status.toLowerCase();
+    if (s === "no_show" || (s === "completed" && client_attended === false)) {
+      return { label: "NÃO COMPARECEU", color: "text-orange-500 border-orange-500/30 bg-orange-500/10" };
+    }
+    switch (s) {
       case "pending": 
         return { label: "PENDENTE", color: "text-yellow-500 border-yellow-500/30 bg-yellow-500/10" };
       case "confirmed": 
@@ -261,10 +274,17 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
 
 // Removido money local, usando importado
 
-  const handleFinishAppointment = async (appt: Appointment) => {
+  const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [isFinishing, setIsFinishing] = useState(false);
+
+  const handleFinishAppointment = async (attended: boolean) => {
+    if (!selectedAppt) return;
     try {
+      setIsFinishing(true);
       const { data, error } = await supabase.rpc('finish_barber_appointment', {
-        p_appointment_id: appt.id
+        p_appointment_id: selectedAppt.id,
+        p_attended: attended
       });
 
       if (error) {
@@ -277,10 +297,13 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
         return;
       }
 
-      toast.success("Atendimento finalizado");
+      toast.success(attended ? "Atendimento finalizado" : "Registrado como não comparecimento");
+      setIsFinishModalOpen(false);
       onRefresh();
     } catch (err: any) {
       toast.error("Ocorreu um erro ao finalizar o atendimento");
+    } finally {
+      setIsFinishing(false);
     }
   };
 
@@ -295,7 +318,7 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
   return (
     <div className="space-y-4">
       {appointments.map((appt, i) => {
-        const isFinished = ["completed", "finalizado", "cancelled", "canceled", "cancelado"].includes(appt.status.toLowerCase()) || new Date(appt.starts_at) < new Date(new Date().getTime() - 60 * 60 * 1000);
+        const isFinished = ["completed", "finalizado", "cancelled", "canceled", "cancelado", "no_show"].includes(appt.status.toLowerCase());
         const price = appt.price ?? appt.price_charged ?? appt.service_price ?? 0;
         const commission = appt.commission_amount ?? appt.commission_value ?? 0;
 
@@ -316,8 +339,8 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
                 </div>
               </div>
 
-              <span className={`text-[9px] font-bold px-2 py-1 rounded-[2px] border uppercase tracking-widest ${getStatusInfo(appt.status).color}`}>
-                {getStatusInfo(appt.status).label}
+              <span className={`text-[9px] font-bold px-2 py-1 rounded-[2px] border uppercase tracking-widest ${getStatusInfo(appt.status, (appt as any).client_attended).color}`}>
+                {getStatusInfo(appt.status, (appt as any).client_attended).label}
               </span>
             </div>
 
@@ -345,7 +368,10 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
               {!isFinished && (
                 <Button 
                   className="w-full h-10 bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 text-[10px] uppercase font-bold tracking-widest"
-                  onClick={() => handleFinishAppointment(appt)}
+                  onClick={() => {
+                    setSelectedAppt(appt);
+                    setIsFinishModalOpen(true);
+                  }}
                 >
                   Finalizar atendimento
                 </Button>
@@ -365,6 +391,42 @@ function AppointmentList({ appointments, onWhatsApp, emptyMessage, onRefresh }: 
           </div>
         );
       })}
+
+      <AlertDialog open={isFinishModalOpen} onOpenChange={setIsFinishModalOpen}>
+        <AlertDialogContent className="bg-[#141b2a] border-[#2a3347] text-[#c8d4e8]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-oswald uppercase text-[#f0c040] tracking-widest">
+              O CLIENTE COMPARECEU?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#8a9ab5] text-[10px] uppercase tracking-widest leading-relaxed">
+              Selecione se o cliente realizou o serviço ou se não compareceu ao horário agendado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="bg-transparent border-[#2a3347] text-[#8a9ab5] hover:bg-[#1c2333] hover:text-white font-oswald uppercase text-xs tracking-widest rounded-none h-12 w-full sm:w-auto">
+              VOLTAR
+            </AlertDialogCancel>
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+              <Button
+                onClick={() => handleFinishAppointment(false)}
+                disabled={isFinishing}
+                variant="outline"
+                className="bg-transparent border-red-500/50 text-red-400 hover:bg-red-500/10 font-oswald uppercase text-xs tracking-widest rounded-none h-12 w-full"
+              >
+                NÃO COMPARECEU
+              </Button>
+              <Button
+                onClick={() => handleFinishAppointment(true)}
+                disabled={isFinishing}
+                className="bg-green-600 hover:bg-green-700 text-white font-oswald uppercase text-xs tracking-widest rounded-none h-12 w-full"
+              >
+                {isFinishing ? "PROCESSANDO..." : "SIM, COMPARECEU"}
+              </Button>
+            </div>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
