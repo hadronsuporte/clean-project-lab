@@ -107,6 +107,29 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
   const [stateUf, setStateUf] = useState("");
 
   const [saving, setSaving] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+
+  async function lookupCep(rawCep: string) {
+    const digits = rawCep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const data = await res.json();
+      if (data?.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+      setStreet(data.logradouro || "");
+      setNeighborhood(data.bairro || "");
+      setCity(data.localidade || "");
+      setStateUf(data.uf || "");
+    } catch {
+      toast.error("Não foi possível consultar o CEP");
+    } finally {
+      setCepLoading(false);
+    }
+  }
 
   function reset() {
     setName(""); setSex("M"); setForeign(false); setBirth(""); setCpf("");
