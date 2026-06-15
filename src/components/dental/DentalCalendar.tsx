@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 const DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -79,7 +79,7 @@ export function DentalCalendar() {
           })}
 
           {HOURS.map((h) => (
-            <>
+            <Fragment key={h}>
               <div key={`h-${h}`} className="border-b border-r border-slate-200 px-2 py-1 text-xs text-slate-500 text-right h-16">
                 {h}
               </div>
@@ -94,7 +94,7 @@ export function DentalCalendar() {
                   />
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>
