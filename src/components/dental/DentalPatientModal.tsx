@@ -343,11 +343,21 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-slate-800">
-                  <SelectItem value="indicacao">Indicação</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="google">Google</SelectItem>
-                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                  <SelectItem value="outros">Outros</SelectItem>
+                  {[
+                    ["indicacao", "Indicação"],
+                    ["instagram", "Instagram"],
+                    ["google", "Google"],
+                    ["whatsapp", "WhatsApp"],
+                    ["outros", "Outros"],
+                  ].map(([v, l]) => (
+                    <SelectItem
+                      key={v}
+                      value={v}
+                      className="text-slate-800 focus:bg-blue-50 focus:text-blue-700 data-[state=checked]:bg-blue-50 data-[state=checked]:text-blue-700"
+                    >
+                      {l}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
