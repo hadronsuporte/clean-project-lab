@@ -21,6 +21,11 @@ export function PhoneGate({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (window.location.pathname.startsWith("/dental")) {
+      setIsOpen(false);
+      return;
+    }
+
     if (!authLoading && user && profile) {
       const isGoogleLogin =
         user?.app_metadata?.provider === "google" ||

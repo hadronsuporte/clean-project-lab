@@ -17,6 +17,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import DentalDashboard from "./pages/DentalDashboard";
 import DentalPatients from "./pages/DentalPatients";
+import DentalLogin from "./pages/DentalLogin";
+import { DentalAuthGuard } from "./contexts/DentalContext";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PhoneGate } from "./components/PhoneGate";
@@ -74,11 +76,23 @@ const router = createBrowserRouter([
   },
   {
     path: "/dental",
-    element: <DentalDashboard />,
+    element: (
+      <DentalAuthGuard>
+        <DentalDashboard />
+      </DentalAuthGuard>
+    ),
   },
   {
     path: "/dental/pacientes",
-    element: <DentalPatients />,
+    element: (
+      <DentalAuthGuard>
+        <DentalPatients />
+      </DentalAuthGuard>
+    ),
+  },
+  {
+    path: "/dental/login",
+    element: <DentalLogin />,
   },
 ]);
 
@@ -98,7 +112,8 @@ function App() {
             '/super-admin',
             '/services',
             '/barbers',
-            '/booking'
+            '/booking',
+            '/dental'
           ];
 
           const path = window.location.pathname;
