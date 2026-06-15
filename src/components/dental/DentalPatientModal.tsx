@@ -313,7 +313,7 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
             </div>
             <div>
               <FieldLabel>CPF</FieldLabel>
-              <Input className={inputCls} value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="000.000.000-00" />
+              <Input className={inputCls} value={cpf} onChange={(e) => setCpf(maskCpf(e.target.value))} placeholder="000.000.000-00" />
             </div>
             <div>
               <FieldLabel>RG</FieldLabel>
@@ -331,7 +331,7 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
                 <Input
                   className={`${inputCls} rounded-l-none`}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(maskPhoneBR(e.target.value))}
                   placeholder="(00) 00000-0000"
                 />
               </div>
@@ -339,10 +339,10 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
             <div>
               <FieldLabel>Como o paciente chegou na clínica</FieldLabel>
               <Select value={origin} onValueChange={setOrigin}>
-                <SelectTrigger className="h-10 bg-white border-slate-300 text-sm">
+                <SelectTrigger className="h-10 bg-white border-slate-300 text-sm text-slate-800 [&>span]:text-slate-800 data-[placeholder]:text-slate-400">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-white text-slate-800">
                   <SelectItem value="indicacao">Indicação</SelectItem>
                   <SelectItem value="instagram">Instagram</SelectItem>
                   <SelectItem value="google">Google</SelectItem>
@@ -383,11 +383,11 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
                 <FieldLabel>CPF</FieldLabel>
-                <Input className={inputCls} value={respCpf} onChange={(e) => setRespCpf(e.target.value)} />
+                <Input className={inputCls} value={respCpf} onChange={(e) => setRespCpf(maskCpf(e.target.value))} placeholder="000.000.000-00" />
               </div>
               <div>
                 <FieldLabel>Celular do responsável</FieldLabel>
-                <Input className={inputCls} value={respPhone} onChange={(e) => setRespPhone(e.target.value)} />
+                <Input className={inputCls} value={respPhone} onChange={(e) => setRespPhone(maskPhoneBR(e.target.value))} placeholder="(00) 00000-0000" />
               </div>
             </div>
 
@@ -434,7 +434,7 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
                   </div>
                   <div>
                     <FieldLabel>Telefone</FieldLabel>
-                    <Input className={inputCls} value={phone2} onChange={(e) => setPhone2(e.target.value)} />
+                    <Input className={inputCls} value={phone2} onChange={(e) => setPhone2(maskPhoneBR(e.target.value))} placeholder="(00) 00000-0000" />
                   </div>
                   <div>
                     <FieldLabel>Número do paciente</FieldLabel>
@@ -471,7 +471,7 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
                   </div>
                   <div>
                     <FieldLabel>CPF do responsável</FieldLabel>
-                    <Input className={inputCls} value={insRespCpf} onChange={(e) => setInsRespCpf(e.target.value)} />
+                    <Input className={inputCls} value={insRespCpf} onChange={(e) => setInsRespCpf(maskCpf(e.target.value))} placeholder="000.000.000-00" />
                   </div>
                 </div>
               )}
@@ -480,7 +480,18 @@ export function DentalPatientModal({ open, onOpenChange, onSave, patient }: Prop
                 <div className="grid grid-cols-6 gap-4">
                   <div className="col-span-2">
                     <FieldLabel>CEP</FieldLabel>
-                    <Input className={inputCls} value={zip} onChange={(e) => setZip(e.target.value)} placeholder="00000-000" />
+                    <Input
+                      className={inputCls}
+                      value={zip}
+                      onChange={(e) => {
+                        const masked = maskCep(e.target.value);
+                        setZip(masked);
+                        if (masked.replace(/\D/g, "").length === 8) lookupCep(masked);
+                      }}
+                      onBlur={(e) => lookupCep(e.target.value)}
+                      placeholder="00000-000"
+                      disabled={cepLoading}
+                    />
                   </div>
                   <div className="col-span-3">
                     <FieldLabel>Rua</FieldLabel>
