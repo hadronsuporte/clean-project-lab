@@ -41,6 +41,17 @@ import {
   Clock,
 } from "lucide-react";
 
+import iconBarbearias from "@/assets/categories/barbearias.png";
+import iconCabelos from "@/assets/categories/cabelos.png";
+import iconUnhas from "@/assets/categories/unhas.png";
+import iconEstetica from "@/assets/categories/estetica.png";
+import iconMassagem from "@/assets/categories/massagem.png";
+import iconSobrancelhas from "@/assets/categories/sobrancelhas.png";
+import iconMaquiagem from "@/assets/categories/maquiagem.png";
+import iconDepilacao from "@/assets/categories/depilacao.png";
+import iconPodologia from "@/assets/categories/podologia.png";
+import iconVerMais from "@/assets/categories/ver-mais.png";
+
 /* ============================================================
  * GoHub — Home do Cliente (layout estilo iFood, cores GoHub)
  * ============================================================ */
@@ -57,22 +68,20 @@ const COLORS = {
 type Category = {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  bg: string;
-  fg: string;
+  image: string;
 };
 
 const CATEGORIES: Category[] = [
-  { id: "barbearias", label: "Barbearias", icon: Scissors, bg: "bg-indigo-50", fg: "text-indigo-600" },
-  { id: "cabeleireiros", label: "Cabelos", icon: Brush, bg: "bg-sky-50", fg: "text-sky-600" },
-  { id: "unhas", label: "Unhas", icon: Sparkles, bg: "bg-rose-50", fg: "text-rose-500" },
-  { id: "estetica", label: "Estética", icon: Heart, bg: "bg-pink-50", fg: "text-pink-500" },
-  { id: "massoterapia", label: "Massagem", icon: Hand, bg: "bg-emerald-50", fg: "text-emerald-600" },
-  { id: "sobrancelhas", label: "Sobrancelhas", icon: Eye, bg: "bg-amber-50", fg: "text-amber-600" },
-  { id: "maquiagem", label: "Maquiagem", icon: Palette, bg: "bg-fuchsia-50", fg: "text-fuchsia-600" },
-  { id: "depilacao", label: "Depilação", icon: Flower2, bg: "bg-teal-50", fg: "text-teal-600" },
-  { id: "podologia", label: "Podologia", icon: Footprints, bg: "bg-orange-50", fg: "text-orange-500" },
-  { id: "todos", label: "Ver mais", icon: LayoutGrid, bg: "bg-violet-50", fg: "text-violet-600" },
+  { id: "barbearias", label: "Barbearias", image: iconBarbearias },
+  { id: "cabeleireiros", label: "Cabelos", image: iconCabelos },
+  { id: "unhas", label: "Unhas", image: iconUnhas },
+  { id: "estetica", label: "Estética", image: iconEstetica },
+  { id: "massoterapia", label: "Massagem", image: iconMassagem },
+  { id: "sobrancelhas", label: "Sobrancelhas", image: iconSobrancelhas },
+  { id: "maquiagem", label: "Maquiagem", image: iconMaquiagem },
+  { id: "depilacao", label: "Depilação", image: iconDepilacao },
+  { id: "podologia", label: "Podologia", image: iconPodologia },
+  { id: "todos", label: "Ver mais", image: iconVerMais },
 ];
 
 interface Barbershop {
@@ -81,6 +90,8 @@ interface Barbershop {
   address: string | null;
   logo_url: string | null;
   description: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface Appointment {
