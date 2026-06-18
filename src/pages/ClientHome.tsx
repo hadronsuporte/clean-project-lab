@@ -562,7 +562,7 @@ export default function ClientHome() {
   const handlePickCategory = (id: string) => {
     setActiveCategory(id);
     localStorage.setItem("gohub_active_category", id);
-    document.getElementById("ultimas-lojas")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    navigate(`/client-category/${id}`);
   };
 
   const handlePickLocation = (loc: SavedLocation) => {
