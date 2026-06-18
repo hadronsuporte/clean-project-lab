@@ -243,27 +243,141 @@ function formatAddressLabel(a: Partial<SavedLocation>): string {
   return "Localização definida";
 }
 
-async function reverseGeocode(lat: number, lon: number): Promise<SavedLocation | null> {
+const IS_DEV = import.meta.env.DEV;
+
+export type GeocodeResult =
+  | { ok: true; source: "google" | "nominatim"; location: SavedLocation }
+  | { ok: false; reason: GeocodeFailReason; message: string };
+
+export type GeocodeListResult =
+  | { ok: true; source: "google" | "nominatim"; results: SavedLocation[] }
+  | { ok: false; reason: GeocodeFailReason; message: string };
+
+export type GeocodeFailReason =
+  | "not_found"
+  | "key_missing"
+  | "api_disabled"
+  | "unauthorized"
+  | "function_missing"
+  | "network"
+  | "unknown";
+
+function classifyEdgeError(error: unknown, data: unknown): { reason: GeocodeFailReason; message: string } {
+  const errAny = error as any;
+  const dataAny = data as any;
+  const msg = String(errAny?.message || dataAny?.error || "").toLowerCase();
+  const status = errAny?.status ?? errAny?.context?.status;
+  if (status === 401 || status === 403) return { reason: "unauthorized", message: "Acesso negado à função (401/403)." };
+  if (status === 404) return { reason: "function_missing", message: "Edge Function google-geocode não publicada." };
+  if (msg.includes("google_maps_api_key")) return { reason: "key_missing", message: "GOOGLE_MAPS_API_KEY não configurada." };
+  if (msg.includes("request_denied") || msg.includes("api key") || msg.includes("disabled"))
+    return { reason: "api_disabled", message: "Geocoding API desativada ou chave inválida." };
+  if (msg.includes("not found") || msg.includes("zero_results") || msg.includes("nao encontrado") || msg.includes("não encontrado"))
+    return { reason: "not_found", message: "Endereço não encontrado." };
+  if (msg.includes("failed to fetch") || msg.includes("network")) return { reason: "network", message: "Falha de rede." };
+  return { reason: "unknown", message: String(errAny?.message || dataAny?.error || "Erro desconhecido") };
+}
+
+function nominatimToLocation(item: any): SavedLocation {
+  const a = item.address || {};
+  const street = a.road || a.pedestrian || a.footway || "";
+  const number = a.house_number || "";
+  const neighborhood = a.suburb || a.neighbourhood || a.city_district || "";
+  const city = a.city || a.town || a.village || a.municipality || "";
+  const state = a.state_code || a.state || "";
+  const postcode = a.postcode || "";
+  const latitude = parseFloat(item.lat);
+  const longitude = parseFloat(item.lon);
+  const loc: SavedLocation = { label: "", street, number, neighborhood, city, state, postcode, latitude, longitude };
+  loc.label = formatAddressLabel(loc);
+  if (!loc.label || loc.label === "Localização definida") loc.label = item.display_name || "Endereço encontrado";
+  return loc;
+}
+
+async function nominatimReverse(lat: number, lon: number): Promise<SavedLocation | null> {
   try {
-    const { data, error } = await supabase.functions.invoke("google-geocode", {
-      body: { mode: "reverse", latitude: lat, longitude: lon },
-    });
-    if (error || !data?.success) return null;
-    return data.location as SavedLocation;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=pt-BR&lat=${lat}&lon=${lon}`;
+    const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || data.error) return null;
+    return nominatimToLocation(data);
   } catch {
     return null;
   }
 }
 
-async function forwardGeocode(q: string): Promise<SavedLocation | null> {
+async function nominatimSearch(q: string): Promise<SavedLocation[]> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&accept-language=pt-BR&limit=5&countrycodes=br&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (!res.ok) return [];
+    const arr = await res.json();
+    if (!Array.isArray(arr)) return [];
+    return arr.map(nominatimToLocation);
+  } catch {
+    return [];
+  }
+}
+
+async function reverseGeocode(lat: number, lon: number): Promise<GeocodeResult> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return { ok: false, reason: "unknown", message: "Coordenadas inválidas." };
+  }
+  if (IS_DEV) console.log("[geocode/reverse] coords:", lat, lon);
+  try {
+    const { data, error } = await supabase.functions.invoke("google-geocode", {
+      body: { mode: "reverse", latitude: lat, longitude: lon },
+    });
+    if (IS_DEV) console.log("[geocode/reverse] edge response:", { data, error });
+    if (!error && data?.success && data.location) {
+      return { ok: true, source: "google", location: data.location as SavedLocation };
+    }
+    const cls = classifyEdgeError(error, data);
+    if (IS_DEV) console.warn("[geocode/reverse] edge fail → fallback Nominatim:", cls);
+    const fb = await nominatimReverse(lat, lon);
+    if (fb) return { ok: true, source: "nominatim", location: fb };
+    return { ok: false, reason: cls.reason, message: cls.message };
+  } catch (e) {
+    if (IS_DEV) console.error("[geocode/reverse] exception:", e);
+    const fb = await nominatimReverse(lat, lon);
+    if (fb) return { ok: true, source: "nominatim", location: fb };
+    return { ok: false, reason: "network", message: "Falha de rede ao geocodificar." };
+  }
+}
+
+async function forwardGeocodeList(q: string): Promise<GeocodeListResult> {
+  if (IS_DEV) console.log("[geocode/search] query:", q);
   try {
     const { data, error } = await supabase.functions.invoke("google-geocode", {
       body: { mode: "search", query: q },
     });
-    if (error || !data?.success) return null;
-    return data.location as SavedLocation;
-  } catch {
-    return null;
+    if (IS_DEV) console.log("[geocode/search] edge response:", { data, error });
+    if (!error && data?.success && data.location) {
+      return { ok: true, source: "google", results: [data.location as SavedLocation] };
+    }
+    const cls = classifyEdgeError(error, data);
+    if (IS_DEV) console.warn("[geocode/search] edge fail → fallback Nominatim:", cls);
+    const fb = await nominatimSearch(q);
+    if (fb.length > 0) return { ok: true, source: "nominatim", results: fb };
+    return { ok: false, reason: cls.reason, message: cls.message };
+  } catch (e) {
+    if (IS_DEV) console.error("[geocode/search] exception:", e);
+    const fb = await nominatimSearch(q);
+    if (fb.length > 0) return { ok: true, source: "nominatim", results: fb };
+    return { ok: false, reason: "network", message: "Falha de rede ao buscar endereço." };
+  }
+}
+
+function describeGeocodeError(reason: GeocodeFailReason): string {
+  switch (reason) {
+    case "key_missing": return "Chave do Google não configurada no servidor.";
+    case "api_disabled": return "Geocoding API desativada ou chave inválida.";
+    case "unauthorized": return "Sem permissão para chamar a função de endereço.";
+    case "function_missing": return "Função de endereço indisponível.";
+    case "network": return "Sem conexão. Verifique sua internet.";
+    case "not_found": return "Endereço não encontrado.";
+    default: return "Não foi possível identificar o endereço.";
   }
 }
 
@@ -297,8 +411,10 @@ function LocationModal({
 }) {
   const [query, setQuery] = useState("");
   const [requesting, setRequesting] = useState(false);
+  const [resolving, setResolving] = useState(false);
   const [searching, setSearching] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [results, setResults] = useState<SavedLocation[]>([]);
   const saved: SavedLocation[] = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("gohub_saved_addresses") || "[]");
@@ -316,22 +432,28 @@ function LocationModal({
     setPermissionDenied(false);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const loc = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
         setRequesting(false);
-        if (!loc) {
-          toast.error("Não conseguimos identificar seu endereço. Tente buscar manualmente.");
+        setResolving(true);
+        const res = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        setResolving(false);
+        if (res.ok !== true) {
+          toast.error(describeGeocodeError((res as any).reason));
           return;
         }
-        onPick(loc);
+        onPick(res.location);
       },
       (err) => {
-        setPermissionDenied(err.code === err.PERMISSION_DENIED);
-        toast.error(
-          err.code === err.PERMISSION_DENIED
-            ? "Permissão negada. Busque seu endereço manualmente abaixo."
-            : "Não foi possível obter sua localização. Use a busca."
-        );
         setRequesting(false);
+        setPermissionDenied(err.code === err.PERMISSION_DENIED);
+        const msg =
+          err.code === err.PERMISSION_DENIED
+            ? "Permissão de localização negada. Busque manualmente abaixo."
+            : err.code === err.POSITION_UNAVAILABLE
+            ? "GPS indisponível. Tente novamente ou busque manualmente."
+            : err.code === err.TIMEOUT
+            ? "Tempo esgotado ao obter GPS. Tente novamente."
+            : "Não foi possível obter sua localização.";
+        toast.error(msg);
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
@@ -341,13 +463,19 @@ function LocationModal({
     const v = query.trim();
     if (!v) return;
     setSearching(true);
-    const geo = await forwardGeocode(v);
+    setResults([]);
+    const res = await forwardGeocodeList(v);
     setSearching(false);
-    const loc: SavedLocation =
-      geo || { label: v };
-    if (!geo) toast.info("Endereço salvo sem coordenadas (não localizado no mapa).");
-    onPick(loc);
-    setQuery("");
+    if (res.ok !== true) {
+      toast.error(describeGeocodeError((res as any).reason));
+      return;
+    }
+    if (res.results.length === 1) {
+      onPick(res.results[0]);
+      setQuery("");
+      return;
+    }
+    setResults(res.results);
   };
 
   return (
@@ -361,7 +489,7 @@ function LocationModal({
         </DialogHeader>
         <button
           onClick={useCurrentLocation}
-          disabled={requesting}
+          disabled={requesting || resolving}
           className="select-none w-full flex items-center gap-3 p-3 rounded-[8px] border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition text-left disabled:opacity-50"
         >
           <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
@@ -372,6 +500,8 @@ function LocationModal({
             <p className="text-xs text-slate-500">
               {requesting
                 ? "Buscando sua localização..."
+                : resolving
+                ? "Identificando endereço..."
                 : permissionDenied
                 ? "Permissão negada — busque abaixo"
                 : "Solicitar permissão de GPS"}
@@ -379,19 +509,33 @@ function LocationModal({
           </div>
         </button>
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-600">Pesquisar endereço</label>
+          <label className="text-xs font-medium text-slate-600">Pesquisar endereço, bairro ou CEP</label>
           <div className="flex gap-2">
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rua, bairro ou cidade"
+              placeholder="Rua, número, bairro, cidade ou CEP"
               onKeyDown={(e) => e.key === "Enter" && submitSearch()}
               className="bg-white border-slate-200 text-[#172033]"
             />
-            <Button onClick={submitSearch} disabled={searching} className="bg-[#4338CA] hover:bg-[#3730A3] text-white">
-              {searching ? "..." : "Usar"}
+            <Button onClick={submitSearch} disabled={searching || !query.trim()} className="bg-[#4338CA] hover:bg-[#3730A3] text-white">
+              {searching ? "..." : "Buscar"}
             </Button>
           </div>
+          {results.length > 0 && (
+            <div className="space-y-1.5 max-h-56 overflow-auto border border-slate-100 rounded-[6px] p-1">
+              {results.map((r, i) => (
+                <button
+                  key={`${r.label}-${i}`}
+                  onClick={() => { onPick(r); setResults([]); setQuery(""); }}
+                  className="select-none w-full flex items-start gap-2 p-2 rounded-[6px] hover:bg-slate-50 transition text-left"
+                >
+                  <MapPin className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-[#172033]">{r.label}{r.city ? ` — ${r.city}${r.state ? `/${r.state}` : ""}` : ""}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         {saved.length > 0 && (
           <div className="space-y-2">
