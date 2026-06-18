@@ -1,42 +1,82 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  User, 
-  LogOut, 
-  RefreshCcw, 
-  Trash2,
-  X,
-  Store,
-  Scissors
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserAvatar } from "@/components/UserAvatar";
-import { ProfileModal } from "@/components/ProfileModal";
-
-import { LogoutButton } from "@/components/LogoutButton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProfileModal } from "@/components/ProfileModal";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { money } from "@/utils/format";
+import { UserAvatar } from "@/components/UserAvatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { checkBarbershopAccess } from "@/utils/paymentCheck";
+  Search,
+  MapPin,
+  Bell,
+  Scissors,
+  Sparkles,
+  Hand,
+  Heart,
+  Brush,
+  Eye,
+  Palette,
+  Flower2,
+  Footprints,
+  LayoutGrid,
+  ChevronRight,
+  Home,
+  Calendar,
+  Star,
+  User as UserIcon,
+  Search as SearchIcon,
+  Navigation,
+  X,
+  Clock,
+} from "lucide-react";
+
+/* ============================================================
+ * GoHub — Nova Home do Cliente
+ * Identidade clara/moderna; usa Supabase real para barbearias
+ * e RPC get_my_appointments_safe para próximos agendamentos.
+ * Categorias são front-end por enquanto (filtro local).
+ * ============================================================ */
+
+type Category = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  bg: string;
+  fg: string;
+};
+
+const CATEGORIES: Category[] = [
+  { id: "barbearias", label: "Barbearias", icon: Scissors, bg: "bg-indigo-50", fg: "text-indigo-600" },
+  { id: "cabeleireiros", label: "Cabeleireiros", icon: Brush, bg: "bg-sky-50", fg: "text-sky-600" },
+  { id: "unhas", label: "Unhas", icon: Sparkles, bg: "bg-rose-50", fg: "text-rose-500" },
+  { id: "estetica", label: "Estética", icon: Heart, bg: "bg-pink-50", fg: "text-pink-500" },
+  { id: "massoterapia", label: "Massoterapia", icon: Hand, bg: "bg-emerald-50", fg: "text-emerald-600" },
+  { id: "sobrancelhas", label: "Sobrancelhas", icon: Eye, bg: "bg-amber-50", fg: "text-amber-600" },
+  { id: "maquiagem", label: "Maquiagem", icon: Palette, bg: "bg-fuchsia-50", fg: "text-fuchsia-600" },
+  { id: "depilacao", label: "Depilação", icon: Flower2, bg: "bg-teal-50", fg: "text-teal-600" },
+  { id: "podologia", label: "Podologia", icon: Footprints, bg: "bg-orange-50", fg: "text-orange-500" },
+  { id: "todos", label: "Todos", icon: LayoutGrid, bg: "bg-violet-50", fg: "text-violet-600" },
+];
+
+interface Barbershop {
+  id: string;
+  name: string;
+  address: string | null;
+  logo_url: string | null;
+  description: string | null;
+}
 
 interface Appointment {
   id: string;
@@ -50,453 +90,582 @@ interface Appointment {
   barbershop_id?: string;
 }
 
-function AppointmentCard({ 
-  appt, 
-  onCancel, 
-  isPast 
-}: { 
-  appt: Appointment; 
-  onCancel: () => void; 
-  isPast: boolean;
-  client_attended?: boolean;
+function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse bg-slate-200/70 rounded ${className}`} />;
+}
+
+function ShopCard({ shop, onClick }: { shop: Barbershop; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="select-none flex-shrink-0 w-64 bg-white rounded-[8px] overflow-hidden border border-slate-100 hover:border-indigo-200 active:scale-[0.98] transition text-left shadow-sm"
+    >
+      <div className="h-28 bg-gradient-to-br from-indigo-50 to-sky-50 flex items-center justify-center overflow-hidden">
+        {shop.logo_url ? (
+          <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
+        ) : (
+          <Scissors className="w-10 h-10 text-indigo-300" />
+        )}
+      </div>
+      <div className="p-3 space-y-1">
+        <h3 className="font-semibold text-[#172033] text-sm truncate">{shop.name}</h3>
+        <p className="text-xs text-slate-500 truncate">{shop.address || "Endereço não informado"}</p>
+        <div className="flex items-center gap-2 pt-1 text-xs text-slate-600">
+          <span className="flex items-center gap-1">
+            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <span className="font-medium">Novo</span>
+          </span>
+          <span className="text-slate-300">•</span>
+          <span className="flex items-center gap-1 text-emerald-600">
+            <Clock className="w-3 h-3" /> Disponível
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function SectionHeader({ title, action }: { title: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between px-4 mb-3">
+      <h2 className="text-base font-bold text-[#172033]">{title}</h2>
+      {action}
+    </div>
+  );
+}
+
+function LocationModal({
+  open,
+  onOpenChange,
+  onPick,
+  current,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onPick: (label: string) => void;
+  current: string | null;
 }) {
-  const price = Number(appt.price || 0);
-  const formattedPrice = price.toLocaleString('pt-BR', { 
-    style: 'currency', 
-    currency: 'BRL' 
-  });
-  const barbershopName = appt.barbershop_name;
+  const [query, setQuery] = useState("");
+  const [requesting, setRequesting] = useState(false);
+
+  const saved: string[] = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("gohub_saved_addresses") || "[]");
+    } catch {
+      return [];
+    }
+  }, [open]);
+
+  const useCurrentLocation = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocalização indisponível neste dispositivo.");
+      return;
+    }
+    setRequesting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const label = `Localização atual (${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)})`;
+        onPick(label);
+        setRequesting(false);
+      },
+      () => {
+        toast.error("Não foi possível obter sua localização. Use a busca.");
+        setRequesting(false);
+      },
+      { timeout: 8000 }
+    );
+  };
+
+  const submitSearch = () => {
+    const v = query.trim();
+    if (!v) return;
+    const next = [v, ...saved.filter((s) => s !== v)].slice(0, 5);
+    localStorage.setItem("gohub_saved_addresses", JSON.stringify(next));
+    onPick(v);
+    setQuery("");
+  };
 
   return (
-    <div className={`bg-[#141b2a] border border-[#2a3347] rounded-[4px] p-5 space-y-4 relative overflow-hidden group ${isPast ? 'opacity-70' : ''}`}>
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            {!isPast && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
-            <h4 className="text-xs font-bold text-[#f0c040] uppercase tracking-widest font-oswald">
-              {appt.service_name}
-              {(appt.status.toLowerCase() === 'no_show' || (appt as any).client_attended === false) && (
-                <span className="ml-2 text-orange-500">(NÃO COMPARECEU)</span>
-              )}
-              {(appt.status.toLowerCase() === 'cancelled' || appt.status.toLowerCase() === 'canceled' || appt.status.toLowerCase() === 'cancelado') && (
-                <span className="ml-2 text-red-500">(CANCELADO)</span>
-              )}
-              {(appt.status.toLowerCase() === 'completed' && (appt as any).client_attended !== false) && (
-                <span className="ml-2 text-blue-500">(FINALIZADO)</span>
-              )}
-            </h4>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-white border-slate-200 max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-[#172033]">Sua localização</DialogTitle>
+          <DialogDescription className="text-slate-500">
+            {current ? `Atual: ${current}` : "Selecione uma localização para mostrar estabelecimentos próximos."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <button
+          onClick={useCurrentLocation}
+          disabled={requesting}
+          className="select-none w-full flex items-center gap-3 p-3 rounded-[8px] border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition text-left disabled:opacity-50"
+        >
+          <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
+            <Navigation className="w-4 h-4 text-indigo-600" />
           </div>
-          <p className="text-[10px] text-[#8a9ab5] uppercase tracking-wider font-medium">
-            {barbershopName}
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-lg font-bold text-[#c8d4e8] font-oswald leading-none">
-            {formattedPrice}
+          <div>
+            <p className="text-sm font-medium text-[#172033]">Usar localização atual</p>
+            <p className="text-xs text-slate-500">{requesting ? "Buscando..." : "Permitir GPS do dispositivo"}</p>
+          </div>
+        </button>
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-slate-600">Pesquisar endereço</label>
+          <div className="flex gap-2">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Rua, bairro ou cidade"
+              onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+              className="bg-white border-slate-200 text-[#172033]"
+            />
+            <Button onClick={submitSearch} className="bg-[#4338CA] hover:bg-[#3730A3] text-white">
+              Usar
+            </Button>
           </div>
         </div>
+
+        {saved.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-slate-600">Endereços salvos</p>
+            <div className="space-y-1.5 max-h-48 overflow-auto">
+              {saved.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => onPick(s)}
+                  className="select-none w-full flex items-center gap-3 p-2 rounded-[6px] hover:bg-slate-50 transition text-left"
+                >
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm text-[#172033] truncate">{s}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function BottomNav({ active, onChange }: { active: string; onChange: (k: string) => void }) {
+  const items = [
+    { key: "home", label: "Início", icon: Home },
+    { key: "search", label: "Buscar", icon: SearchIcon },
+    { key: "appts", label: "Agenda", icon: Calendar },
+    { key: "favs", label: "Favoritos", icon: Heart },
+    { key: "profile", label: "Perfil", icon: UserIcon },
+  ];
+  return (
+    <nav
+      className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-40"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="max-w-md mx-auto grid grid-cols-5">
+        {items.map((it) => {
+          const Icon = it.icon;
+          const isActive = active === it.key;
+          return (
+            <button
+              key={it.key}
+              onClick={() => onChange(it.key)}
+              className={`select-none flex flex-col items-center justify-center py-2.5 gap-0.5 transition ${
+                isActive ? "text-[#4338CA]" : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
+              <span className="text-[10px] font-medium">{it.label}</span>
+            </button>
+          );
+        })}
       </div>
-
-      <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[#1c2333]">
-        <div className="flex items-center gap-2">
-          <UserAvatar 
-            name={appt.barber_name} 
-            avatarUrl={appt.barber_avatar_url} 
-            size="sm" 
-            className="border-[#2a3347]" 
-          />
-
-          <div className="flex flex-col">
-            <span className="text-[8px] text-[#8a9ab5] uppercase tracking-tighter">BARBEIRO</span>
-            <span className="text-[10px] font-bold text-[#c8d4e8] uppercase truncate max-w-[80px]">
-              {appt.barber_name}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#1c2333] border border-[#2a3347] flex items-center justify-center">
-            <Clock className="w-4 h-4 text-[#f0c040]" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[8px] text-[#8a9ab5] uppercase tracking-tighter">DATA E HORA</span>
-            <span className="text-[10px] font-bold text-[#c8d4e8] uppercase">
-              {format(new Date(appt.starts_at), "dd/MM 'ÀS' HH:mm", { locale: ptBR })}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {isPast ? (
-        <div className="pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = `/barbers?barbershopId=${appt.barbershop_id}`}
-            className="w-full text-[10px] text-[#f0c040] border-[#f0c040]/30 hover:bg-[#f0c040] hover:text-[#1c2333] uppercase tracking-widest font-bold flex items-center gap-2 transition-all"
-          >
-            <RefreshCcw className="w-3.5 h-3.5" />
-            AGENDAR NOVAMENTE
-          </Button>
-          <p className="text-[8px] text-[#8a9ab5] uppercase tracking-widest mt-2 text-center">
-            {(appt.status.toLowerCase() === 'no_show' || (appt as any).client_attended === false) ? 'Não compareceu' : (appt.status.toLowerCase().includes('cancel') ? 'Cancelado' : 'Agendamento finalizado')}
-          </p>
-        </div>
-      ) : (
-        <div className="pt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="w-full text-[10px] text-red-500 hover:text-white hover:bg-red-900/50 uppercase tracking-widest font-bold flex items-center gap-2 transition-all border border-red-900/20"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            CANCELAR AGENDAMENTO
-          </Button>
-        </div>
-      )}
-    </div>
+    </nav>
   );
 }
 
 export default function ClientHome() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
+
+  const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [currentBarbershop, setCurrentBarbershop] = useState<{ name: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [history, setHistory] = useState<Appointment[]>([]);
+  const [loadingShops, setLoadingShops] = useState(true);
+  const [loadingAppts, setLoadingAppts] = useState(true);
 
-  const barbershopId = profile?.barbershop_id;
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(() =>
+    localStorage.getItem("gohub_active_category")
+  );
+  const [location, setLocation] = useState<string | null>(() =>
+    localStorage.getItem("gohub_location")
+  );
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
+  const [notifCount] = useState(0);
 
+  // Role-based routing guard — só clientes ficam aqui
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    } else if (user && profile) {
-      // Prioritize primary panels if roles are owner/admin/barber
-      // unless they are specifically in client mode (no force flag)
-      const role = String(profile.role || 'client').toLowerCase();
-      const hasForceBarber = localStorage.getItem('force_barber_panel') === 'true';
+    if (authLoading) return;
+    if (!user) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (!profile) return;
+    const role = String(profile.role || "client").toLowerCase();
+    const force = localStorage.getItem("force_barber_panel") === "true";
+    if (!force) {
+      if (role === "superadmin") return navigate("/super-admin", { replace: true });
+      if (role === "owner" || role === "admin") return navigate("/admin", { replace: true });
+      if (role === "barber") return navigate("/barber-dashboard", { replace: true });
+    }
+  }, [user, profile, authLoading, navigate]);
 
-      if (!hasForceBarber) {
-        if (role === 'superadmin') {
-          navigate("/super-admin", { replace: true });
-          return;
-        } else if (role === 'owner' || role === 'admin') {
-          navigate("/admin", { replace: true });
-          return;
-        } else if (role === 'barber') {
-          navigate("/barber-dashboard", { replace: true });
-          return;
+  // Fetch real data
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    (async () => {
+      setLoadingShops(true);
+      try {
+        const { data, error } = await supabase.rpc("get_available_barbershops");
+        if (error) throw error;
+        setBarbershops((data || []) as Barbershop[]);
+      } catch (e: any) {
+        console.error(e);
+      } finally {
+        setLoadingShops(false);
+      }
+    })();
+
+    (async () => {
+      setLoadingAppts(true);
+      try {
+        const { data } = await supabase.rpc("get_my_appointments_safe");
+        if (data?.success) {
+          setAppointments((data.active || []) as Appointment[]);
+          setHistory((data.history || []) as Appointment[]);
         }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoadingAppts(false);
       }
+    })();
+  }, [user, profile]);
 
-      if (!profile.barbershop_id) {
-        navigate("/", { replace: true });
-        return;
-      }
+  const handlePickCategory = (id: string) => {
+    setActiveCategory(id);
+    localStorage.setItem("gohub_active_category", id);
+    // Sem tela dedicada de categoria nesta fase: rolar para "Perto de você".
+    document.getElementById("perto-de-voce")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
-      const checkAccess = async () => {
-        const blocked = await checkBarbershopAccess(
-          barbershopId, 
-          'client', 
-          navigate, 
-          async () => {
-            await supabase.rpc('set_my_selected_barbershop', { p_barbershop_id: null });
-            localStorage.removeItem('selectedBarbershopId');
-          }
-        );
-        if (!blocked) {
-          fetchBarbershop();
-          fetchAppointments();
-        }
-      };
+  const handlePickLocation = (label: string) => {
+    setLocation(label);
+    localStorage.setItem("gohub_location", label);
+    setLocationOpen(false);
+  };
 
-      checkAccess();
-
-      // Recarregar quando a janela ganha foco para refletir finalizações do barbeiro
-      const handleFocus = () => {
-        if (!authLoading && user && profile) {
-          fetchAppointments();
-        }
-      };
-      window.addEventListener('focus', handleFocus);
-      return () => window.removeEventListener('focus', handleFocus);
-    }
-  }, [user, profile, authLoading, navigate, barbershopId]);
-
-
-  const fetchBarbershop = async () => {
-    if (!barbershopId) return;
+  const handleOpenShop = async (shop: Barbershop) => {
     try {
-      const { data, error } = await supabase
-        .from('barbershops')
-        .select('name')
-        .eq('id', barbershopId)
-        .maybeSingle();
-      
-      if (!error && data) {
-        setCurrentBarbershop(data);
+      await supabase.rpc("set_my_selected_barbershop", { p_barbershop_id: shop.id });
+      localStorage.setItem("selectedBarbershopId", shop.id);
+    } catch {}
+    navigate(`/barbers?barbershopId=${shop.id}`);
+  };
+
+  const handleTab = (k: string) => {
+    setActiveTab(k);
+    if (k === "profile") setProfileOpen(true);
+    else if (k === "search") document.getElementById("gh-search")?.focus();
+    else if (k === "appts") document.getElementById("proximos")?.scrollIntoView({ behavior: "smooth" });
+    else if (k === "favs") toast.info("Favoritos em breve");
+    else if (k === "home") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const firstName = (profile?.name || user?.user_metadata?.name || user?.email || "Cliente").split(" ")[0];
+
+  const filteredShops = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return barbershops;
+    return barbershops.filter(
+      (s) =>
+        s.name?.toLowerCase().includes(q) ||
+        s.address?.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q)
+    );
+  }, [search, barbershops]);
+
+  const nextAppt = appointments[0];
+  const rebookSources = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Appointment[] = [];
+    for (const a of history) {
+      const key = a.barbershop_id || a.barbershop_name;
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        out.push(a);
       }
-    } catch (err) {
-      console.error("Error fetching barbershop:", err);
     }
-  };
+    return out.slice(0, 10);
+  }, [history]);
 
-  const fetchAppointments = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      // Auto complete past appointments
-      await supabase.rpc('auto_complete_past_appointments');
-
-      const { data, error } = await supabase.rpc('get_my_appointments_safe');
-
-      if (error) {
-        throw error;
-      }
-
-      if (data && data.success) {
-        const active = (data.active || []).map((a: any) => ({ ...a, is_active: true }));
-        const history = (data.history || []).map((a: any) => ({ ...a, is_active: false }));
-        setAppointments([...active, ...history]);
-      } else if (data && !data.success) {
-        // If success is false, we might want to show an error, 
-        // but the prompt says: Não mostrar "erro ao carregar agendamentos" quando a RPC retornar success true.
-        // If it's false, it's actually an error state from the RPC's perspective.
-        console.error("RPC returned error:", data.error);
-        toast.error(data.error || "Erro ao carregar agendamentos");
-      }
-    } catch (error: any) {
-      console.error("Error fetching appointments:", error);
-      // We only show error if it's a real exception or RPC failure, 
-      // but if RPC returns success=true with empty arrays, we don't show error.
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancelAppointment = async () => {
-    if (!cancellingId) return;
-    setIsCancelling(true);
-    try {
-      const { data, error } = await supabase.rpc("cancel_my_appointment", { 
-        p_appointment_id: cancellingId 
-      });
-
-      if (error) throw error;
-      
-      if (data && data.success === false) {
-        toast.error(data.error || "Erro ao cancelar agendamento");
-        return;
-      }
-
-      toast.success("Agendamento cancelado");
-      setAppointments(prev => prev.filter(a => a.id !== cancellingId));
-    } catch (error: any) {
-      console.error("Error cancelling:", error);
-      toast.error(error.message || "Erro ao cancelar agendamento");
-    } finally {
-      setIsCancelling(false);
-      setCancellingId(null);
-    }
-  };
-
-  const switchBarbershop = () => {
-    navigate("/", { replace: false, state: { select: true } });
-  };
-
-
-  if (authLoading || isLoading) {
-    return <LoadingScreen />;
-  }
-
-  const firstName = profile?.name?.split(" ")[0] || user?.user_metadata?.name?.split(" ")[0] || "USUÁRIO";
-  
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "BOM DIA";
-    if (hour >= 12 && hour < 18) return "BOA TARDE";
-    return "BOA NOITE";
-  };
-  
-  const now = new Date();
-  
-  const isHistorical = (appt: Appointment) => {
-    const status = appt.status.toLowerCase();
-    const canceledStatuses = ['cancelled', 'canceled', 'cancelado'];
-    return status === 'completed' || 
-           status === 'no_show' || 
-           canceledStatuses.includes(status) || 
-           (appt as any).client_attended === false;
-  };
-
-  const upcomingAppointments = appointments.filter(a => !isHistorical(a));
-  const historyAppointments = appointments.filter(a => isHistorical(a));
-
+  if (authLoading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-[#1c2333] text-[#c8d4e8] flex flex-col items-center font-light pb-24 overflow-x-hidden">
-      <div className="w-full max-w-[390px] p-6 space-y-10">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-[#f0c040]" />
-            <span className="text-[10px] font-bold tracking-widest text-[#f0c040] uppercase truncate max-w-[150px]">
-              {currentBarbershop?.name || "Sua Barbearia"}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setIsProfileModalOpen(true)}
-              className="transition-transform active:scale-95 outline-none"
-            >
-              <UserAvatar 
-                name={profile?.name} 
-                email={user?.email} 
-                avatarUrl={profile?.avatar_url} 
-                size="md" 
-                className="border-[#2a3347] hover:border-[#f0c040] transition-colors" 
-              />
-
-            </button>
-            <LogoutButton showText />
-          </div>
-        </div>
-
-        {/* Welcome Section */}
-        <div className="space-y-1">
-          <h1 className="text-[11px] font-light uppercase tracking-[0.2em] text-[#8a9ab5] m-0">
-            {getGreeting()},
-          </h1>
-          <h2 className="text-4xl font-bold uppercase text-[#f0c040] font-oswald tracking-tight m-0 leading-tight pt-1">
-            {firstName.toUpperCase()}!
-          </h2>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 gap-3">
-          <Button
-            onClick={() => navigate(`/barbers?barbershopId=${barbershopId}`)}
-            className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-8 text-lg rounded-[4px] border-none shadow-none transition-all font-oswald uppercase tracking-[2px] flex flex-col items-center gap-1"
-          >
-            <Calendar className="w-6 h-6 mb-1" />
-            AGENDAR HORÁRIO
-          </Button>
-
-          <Button
-            onClick={switchBarbershop}
-            variant="outline"
-            className="w-full bg-[#141b2a] border-[#2a3347] text-[#c8d4e8] hover:border-[#f0c040] hover:bg-[#141b2a] py-6 text-xs rounded-[4px] transition-all font-oswald uppercase tracking-[1px] flex items-center gap-2"
-          >
-            <RefreshCcw className="w-4 h-4" />
-            TROCAR ESTABELECIMENTO
-          </Button>
-        </div>
-
-        {/* Appointments Section */}
-        <div className="space-y-6 pt-4">
-          <Tabs defaultValue="active" className="w-full">
-            <TabsList className="w-full bg-[#141b2a] border border-[#2a3347] grid grid-cols-2 h-12 p-1">
-              <TabsTrigger 
-                value="active" 
-                className="text-[10px] uppercase font-bold tracking-wider data-[state=active]:bg-[#f0c040] data-[state=active]:text-[#1c2333]"
+    <div
+      className="min-h-screen bg-[#F7F9FC] text-[#172033] pb-24"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
+      <div className="max-w-md mx-auto">
+        {/* HEADER */}
+        <header className="bg-white px-4 pt-4 pb-3 rounded-b-2xl shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-slate-500">Olá,</p>
+              <h1 className="text-lg font-bold text-[#172033] truncate">{firstName}</h1>
+              <button
+                onClick={() => setLocationOpen(true)}
+                className="select-none mt-1 flex items-center gap-1 text-xs text-[#4338CA] font-medium hover:underline"
               >
-                MEUS AGENDAMENTOS
-              </TabsTrigger>
-              <TabsTrigger 
-                value="history" 
-                className="text-[10px] uppercase font-bold tracking-wider data-[state=active]:bg-[#f0c040] data-[state=active]:text-[#1c2333]"
-              >
-                HISTÓRICO
-              </TabsTrigger>
-            </TabsList>
+                <MapPin className="w-3.5 h-3.5" />
+                <span className="truncate max-w-[200px]">{location || "Selecionar localização"}</span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
 
-            <TabsContent value="active" className="mt-6 space-y-4">
-              {upcomingAppointments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4 bg-[#141b2a] border border-[#2a3347] rounded-[4px] text-center space-y-4">
-                  <Scissors className="w-10 h-10 text-[#2a3347]" />
-                  <p className="text-xs text-[#8a9ab5] uppercase tracking-widest">Você não possui agendamentos ativos.</p>
-                  <Button 
-                    variant="link" 
-                    onClick={() => navigate(`/barbers?barbershopId=${barbershopId}`)}
-                    className="text-[#f0c040] font-bold p-0 uppercase text-[10px] tracking-widest"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => toast.info("Notificações em breve")}
+                className="select-none relative w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center transition"
+                aria-label="Notificações"
+              >
+                <Bell className="w-4 h-4 text-[#172033]" />
+                {notifCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-[#FF6B6B] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+                    {notifCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setProfileOpen(true)}
+                className="select-none transition active:scale-95"
+                aria-label="Perfil"
+              >
+                <UserAvatar
+                  name={profile?.name}
+                  email={user?.email}
+                  avatarUrl={profile?.avatar_url}
+                  size="md"
+                  className="border-slate-200 shadow-none"
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* SEARCH */}
+          <div className="mt-4 relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              id="gh-search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Qual serviço você procura?"
+              className="bg-[#F7F9FC] border-slate-200 pl-9 h-11 rounded-[8px] text-[#172033] placeholder:text-slate-400"
+            />
+          </div>
+        </header>
+
+        {/* CATEGORIAS */}
+        <section className="mt-5">
+          <SectionHeader title="O que você procura?" />
+          <div className="px-4 grid grid-cols-4 gap-3">
+            {CATEGORIES.map((c) => {
+              const Icon = c.icon;
+              const isActive = activeCategory === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => handlePickCategory(c.id)}
+                  className={`select-none flex flex-col items-center gap-1.5 active:scale-95 transition ${
+                    isActive ? "" : ""
+                  }`}
+                >
+                  <div
+                    className={`w-14 h-14 rounded-[8px] ${c.bg} ${
+                      isActive ? "ring-2 ring-[#4338CA] ring-offset-2 ring-offset-[#F7F9FC]" : ""
+                    } flex items-center justify-center transition`}
                   >
-                    Agendar agora
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {upcomingAppointments.map((appt) => (
-                    <AppointmentCard 
-                      key={appt.id} 
-                      appt={appt} 
-                      onCancel={() => setCancellingId(appt.id)} 
-                      isPast={false}
-                      client_attended={(appt as any).client_attended}
-                    />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+                    <Icon className={`w-6 h-6 ${c.fg}`} />
+                  </div>
+                  <span className="text-[11px] text-center text-[#172033] font-medium leading-tight">
+                    {c.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-            <TabsContent value="history" className="mt-6 space-y-4">
-              {historyAppointments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4 bg-[#141b2a] border border-[#2a3347] rounded-[4px] text-center space-y-4">
-                  <Scissors className="w-10 h-10 text-[#2a3347]" />
-                  <p className="text-xs text-[#8a9ab5] uppercase tracking-widest">Nenhum histórico encontrado.</p>
+        {/* PRÓXIMO AGENDAMENTO */}
+        <section id="proximos" className="mt-6">
+          <SectionHeader title="Seus próximos agendamentos" />
+          <div className="px-4">
+            {loadingAppts ? (
+              <Skeleton className="h-24 w-full rounded-[8px]" />
+            ) : nextAppt ? (
+              <button
+                onClick={() => navigate(`/barbers?barbershopId=${nextAppt.barbershop_id}`)}
+                className="select-none w-full text-left bg-white border border-slate-100 rounded-[8px] p-4 hover:border-indigo-200 transition shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-[#4338CA] font-semibold uppercase tracking-wide">
+                      {nextAppt.service_name}
+                    </p>
+                    <p className="text-sm font-semibold text-[#172033] truncate mt-0.5">
+                      {nextAppt.barbershop_name}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">com {nextAppt.barber_name}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-slate-500">
+                      {format(new Date(nextAppt.starts_at), "dd/MM", { locale: ptBR })}
+                    </p>
+                    <p className="text-sm font-bold text-[#172033]">
+                      {format(new Date(nextAppt.starts_at), "HH:mm")}
+                    </p>
+                    <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                      Confirmado
+                    </span>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {historyAppointments.map((appt) => (
-                    <AppointmentCard 
-                      key={appt.id} 
-                      appt={appt} 
-                      onCancel={() => setCancellingId(appt.id)} 
-                      isPast={true}
-                      client_attended={(appt as any).client_attended}
-                    />
-                  ))}
+              </button>
+            ) : (
+              <div className="bg-white border border-dashed border-slate-200 rounded-[8px] p-6 text-center">
+                <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">Você não tem agendamentos ativos.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* PERTO DE VOCÊ */}
+        <section id="perto-de-voce" className="mt-6">
+          <SectionHeader
+            title="Perto de você"
+            action={
+              <button
+                onClick={() => navigate("/", { state: { select: true } })}
+                className="text-xs text-[#4338CA] font-medium hover:underline"
+              >
+                Ver todos
+              </button>
+            }
+          />
+          {loadingShops ? (
+            <div className="px-4 flex gap-3 overflow-hidden">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-44 w-64 flex-shrink-0 rounded-[8px]" />
+              ))}
+            </div>
+          ) : filteredShops.length === 0 ? (
+            <div className="px-4">
+              <div className="bg-white border border-dashed border-slate-200 rounded-[8px] p-6 text-center">
+                <Scissors className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">Nenhum estabelecimento encontrado.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+              {filteredShops.map((s) => (
+                <div key={s.id} className="snap-start">
+                  <ShopCard shop={s} onClick={() => handleOpenShop(s)} />
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* AGENDE NOVAMENTE */}
+        {rebookSources.length > 0 && (
+          <section className="mt-6">
+            <SectionHeader title="Agende novamente" />
+            <div className="flex gap-3 overflow-x-auto px-4 pb-1">
+              {rebookSources.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => navigate(`/barbers?barbershopId=${a.barbershop_id}`)}
+                  className="select-none flex-shrink-0 w-56 bg-white rounded-[8px] border border-slate-100 hover:border-indigo-200 transition p-3 text-left active:scale-[0.98] shadow-sm"
+                >
+                  <p className="text-xs font-semibold text-[#172033] truncate">{a.barbershop_name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">
+                    {a.service_name} • {a.barber_name}
+                  </p>
+                  <span className="inline-block mt-2 text-[10px] font-semibold text-[#4338CA] bg-indigo-50 px-2 py-0.5 rounded">
+                    Repetir agendamento
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* DESTAQUES */}
+        <section className="mt-6">
+          <SectionHeader title="Destaques" />
+          {loadingShops ? (
+            <div className="px-4">
+              <Skeleton className="h-32 w-full rounded-[8px]" />
+            </div>
+          ) : filteredShops.length > 0 ? (
+            <div className="px-4 space-y-3">
+              {filteredShops.slice(0, 3).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => handleOpenShop(s)}
+                  className="select-none w-full flex items-center gap-3 bg-white rounded-[8px] border border-slate-100 hover:border-sky-200 transition p-3 text-left active:scale-[0.99] shadow-sm"
+                >
+                  <div className="w-14 h-14 rounded-[8px] bg-gradient-to-br from-sky-50 to-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
+                    {s.logo_url ? (
+                      <img src={s.logo_url} alt={s.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Sparkles className="w-6 h-6 text-[#0EA5E9]" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-[#172033] truncate">{s.name}</p>
+                    <p className="text-xs text-slate-500 truncate">
+                      {s.description || s.address || "Confira novidades"}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold text-white bg-[#FF6B6B] px-2 py-1 rounded">
+                    Novo
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4">
+              <div className="bg-white border border-dashed border-slate-200 rounded-[8px] p-6 text-center">
+                <Sparkles className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">Sem destaques no momento.</p>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Cancel Confirmation */}
-      <AlertDialog open={!!cancellingId} onOpenChange={(open) => !open && setCancellingId(null)}>
-        <AlertDialogContent className="bg-[#141b2a] border-[#2a3347] text-[#c8d4e8]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="font-oswald uppercase text-[#f0c040] tracking-widest">
-              Cancelar agendamento?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-[#8a9ab5] text-xs uppercase tracking-wider">
-              Esse horário ficará disponível novamente para outros clientes. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="bg-transparent border-[#2a3347] text-[#8a9ab5] hover:bg-[#1c2333] hover:text-white font-oswald uppercase text-xs tracking-widest rounded-none">
-              VOLTAR
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCancelAppointment}
-              disabled={isCancelling}
-              className="bg-red-600 hover:bg-red-700 text-white font-oswald uppercase text-xs tracking-widest rounded-none"
-            >
-              {isCancelling ? "CANCELANDO..." : "CANCELAR AGENDAMENTO"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <BottomNav active={activeTab} onChange={handleTab} />
 
-      <ProfileModal 
-        isOpen={isProfileModalOpen} 
-        onOpenChange={setIsProfileModalOpen} 
+      <LocationModal
+        open={locationOpen}
+        onOpenChange={setLocationOpen}
+        onPick={handlePickLocation}
+        current={location}
       />
+      <ProfileModal isOpen={profileOpen} onOpenChange={setProfileOpen} />
     </div>
   );
 }
