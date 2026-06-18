@@ -13,6 +13,7 @@ serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    if (!request.headers.get("apikey")) throw new Error("Chamada nao autorizada");
     const apiKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
     if (!apiKey) throw new Error("GOOGLE_MAPS_API_KEY nao configurada");
 
