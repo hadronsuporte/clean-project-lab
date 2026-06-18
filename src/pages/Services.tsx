@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Clock3, Sparkles } from "lucide-react";
+import { Check, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ClientFlowLayout } from "@/components/client/ClientFlowLayout";
+import { getServiceVisual } from "@/lib/serviceVisuals";
 
 type Service = { id: string; name: string; description?: string | null; price: number; duration_minutes: number };
 
@@ -61,7 +62,9 @@ export default function Services() {
           const selected = selectedId === service.id;
           return (
             <button key={service.id} type="button" onClick={() => setSelectedId(service.id)} className={`flex w-full items-center gap-3 rounded-[8px] border bg-white p-4 text-left transition active:scale-[0.99] ${selected ? "border-[#3157D5] ring-2 ring-[#3157D5]/15" : "border-slate-200"}`}>
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[8px] bg-[#EAF0FF]"><Sparkles className="h-5 w-5 text-[#3157D5]" /></span>
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[8px] bg-slate-50">
+                <img src={getServiceVisual(service.name).image} alt="" loading="lazy" width={48} height={48} className="h-12 w-12 object-contain" />
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-extrabold">{service.name}</span>
                 {service.description && <span className="mt-1 line-clamp-1 block text-xs text-slate-500">{service.description}</span>}
