@@ -49,7 +49,11 @@ export default function Services() {
       ]);
       if (!active) return;
       if (error) toast.error("Não foi possível carregar os serviços.");
-      setServices(((serviceData || []) as Service[]).map((item) => ({ ...item, price: Number(item.price) || 0 })));
+      setServices(((serviceData || []) as unknown as Service[]).map((item: any) => ({
+        ...item,
+        price: Number(item.price) || 0,
+        service_catalog: Array.isArray(item.service_catalog) ? item.service_catalog[0] || null : item.service_catalog,
+      })));
       setShopName(shop?.name || "Estabelecimento GoHub");
       setLoading(false);
     })();
