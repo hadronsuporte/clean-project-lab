@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitial } from "@/lib/utils";
 import { toast } from "sonner";
 import { Loader2, Mail, Phone, User, Lock, Check } from "lucide-react";
+import { LogoutSection } from "@/components/LogoutSection";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -213,6 +214,11 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Logout */}
+        <div className="pt-4 border-t border-[#2a3347]/50">
+          <LogoutSection onBeforeLogout={() => onOpenChange(false)} />
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-2">
