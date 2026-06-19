@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitial } from "@/lib/utils";
 import { toast } from "sonner";
 import { Loader2, Mail, Phone, User, Lock, Check } from "lucide-react";
+import { LogoutSection } from "@/components/LogoutSection";
 
 interface ProfileModalProps {
   isOpen: boolean;
