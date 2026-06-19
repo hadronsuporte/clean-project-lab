@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
+import { Mail, Lock, User as UserIcon, Phone } from "lucide-react";
+import loginBg from "@/assets/login/gohub-beauty-background.webp";
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
