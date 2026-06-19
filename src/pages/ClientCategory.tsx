@@ -421,7 +421,12 @@ export default function ClientCategory() {
                   {category.id !== "todos" && (
                     <button
                       type="button"
-                      onClick={() => navigate("/client-category/todos")}
+                      onClick={() => {
+                        setFilters([]);
+                        setSubcategory(null);
+                        setQuery("");
+                        navigate("/client-category/todos");
+                      }}
                       className="mt-4 inline-flex h-10 items-center justify-center rounded-[8px] bg-[#3157D5] px-4 text-xs font-semibold text-white"
                     >
                       Ver todos os estabelecimentos
