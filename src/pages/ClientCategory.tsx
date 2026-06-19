@@ -77,6 +77,7 @@ export default function ClientCategory() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [location] = useState<SavedLocation | null>(() => {
     try {
       return JSON.parse(localStorage.getItem("gohub_location_v2") || "null");
@@ -99,6 +100,7 @@ export default function ClientCategory() {
     let active = true;
     (async () => {
       setLoading(true);
+      setLoadError(null);
       const [{ data: shopData, error: shopError }, { data: serviceData, error: serviceError }] =
         await Promise.all([
           supabase.rpc("get_available_barbershops"),
@@ -107,9 +109,15 @@ export default function ClientCategory() {
       if (!active) return;
       if (shopError) {
         console.error("Erro ao carregar estabelecimentos:", shopError);
+        setLoadError(shopError.message || "Erro ao carregar estabelecimentos");
+        setLoading(false);
+        return;
       }
       if (serviceError) {
         console.error("Erro ao carregar serviços:", serviceError);
+      }
+      if (import.meta.env.DEV) {
+        console.log("[ClientCategory] get_available_barbershops →", shopData);
       }
       setShops((shopData || []) as Shop[]);
       setServices((serviceData || []) as Service[]);
@@ -140,7 +148,8 @@ export default function ClientCategory() {
           .join(" ")
           .toLocaleLowerCase("pt-BR");
         const matchesCategory =
-          category.id === "todos" || (shop.category_slug || "") === category.id;
+          category.id === "todos" ||
+          (shop.category_slug || "barbearias") === category.id;
         const matchesSubcategory = !subcategory || content.includes(subcategory.toLocaleLowerCase("pt-BR"));
         const matchesSearch = !normalizedQuery || content.includes(normalizedQuery);
         const minPrice = shopServices.length
@@ -156,6 +165,21 @@ export default function ClientCategory() {
         return { shop, services: shopServices, minPrice, distance, matchesCategory, matchesSubcategory, matchesSearch };
       })
       .filter((item) => item.matchesCategory && item.matchesSubcategory && item.matchesSearch);
+
+    if (import.meta.env.DEV) {
+      const afterCategory = shops.filter((s) =>
+        category.id === "todos" || (s.category_slug || "barbearias") === category.id,
+      ).length;
+      console.log({
+        categorySlug: category.id,
+        shopsReturned: shops.length,
+        selectedSubcategory: subcategory,
+        activeFilters: filters,
+        searchQuery: query,
+        afterCategory,
+        finalCount: result.length,
+      });
+    }
 
     return result.sort((a, b) => {
       if (filters.includes("price")) return (a.minPrice ?? Infinity) - (b.minPrice ?? Infinity);
