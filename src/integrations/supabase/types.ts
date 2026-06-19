@@ -584,10 +584,16 @@ export type Database = {
         Returns: Json
       }
       unaccent: { Args: { "": string }; Returns: string }
-      upsert_catalog_service: {
-        Args: { p_barbershop_id: string; p_name: string }
-        Returns: string
-      }
+      upsert_catalog_service:
+        | { Args: { p_barbershop_id: string; p_name: string }; Returns: string }
+        | {
+            Args: {
+              p_barbershop_id: string
+              p_icon_key?: string
+              p_name: string
+            }
+            Returns: string
+          }
     }
     Enums: {
       [_ in never]: never
