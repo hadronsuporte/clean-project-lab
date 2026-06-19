@@ -96,13 +96,11 @@ export default function ClientCategory() {
   }, [categorySlug]);
 
   useEffect(() => {
+    if (!user) return;
     let active = true;
     (async () => {
       setLoading(true);
       setLoadError(null);
-      if (import.meta.env.DEV) {
-        console.log("[ClientCategory] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
-      }
       const [{ data: shopData, error: shopError }, { data: serviceData, error: serviceError }] =
         await Promise.all([
           supabase.rpc("get_available_barbershops"),
@@ -110,17 +108,16 @@ export default function ClientCategory() {
         ]);
       if (!active) return;
       if (shopError) {
-        console.error("[ClientCategory] Erro RPC get_available_barbershops:", shopError);
+        console.error("Erro ao carregar estabelecimentos:", shopError);
         setLoadError(shopError.message || "Erro ao carregar estabelecimentos");
         setLoading(false);
         return;
       }
       if (serviceError) {
-        console.warn("[ClientCategory] Erro ao carregar serviços (ignorado):", serviceError);
+        console.error("Erro ao carregar serviços:", serviceError);
       }
       if (import.meta.env.DEV) {
-        console.log("[ClientCategory] RPC resposta completa →", shopData);
-        console.log("[ClientCategory] Total recebido da RPC:", (shopData || []).length);
+        console.log("[ClientCategory] get_available_barbershops →", shopData);
       }
       setShops((shopData || []) as Shop[]);
       setServices((serviceData || []) as Service[]);
@@ -129,7 +126,7 @@ export default function ClientCategory() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   const { stores, isSubcategoryFallback } = useMemo(() => {
     const grouped = new Map<string, Service[]>();
@@ -143,7 +140,6 @@ export default function ClientCategory() {
     const lat = location?.latitude;
     const lon = location?.longitude;
 
-    const beforeCategory = shops.length;
     const categoryStores = shops
       .map((shop) => {
         const shopServices = grouped.get(shop.id) || [];
@@ -197,26 +193,11 @@ export default function ClientCategory() {
       });
     }
 
-    const sorted = [...result].sort((a, b) => {
-      if (filters.includes("price")) {
-        return (a.minPrice ?? Infinity) - (b.minPrice ?? Infinity);
-      }
-      // Distância sempre ordena (com ou sem filtro); registros sem coordenadas vão para o fim.
-      const da = a.distance ?? Infinity;
-      const db = b.distance ?? Infinity;
-      if (da !== db) return da - db;
+    const sorted = result.sort((a, b) => {
+      if (filters.includes("price")) return (a.minPrice ?? Infinity) - (b.minPrice ?? Infinity);
+      if (filters.includes("distance")) return (a.distance ?? Infinity) - (b.distance ?? Infinity);
       return a.shop.name.localeCompare(b.shop.name, "pt-BR");
     });
-    if (import.meta.env.DEV) {
-      console.log("[ClientCategory] Pipeline:", {
-        beforeCategory,
-        afterCategory: categoryStores.length,
-        afterSubcategory: subcategoryMatches.length,
-        subcategoryFallback: shouldFallback,
-        final: sorted.length,
-        location,
-      });
-    }
     return { stores: sorted, isSubcategoryFallback: shouldFallback };
   }, [category, filters, location, query, services, shops, subcategory]);
 
@@ -421,12 +402,7 @@ export default function ClientCategory() {
                   {category.id !== "todos" && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setFilters([]);
-                        setSubcategory(null);
-                        setQuery("");
-                        navigate("/client-category/todos");
-                      }}
+                      onClick={() => navigate("/client-category/todos")}
                       className="mt-4 inline-flex h-10 items-center justify-center rounded-[8px] bg-[#3157D5] px-4 text-xs font-semibold text-white"
                     >
                       Ver todos os estabelecimentos
