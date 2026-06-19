@@ -858,7 +858,8 @@ export default function SuperAdmin() {
                               setEditingBarbershop(shop);
                               setEditLogoPreview(shop.logo_url);
                               setEditMonthlyPrice(fmtBRL(shop.monthly_price));
-                              setEditCategory(categoryIdToSlug[shop.category_id || ""] || "barbearias");
+                              setEditCategoryId(shop.category_id || "");
+                              setEditAddress({ ...emptyAddress, street: shop.address || "" });
                             }}
                           >
                             <Pencil className="h-4 w-4" />
@@ -935,23 +936,21 @@ export default function SuperAdmin() {
                 </Field>
 
                 <Field label="Categoria" htmlFor="category">
-                  <Select value={createCategory} onValueChange={setCreateCategory}>
+                  <Select value={createCategoryId} onValueChange={setCreateCategoryId}>
                     <SelectTrigger id="category" className={inputClass}>
-                      <SelectValue />
+                      <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent className="border border-[#DDE3EE] bg-white text-[#172033] shadow-lg rounded-[8px]">
-                      {ESTABLISHMENT_CATEGORIES.map((c) => (
+                      {categories.map((c) => (
                         <SelectItem className="text-[#172033] focus:bg-[#EAF0FF] focus:text-[#3157D5] data-[state=checked]:bg-[#EAF0FF] data-[state=checked]:text-[#3157D5]" key={c.id} value={c.id}>
-                          {c.label}
+                          {c.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </Field>
 
-                <Field label="Endereço" htmlFor="barbershop_address">
-                  <Input id="barbershop_address" name="barbershop_address" required className={inputClass} />
-                </Field>
+                <AddressFields value={createAddress} onChange={setCreateAddress} idPrefix="create_addr" />
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Telefone" htmlFor="barbershop_phone">
@@ -1108,14 +1107,14 @@ export default function SuperAdmin() {
                 <Input id="edit_name" name="name" defaultValue={editingBarbershop?.name} className={inputClass} />
               </Field>
               <Field label="Categoria" htmlFor="edit_category">
-                <Select value={editCategory} onValueChange={setEditCategory}>
+                <Select value={editCategoryId} onValueChange={setEditCategoryId}>
                   <SelectTrigger id="edit_category" className={inputClass}>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent className="border border-[#DDE3EE] bg-white text-[#172033] shadow-lg rounded-[8px]">
-                    {ESTABLISHMENT_CATEGORIES.map((c) => (
+                    {categories.map((c) => (
                       <SelectItem className="text-[#172033] focus:bg-[#EAF0FF] focus:text-[#3157D5] data-[state=checked]:bg-[#EAF0FF] data-[state=checked]:text-[#3157D5]" key={c.id} value={c.id}>
-                        {c.label}
+                        {c.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1170,14 +1169,13 @@ export default function SuperAdmin() {
                 />
               </Field>
               <div className="md:col-span-2">
-                <Field label="Endereço" htmlFor="edit_address">
-                  <Input
-                    id="edit_address"
-                    name="address"
-                    defaultValue={editingBarbershop?.address || ""}
-                    className={inputClass}
-                  />
-                </Field>
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-[#172033]">Endereço</p>
+                  {editingBarbershop?.address && (
+                    <p className="text-[11px] text-[#64748B]">Atual: {editingBarbershop.address}</p>
+                  )}
+                  <AddressFields value={editAddress} onChange={setEditAddress} idPrefix="edit_addr" />
+                </div>
               </div>
               <div className="md:col-span-2">
                 <Field label="Descrição" htmlFor="edit_description">
