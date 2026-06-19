@@ -46,7 +46,7 @@ export default function Booking() {
 
   useEffect(() => {
     fetchServiceDetails();
-  }, [serviceId]);
+  }, [serviceId, barbershopId]);
 
   useEffect(() => {
     if (selectedBarberId && selectedDate && serviceId && service) {
@@ -55,16 +55,29 @@ export default function Booking() {
   }, [selectedBarberId, selectedDate, serviceId, service]);
 
   const fetchServiceDetails = async () => {
+    setIsLoadingService(true);
+    setService(null);
     if (!serviceId) {
       setIsLoadingService(false);
       return;
     }
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("services")
       .select("*")
       .eq("id", serviceId)
-      .single();
+      .eq("barbershop_id", barbershopId)
+      .maybeSingle();
+    if (error) {
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      ({ data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("id", serviceId)
+        .eq("barbershop_id", barbershopId)
+        .maybeSingle());
+    }
     if (data) setService(data);
+    if (!data && !error) toast.error("Serviço não encontrado neste estabelecimento.");
     if (error) toast.error("Não foi possível carregar o serviço.");
     setIsLoadingService(false);
   };
@@ -175,7 +188,7 @@ export default function Booking() {
     <ClientFlowLayout
       title="Escolha data e horário"
       subtitle={service?.name || "Agendamento GoHub"}
-      footer={<button type="button" onClick={handleBooking} disabled={isSubmitting || !selectedSlot} className="h-12 w-full rounded-[8px] bg-[#3157D5] text-sm font-bold text-white transition disabled:opacity-40">{isSubmitting ? "Confirmando..." : "Confirmar agendamento"}</button>}
+      footer={<button type="button" onClick={handleBooking} disabled={isSubmitting || isLoadingService || !service || !selectedSlot} className="h-12 w-full rounded-[8px] bg-[#3157D5] text-sm font-bold text-white transition disabled:opacity-40">{isSubmitting ? "Confirmando..." : "Confirmar agendamento"}</button>}
     >
       <div className="mb-6 rounded-[8px] border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3"><div><p className="text-xs text-slate-500">Serviço escolhido</p><p className="mt-1 text-sm font-extrabold">{service?.name}</p></div><p className="text-sm font-extrabold text-[#3157D5]">R$ {Number(service?.price || 0).toFixed(2).replace(".", ",")}</p></div>
