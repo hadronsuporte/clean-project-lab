@@ -128,7 +128,7 @@ serve(async (req) => {
       .single()
 
     if (bError) {
-      return new Response(JSON.stringify({ success: false, error: `Erro ao criar barbearia: ${bError.message}` }), {
+      return new Response(JSON.stringify({ success: false, error: `Erro ao criar estabelecimento: ${bError.message}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       })
