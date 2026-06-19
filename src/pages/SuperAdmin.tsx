@@ -58,8 +58,6 @@ import { cn } from "@/lib/utils";
 import {
   ESTABLISHMENT_CATEGORIES,
   getCategoryMeta,
-  getShopCategory,
-  setShopCategory,
 } from "@/lib/establishmentCategories";
 import gohubLogo from "@/assets/login/gohub-logo.png";
 
@@ -76,6 +74,7 @@ interface Barbershop {
   paid_until: string | null;
   blocked: boolean;
   created_at?: string | null;
+  category_id?: string | null;
   owner?: { name: string; phone?: string } | null;
 }
 
