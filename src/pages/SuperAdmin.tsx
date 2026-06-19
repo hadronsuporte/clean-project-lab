@@ -58,6 +58,7 @@ import { cn } from "@/lib/utils";
 import {
   ESTABLISHMENT_CATEGORIES,
   getCategoryMeta,
+  displayCategoryName,
 } from "@/lib/establishmentCategories";
 import { AddressFields, AddressData, emptyAddress, composeAddress } from "@/components/admin/AddressFields";
 import gohubLogo from "@/assets/login/gohub-logo.png";
@@ -959,7 +960,7 @@ export default function SuperAdmin() {
                       )}
                       {categories.map((c) => (
                         <SelectItem className="text-[#172033] focus:bg-[#EAF0FF] focus:text-[#3157D5] data-[state=checked]:bg-[#EAF0FF] data-[state=checked]:text-[#3157D5]" key={c.id} value={c.id}>
-                          {c.name}
+                          {displayCategoryName(c.slug, c.name)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1139,7 +1140,7 @@ export default function SuperAdmin() {
                     )}
                     {categories.map((c) => (
                       <SelectItem className="text-[#172033] focus:bg-[#EAF0FF] focus:text-[#3157D5] data-[state=checked]:bg-[#EAF0FF] data-[state=checked]:text-[#3157D5]" key={c.id} value={c.id}>
-                        {c.name}
+                        {displayCategoryName(c.slug, c.name)}
                       </SelectItem>
                     ))}
                   </SelectContent>

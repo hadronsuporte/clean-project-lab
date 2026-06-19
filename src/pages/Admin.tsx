@@ -2,12 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Scissors, LogOut, ArrowLeft, RefreshCw, User, MessageSquare, TrendingUp } from "lucide-react";
+import {
+  Calendar,
+  Users,
+  Scissors,
+  LogOut,
+  RefreshCw,
+  MessageSquare,
+  TrendingUp,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileModal } from "@/components/ProfileModal";
-import { LogoutButton } from "@/components/LogoutButton";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 import { toast } from "sonner";
-import { getInitial } from "@/lib/utils";
+import { cn, getInitial } from "@/lib/utils";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminBarbers from "@/components/admin/AdminBarbers";
 import AdminServices from "@/components/admin/AdminServices";
@@ -23,6 +31,7 @@ export default function Admin() {
   const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -72,120 +81,114 @@ export default function Admin() {
 
 
 
-  return (
-    <div className="min-h-screen bg-[#1c2333] text-[#c8d4e8] flex flex-col items-center font-light pb-24 overflow-x-hidden">
-      <div className="w-full max-w-[390px] p-6 space-y-8 flex-1">
-        {/* Header */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-bold uppercase text-[#f0c040] font-oswald tracking-widest leading-tight">
-              PAINEL ADMIN
-            </h1>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setIsProfileModalOpen(true)}
-                className="transition-transform active:scale-95 outline-none"
-              >
-                <Avatar className="w-10 h-10 border border-[#f0c040] shadow-[0_0_15px_rgba(240,192,64,0.2)] hover:scale-105 transition-all">
-                  <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" className="object-cover" />
-                  <AvatarFallback>
-                    {getInitial(profile?.name, user?.email)}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-              <LogoutButton showText />
-            </div>
-          </div>
+  const tabs: Array<{ id: typeof activeTab; label: string; Icon: typeof Calendar }> = [
+    { id: "agenda", label: "Agenda", Icon: Calendar },
+    { id: "barbeiros", label: "Equipe", Icon: Users },
+    { id: "servicos", label: "Serviços", Icon: Scissors },
+    { id: "whatsapp", label: "WhatsApp", Icon: MessageSquare },
+    { id: "financeiro", label: "Financeiro", Icon: TrendingUp },
+  ];
 
-          {profile?.has_barber_panel && (
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline" 
-                size="sm"
-                disabled
-                className="bg-[#f0c040] border-[#f0c040] text-[#1c2333] opacity-100 text-[10px] h-10 gap-2 font-bold font-oswald tracking-wider cursor-default"
-              >
-                PAINEL DONO
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  localStorage.setItem('force_barber_panel', 'true');
-                  navigate("/barber-dashboard");
-                }}
-                className="bg-[#141b2a] border-[#2a3347] text-[#c8d4e8] hover:border-[#f0c040] text-[10px] h-10 gap-2 font-bold font-oswald tracking-wider"
-              >
-                <RefreshCw className="w-3 h-3 text-[#f0c040]" />
-                PAINEL BARBEIRO
-              </Button>
+  return (
+    <div
+      className="min-h-screen bg-[#F6F7FB] text-[#172033] pb-28 overflow-x-hidden"
+      style={{ fontFamily: "Poppins, sans-serif" }}
+    >
+      <div className="mx-auto w-full max-w-[420px] px-4 pt-[max(env(safe-area-inset-top),16px)] space-y-5">
+        {/* Header */}
+        <header className="flex items-center justify-between gap-3">
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex min-w-0 items-center gap-3 outline-none"
+          >
+            <Avatar className="h-11 w-11 border border-[#DDE3EE] bg-white">
+              <AvatarImage src={profile?.avatar_url || undefined} alt="Perfil" className="object-cover" />
+              <AvatarFallback className="bg-[#EAF0FF] text-[#3157D5] font-semibold">
+                {getInitial(profile?.name, user?.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 text-left">
+              <p className="text-[11px] font-medium text-[#64748B] leading-tight">
+                Painel do Estabelecimento
+              </p>
+              <p className="truncate text-sm font-semibold text-[#172033] leading-tight">
+                {profile?.name || "Bem-vindo"}
+              </p>
             </div>
-          )}
-        </div>
+          </button>
+
+          <Button
+            type="button"
+            onClick={() => setLogoutOpen(true)}
+            className="h-11 min-w-[88px] gap-2 rounded-[8px] bg-white border border-[#DDE3EE] px-3 text-sm font-medium text-[#172033] shadow-none hover:bg-[#F6F7FB] hover:text-[#DC2626] hover:border-[#DC2626]/30"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </Button>
+        </header>
+
+        {profile?.has_barber_panel && (
+          <div className="grid grid-cols-2 gap-2 rounded-[8px] border border-[#DDE3EE] bg-white p-1">
+            <button
+              type="button"
+              disabled
+              className="flex h-10 items-center justify-center rounded-[6px] bg-[#3157D5] text-xs font-semibold text-white"
+            >
+              Painel do Estabelecimento
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem("force_barber_panel", "true");
+                navigate("/barber-dashboard");
+              }}
+              className="flex h-10 items-center justify-center gap-2 rounded-[6px] text-xs font-medium text-[#64748B] hover:bg-[#F6F7FB] hover:text-[#172033]"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Painel Profissional
+            </button>
+          </div>
+        )}
 
         {/* Tab Content */}
-        {activeTab === "agenda" && (
-          <AdminDashboard barbershopId={barbershopId} profile={profile} />
-        )}
-        {activeTab === "barbeiros" && <AdminBarbers barbershopId={barbershopId} />}
-        {activeTab === "servicos" && <AdminServices barbershopId={barbershopId} />}
-        {activeTab === "whatsapp" && <AdminWhatsApp />}
-        {activeTab === "financeiro" && <AdminFinancial barbershopId={barbershopId} />}
+        <main className="space-y-5">
+          {activeTab === "agenda" && (
+            <AdminDashboard barbershopId={barbershopId} profile={profile} />
+          )}
+          {activeTab === "barbeiros" && <AdminBarbers barbershopId={barbershopId} />}
+          {activeTab === "servicos" && <AdminServices barbershopId={barbershopId} />}
+          {activeTab === "whatsapp" && <AdminWhatsApp />}
+          {activeTab === "financeiro" && <AdminFinancial barbershopId={barbershopId} />}
+        </main>
       </div>
 
-      {/* Bottom Menu */}
-      <div className="fixed bottom-0 w-full max-w-[390px] grid grid-cols-5 bg-[#141b2a] border-t border-[#2a3347] py-4 px-1">
-        <button
-          onClick={() => setActiveTab("agenda")}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === "agenda" ? "text-[#f0c040]" : "text-[#8a9ab5]"
-          }`}
-        >
-          <Calendar className="w-5 h-5" />
-          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">AGENDA</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("barbeiros")}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === "barbeiros" ? "text-[#f0c040]" : "text-[#8a9ab5]"
-          }`}
-        >
-          <Users className="w-5 h-5" />
-          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">BARBEIROS</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("servicos")}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === "servicos" ? "text-[#f0c040]" : "text-[#8a9ab5]"
-          }`}
-        >
-          <Scissors className="w-5 h-5" />
-          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">SERVIÇOS</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("whatsapp")}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === "whatsapp" ? "text-[#f0c040]" : "text-[#8a9ab5]"
-          }`}
-        >
-          <MessageSquare className="w-5 h-5" />
-          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">WHATSAPP</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("financeiro")}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === "financeiro" ? "text-[#f0c040]" : "text-[#8a9ab5]"
-          }`}
-        >
-          <TrendingUp className="w-5 h-5" />
-          <span className="text-[8px] font-bold font-oswald tracking-wider uppercase">FINANCEIRO</span>
-        </button>
-      </div>
+      {/* Bottom Nav */}
+      <nav
+        className="fixed bottom-0 left-1/2 z-40 -translate-x-1/2 w-full max-w-[420px] border-t border-[#DDE3EE] bg-white pb-[max(env(safe-area-inset-bottom),8px)] pt-2 px-1 grid grid-cols-5"
+        style={{ fontFamily: "Poppins, sans-serif" }}
+      >
+        {tabs.map(({ id, label, Icon }) => {
+          const active = activeTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={cn(
+                "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-[8px] transition-colors",
+                active ? "text-[#3157D5]" : "text-[#64748B] hover:text-[#172033]",
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
-      <ProfileModal 
-        isOpen={isProfileModalOpen} 
-        onOpenChange={setIsProfileModalOpen} 
-      />
+      <ProfileModal isOpen={isProfileModalOpen} onOpenChange={setIsProfileModalOpen} />
+      <LogoutConfirmDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
     </div>
   );
 }
