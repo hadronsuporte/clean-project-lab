@@ -119,12 +119,12 @@ export function LogoutConfirmDialog({
               </p>
             </div>
 
-            <div className="mt-5 flex w-full flex-col-reverse gap-2 sm:flex-row">
+            <div className="mt-6 mb-1 flex w-full flex-col-reverse gap-3 sm:flex-row">
               <button
                 type="button"
                 disabled={loggingOut}
                 onClick={() => onOpenChange(false)}
-                className="h-11 flex-1 rounded-[8px] border border-[#DDE3EE] bg-white text-sm font-medium text-[#172033] transition-colors hover:bg-[#F6F7FB] active:bg-[#EEF1F7] disabled:opacity-60"
+                className="min-h-[48px] w-full flex-1 rounded-[8px] border border-[#DDE3EE] bg-white px-5 text-base font-semibold text-[#172033] transition-colors hover:bg-[#F6F7FB] active:bg-[#EEF1F7] disabled:opacity-60"
               >
                 Cancelar
               </button>
@@ -132,7 +132,7 @@ export function LogoutConfirmDialog({
                 type="button"
                 disabled={loggingOut}
                 onClick={handleConfirm}
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-[8px] bg-[#DC2626] text-sm font-semibold text-white transition-colors hover:bg-[#bf1f1f] active:bg-[#a31a1a] disabled:opacity-80"
+                className="inline-flex min-h-[48px] w-full flex-1 items-center justify-center gap-2 rounded-[8px] bg-[#DC2626] px-5 text-base font-semibold text-white transition-colors hover:bg-[#bf1f1f] active:bg-[#a31a1a] disabled:opacity-80"
               >
                 {loggingOut ? (
                   <>
