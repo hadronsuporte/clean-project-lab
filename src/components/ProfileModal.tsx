@@ -197,7 +197,7 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
         </DialogHeader>
 
         {/* Body */}
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-5">
+        <div className="px-5 py-5">
           {/* Avatar */}
           <div className="mb-5 flex flex-col items-center gap-2">
             <Avatar className="h-20 w-20 border border-[#DDE3EE] bg-white">
