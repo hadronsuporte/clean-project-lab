@@ -210,6 +210,8 @@ export default function SuperAdmin() {
   // Category catalog from DB (UUID is source of truth)
   type CategoryRow = { id: string; slug: string; name: string };
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const categoryIdToSlug = useMemo(() => {
     const m: Record<string, string> = {};
     categories.forEach((c) => (m[c.id] = c.slug));
@@ -224,16 +226,21 @@ export default function SuperAdmin() {
   }, [isSuperAdmin]);
 
   const fetchCategories = async () => {
+    setCategoriesLoading(true);
+    setCategoriesError(null);
     const { data, error } = await supabase
       .from("business_categories")
-      .select("id, slug, name")
-      .eq("active", true)
+      .select("id, name, slug")
       .order("name");
+    console.log("Categorias retornadas:", data);
     if (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Erro ao carregar categorias:", error);
+      setCategoriesError(error.message || "Erro ao carregar categorias");
+      setCategoriesLoading(false);
       return;
     }
     setCategories((data || []) as CategoryRow[]);
+    setCategoriesLoading(false);
   };
 
   const fetchBarbershops = async () => {
@@ -938,9 +945,18 @@ export default function SuperAdmin() {
                 <Field label="Categoria" htmlFor="category">
                   <Select value={createCategoryId} onValueChange={setCreateCategoryId}>
                     <SelectTrigger id="category" className={inputClass}>
-                      <SelectValue placeholder="Selecione uma categoria" />
+                      <SelectValue placeholder={categoriesLoading ? "Carregando categorias..." : "Selecione uma categoria"} />
                     </SelectTrigger>
                     <SelectContent className="border border-[#DDE3EE] bg-white text-[#172033] shadow-lg rounded-[8px]">
+                      {categoriesLoading && (
+                        <div className="px-3 py-2 text-xs text-[#64748B]">Carregando categorias...</div>
+                      )}
+                      {!categoriesLoading && categoriesError && (
+                        <div className="px-3 py-2 text-xs text-[#B91C1C]">{categoriesError}</div>
+                      )}
+                      {!categoriesLoading && !categoriesError && categories.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-[#64748B]">Nenhuma categoria encontrada</div>
+                      )}
                       {categories.map((c) => (
                         <SelectItem className="text-[#172033] focus:bg-[#EAF0FF] focus:text-[#3157D5] data-[state=checked]:bg-[#EAF0FF] data-[state=checked]:text-[#3157D5]" key={c.id} value={c.id}>
                           {c.name}
@@ -948,6 +964,9 @@ export default function SuperAdmin() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {categoriesError && (
+                    <p className="mt-1 text-[11px] text-[#B91C1C]">{categoriesError}</p>
+                  )}
                 </Field>
 
                 <AddressFields value={createAddress} onChange={setCreateAddress} idPrefix="create_addr" />
@@ -1109,9 +1128,15 @@ export default function SuperAdmin() {
               <Field label="Categoria" htmlFor="edit_category">
                 <Select value={editCategoryId} onValueChange={setEditCategoryId}>
                   <SelectTrigger id="edit_category" className={inputClass}>
-                    <SelectValue placeholder="Selecione uma categoria" />
+                    <SelectValue placeholder={categoriesLoading ? "Carregando categorias..." : "Selecione uma categoria"} />
                   </SelectTrigger>
                   <SelectContent className="border border-[#DDE3EE] bg-white text-[#172033] shadow-lg rounded-[8px]">
+                    {categoriesLoading && (
+                      <div className="px-3 py-2 text-xs text-[#64748B]">Carregando categorias...</div>
+                    )}
+                    {!categoriesLoading && categoriesError && (
+                      <div className="px-3 py-2 text-xs text-[#B91C1C]">{categoriesError}</div>
+                    )}
                     {categories.map((c) => (
                       <SelectItem className="text-[#172033] focus:bg-[#EAF0FF] focus:text-[#3157D5] data-[state=checked]:bg-[#EAF0FF] data-[state=checked]:text-[#3157D5]" key={c.id} value={c.id}>
                         {c.name}
