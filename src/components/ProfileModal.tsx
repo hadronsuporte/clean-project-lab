@@ -216,6 +216,11 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
           </div>
         </div>
 
+        {/* Logout */}
+        <div className="pt-4 border-t border-[#2a3347]/50">
+          <LogoutSection onBeforeLogout={() => onOpenChange(false)} />
+        </div>
+
         <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button
             variant="ghost"
