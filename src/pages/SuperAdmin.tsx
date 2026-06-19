@@ -58,8 +58,6 @@ import { cn } from "@/lib/utils";
 import {
   ESTABLISHMENT_CATEGORIES,
   getCategoryMeta,
-  getShopCategory,
-  setShopCategory,
 } from "@/lib/establishmentCategories";
 import gohubLogo from "@/assets/login/gohub-logo.png";
 
@@ -76,6 +74,7 @@ interface Barbershop {
   paid_until: string | null;
   blocked: boolean;
   created_at?: string | null;
+  category_id?: string | null;
   owner?: { name: string; phone?: string } | null;
 }
 
@@ -176,7 +175,7 @@ export default function SuperAdmin() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [createMonthlyPrice, setCreateMonthlyPrice] = useState("");
-  const [createCategory, setCreateCategory] = useState("barbearia");
+  const [createCategory, setCreateCategory] = useState("barbearias");
   const [ownerIsBarber, setOwnerIsBarber] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -185,7 +184,7 @@ export default function SuperAdmin() {
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
   const [editMonthlyPrice, setEditMonthlyPrice] = useState("");
-  const [editCategory, setEditCategory] = useState("barbearia");
+  const [editCategory, setEditCategory] = useState("barbearias");
 
   // Delete
   const [deletingShop, setDeletingShop] = useState<Barbershop | null>(null);
@@ -205,12 +204,35 @@ export default function SuperAdmin() {
   const [blockedFilter, setBlockedFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"name" | "paid_until" | "created_at">("name");
 
-  // Category map (client-side persistence)
-  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+  // Category catalog from DB: id <-> slug
+  const [categorySlugToId, setCategorySlugToId] = useState<Record<string, string>>({});
+  const [categoryIdToSlug, setCategoryIdToSlug] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (isSuperAdmin) fetchBarbershops();
+    if (isSuperAdmin) {
+      fetchCategories();
+      fetchBarbershops();
+    }
   }, [isSuperAdmin]);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from("business_categories")
+      .select("id, slug")
+      .eq("active", true);
+    if (error) {
+      console.error("Error fetching categories:", error);
+      return;
+    }
+    const s2i: Record<string, string> = {};
+    const i2s: Record<string, string> = {};
+    (data || []).forEach((c: any) => {
+      s2i[c.slug] = c.id;
+      i2s[c.id] = c.slug;
+    });
+    setCategorySlugToId(s2i);
+    setCategoryIdToSlug(i2s);
+  };
 
   const fetchBarbershops = async () => {
     setIsLoading(true);
@@ -232,12 +254,6 @@ export default function SuperAdmin() {
       });
 
       setBarbershops(formatted);
-
-      const map: Record<string, string> = {};
-      formatted.forEach((s) => {
-        map[s.id] = getShopCategory(s.id);
-      });
-      setCategoryMap(map);
     } catch (error: any) {
       console.error("Error fetching shops:", error);
       setLoadError(error?.message || "Erro ao carregar estabelecimentos");
@@ -263,8 +279,10 @@ export default function SuperAdmin() {
           .toLowerCase();
         if (!haystack.includes(q)) return false;
       }
-      if (categoryFilter !== "all" && (categoryMap[shop.id] || "barbearia") !== categoryFilter)
-        return false;
+      if (categoryFilter !== "all") {
+        const slug = categoryIdToSlug[shop.category_id || ""] || "barbearias";
+        if (slug !== categoryFilter) return false;
+      }
       if (statusFilter !== "all" && resolveStatus(shop) !== statusFilter) return false;
       if (blockedFilter === "blocked" && !shop.blocked) return false;
       if (blockedFilter === "active" && shop.blocked) return false;
@@ -284,7 +302,7 @@ export default function SuperAdmin() {
     });
 
     return list;
-  }, [barbershops, search, categoryFilter, statusFilter, blockedFilter, sortBy, categoryMap]);
+  }, [barbershops, search, categoryFilter, statusFilter, blockedFilter, sortBy, categoryIdToSlug]);
 
   // Summary
   const summary = useMemo(() => {
@@ -348,6 +366,13 @@ export default function SuperAdmin() {
       let subscriptionStatus = (formData.get("subscription_status") as string) || "trialing";
       if (paidUntilValue) subscriptionStatus = "active";
 
+      const categoryId = categorySlugToId[createCategory];
+      if (!categoryId) {
+        toast.error("Selecione uma categoria válida.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: response, error } = await supabase.functions.invoke(
         "create-barbershop-with-owner",
         {
@@ -365,6 +390,7 @@ export default function SuperAdmin() {
             ownerPhone: formData.get("owner_phone") as string,
             ownerPassword: formData.get("owner_password") as string,
             ownerIsBarber: Boolean(ownerIsBarber),
+            categoryId,
           },
         },
       );
@@ -378,10 +404,6 @@ export default function SuperAdmin() {
         return;
       }
 
-      // Persist category locally
-      const newId = response?.barbershop_id || response?.id;
-      if (newId) setShopCategory(newId, createCategory);
-
       toast.success("Estabelecimento cadastrado com sucesso");
       setIsCreateModalOpen(false);
       (e.target as HTMLFormElement).reset();
@@ -389,7 +411,7 @@ export default function SuperAdmin() {
       setLogoPreview(null);
       setOwnerIsBarber(false);
       setCreateMonthlyPrice("");
-      setCreateCategory("barbearia");
+      setCreateCategory("barbearias");
       fetchBarbershops();
     } catch (error: any) {
       toast.error(error.message || "Erro inesperado ao cadastrar estabelecimento.");
@@ -422,6 +444,13 @@ export default function SuperAdmin() {
       let logoUrl = editingBarbershop.logo_url;
       if (editLogoFile) logoUrl = await uploadLogo(editLogoFile);
 
+      const newCategoryId = categorySlugToId[editCategory];
+      if (!newCategoryId) {
+        toast.error("Selecione uma categoria válida.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("barbershops")
         .update({
@@ -434,12 +463,11 @@ export default function SuperAdmin() {
           paid_until: paidUntilValue || null,
           blocked,
           logo_url: logoUrl,
+          category_id: newCategoryId,
         })
         .eq("id", editingBarbershop.id);
 
       if (error) throw error;
-
-      setShopCategory(editingBarbershop.id, editCategory);
 
       toast.success("Estabelecimento atualizado");
       setEditingBarbershop(null);
@@ -718,7 +746,7 @@ export default function SuperAdmin() {
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((shop) => {
-                  const cat = getCategoryMeta(categoryMap[shop.id] || "barbearia");
+                  const cat = getCategoryMeta(categoryIdToSlug[shop.category_id || ""] || "barbearias");
                   return (
                     <article
                       key={shop.id}
@@ -825,7 +853,7 @@ export default function SuperAdmin() {
                               setEditingBarbershop(shop);
                               setEditLogoPreview(shop.logo_url);
                               setEditMonthlyPrice(fmtBRL(shop.monthly_price));
-                              setEditCategory(categoryMap[shop.id] || "barbearia");
+                              setEditCategory(categoryIdToSlug[shop.category_id || ""] || "barbearias");
                             }}
                           >
                             <Pencil className="h-4 w-4" />

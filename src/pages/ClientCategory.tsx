@@ -28,6 +28,9 @@ type Shop = {
   latitude?: number | null;
   longitude?: number | null;
   created_at?: string | null;
+  category_slug?: string | null;
+  category_id?: string | null;
+  blocked?: boolean | null;
 };
 
 type Service = { barbershop_id: string; name: string; price: number };
@@ -102,8 +105,12 @@ export default function ClientCategory() {
           supabase.from("services").select("barbershop_id,name,price"),
         ]);
       if (!active) return;
-      if (shopError) console.error("Erro ao carregar estabelecimentos:", shopError);
-      if (serviceError) console.error("Erro ao carregar serviços:", serviceError);
+      if (shopError) {
+        console.error("Erro ao carregar estabelecimentos:", shopError);
+      }
+      if (serviceError) {
+        console.error("Erro ao carregar serviços:", serviceError);
+      }
       setShops((shopData || []) as Shop[]);
       setServices((serviceData || []) as Service[]);
       setLoading(false);
@@ -133,7 +140,7 @@ export default function ClientCategory() {
           .join(" ")
           .toLocaleLowerCase("pt-BR");
         const matchesCategory =
-          category.id === "todos" || category.keywords.some((word) => content.includes(word));
+          category.id === "todos" || (shop.category_slug || "") === category.id;
         const matchesSubcategory = !subcategory || content.includes(subcategory.toLocaleLowerCase("pt-BR"));
         const matchesSearch = !normalizedQuery || content.includes(normalizedQuery);
         const minPrice = shopServices.length
@@ -329,6 +336,15 @@ export default function ClientCategory() {
                   <Search className="mx-auto h-7 w-7 text-slate-300" />
                   <p className="mt-3 text-sm font-semibold">Nenhum estabelecimento encontrado</p>
                   <p className="mt-1 text-xs text-slate-500">Tente outra categoria ou remova os filtros.</p>
+                  {category.id !== "todos" && (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/client-category/todos")}
+                      className="mt-4 inline-flex h-10 items-center justify-center rounded-[8px] bg-[#3157D5] px-4 text-xs font-semibold text-white"
+                    >
+                      Ver todos os estabelecimentos
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
