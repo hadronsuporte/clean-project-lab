@@ -134,117 +134,90 @@ export default function AdminServices({ barbershopId }: { barbershopId: string |
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">SERVIÇOS DISPONÍVEIS</h3>
-      
-      <div className="space-y-4">
-        {services.map(service => (
-          <div key={service.id} className="bg-[#141b2a] border border-[#2a3347] p-4 rounded-[4px] flex justify-between items-center group">
-            <div>
-              <h4 className="text-sm font-bold text-[#c8d4e8] font-oswald uppercase tracking-wider">{service.name}</h4>
-              <p className="text-[10px] text-[#8a9ab5] uppercase tracking-widest mt-0.5">
-                {service.duration_minutes} MINutos • {money(service.price)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleEdit(service)}
-                className="text-[#8a9ab5] hover:text-[#f0c040] transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDeleteClick(service.id)}
-                className="text-[#8a9ab5] hover:text-red-500 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+      <h3 className="text-base font-semibold text-[#172033]">Serviços</h3>
 
-      <Button 
+      {services.length === 0 ? (
+        <div className="rounded-[8px] border border-dashed border-[#DDE3EE] bg-white py-8 text-center">
+          <p className="text-sm text-[#64748B]">Nenhum serviço cadastrado.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {services.map(service => (
+            <div key={service.id} className="flex items-center justify-between rounded-[8px] border border-[#DDE3EE] bg-white p-3">
+              <div className="min-w-0">
+                <h4 className="truncate text-sm font-semibold text-[#172033]">{service.name}</h4>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  {service.duration_minutes} min • {money(service.price)}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(service)} className="h-9 w-9 rounded-[8px] text-[#64748B] hover:bg-[#F6F7FB] hover:text-[#3157D5]">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(service.id)} className="h-9 w-9 rounded-[8px] text-[#64748B] hover:bg-[#FDECEC] hover:text-[#DC2626]">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Button
         onClick={() => setIsAdding(true)}
-        className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-7 text-lg rounded-[4px] font-oswald uppercase tracking-[3px] mt-4"
+        className="w-full h-12 rounded-[8px] bg-[#3157D5] text-sm font-semibold text-white hover:bg-[#274ac0] gap-2"
       >
-        ADICIONAR SERVIÇO
+        <Plus className="h-4 w-4" />
+        Adicionar serviço
       </Button>
 
-      {/* Modal/Overlay for Adding */}
       {isAdding && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-[#1c2333] border border-[#2a3347] w-full max-w-[340px] p-6 rounded-[4px] space-y-6 relative animate-in zoom-in-95 duration-200">
-            <button onClick={() => { setIsAdding(false); setEditingService(null); setName(""); setPrice(""); setDuration("30"); }} className="absolute top-4 right-4 text-[#8a9ab5] hover:text-[#f0c040]">
-              <X className="w-5 h-5" />
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+          <div className="relative w-full max-w-[360px] rounded-[8px] border border-[#DDE3EE] bg-white p-5 space-y-4 shadow-xl">
+            <button onClick={() => { setIsAdding(false); setEditingService(null); setName(""); setPrice(""); setDuration("30"); }} className="absolute right-3 top-3 text-[#64748B] hover:text-[#172033]">
+              <X className="h-4 w-4" />
             </button>
-            
-            <h3 className="text-xs font-bold tracking-[0.25em] text-[#f0c040] font-oswald uppercase">{editingService ? "EDITAR SERVIÇO" : "NOVO SERVIÇO"}</h3>
-            
-            <form onSubmit={handleSave} className="space-y-4">
+            <h3 className="text-base font-semibold text-[#172033]">{editingService ? "Editar serviço" : "Novo serviço"}</h3>
+            <form onSubmit={handleSave} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[10px] text-[#8a9ab5] ml-1 uppercase font-bold tracking-widest">NOME DO SERVIÇO</label>
-                <Input value={name} onChange={e => setName(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
+                <label className="text-xs font-medium text-[#172033]">Nome do serviço</label>
+                <Input value={name} onChange={e => setName(e.target.value)} required className="h-11 rounded-[8px] border-[#DDE3EE]" />
               </div>
-              
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] text-[#8a9ab5] ml-1 uppercase font-bold tracking-widest">DURAÇÃO (MIN)</label>
-                  <Input type="number" value={duration} onChange={e => setDuration(e.target.value)} required className="bg-[#141b2a] border-[#2a3347] h-12" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-[#172033]">Duração (min)</label>
+                  <Input type="number" value={duration} onChange={e => setDuration(e.target.value)} required className="h-11 rounded-[8px] border-[#DDE3EE]" />
                 </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] text-[#8a9ab5] ml-1 uppercase font-bold tracking-widest">PREÇO (R$)</label>
-                  <Input 
-                    type="text" 
-                    value={price} 
-                    onChange={e => setPrice(formatPrice(e.target.value))} 
-                    required 
-                    className="bg-[#141b2a] border-[#2a3347] h-12" 
-                    placeholder="0,00"
-                  />
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-[#172033]">Preço (R$)</label>
+                  <Input type="text" value={price} onChange={e => setPrice(formatPrice(e.target.value))} required placeholder="0,00" className="h-11 rounded-[8px] border-[#DDE3EE]" />
                 </div>
               </div>
-
-              <Button type="submit" className="w-full bg-[#f0c040] hover:bg-[#d4a935] text-[#1c2333] font-bold py-6 font-oswald uppercase tracking-[3px] mt-2" disabled={isLoading}>
-                {isLoading ? "SALVANDO..." : "SALVAR SERVIÇO"}
+              <Button type="submit" className="w-full h-11 rounded-[8px] bg-[#3157D5] text-sm font-semibold text-white hover:bg-[#274ac0]" disabled={isLoading}>
+                {isLoading ? "Salvando..." : "Salvar serviço"}
               </Button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Custom Confirmation Modal */}
       {serviceToDelete && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
-          <div className="bg-[#1c2333] border border-[#2a3347] w-full max-w-[340px] p-8 rounded-[4px] space-y-6 relative animate-in zoom-in-95 duration-200 text-center">
-            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+          <div className="w-full max-w-[340px] rounded-[8px] border border-[#DDE3EE] bg-white p-5 space-y-4 text-center shadow-xl">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FDECEC]">
+              <AlertTriangle className="h-5 w-5 text-[#DC2626]" />
             </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-[#f0c040] font-oswald uppercase tracking-wider">CONFIRMAR EXCLUSÃO</h3>
-              <p className="text-sm text-[#8a9ab5] leading-relaxed">
-                Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
-              </p>
+            <div>
+              <h3 className="text-base font-semibold text-[#172033]">Confirmar exclusão</h3>
+              <p className="mt-1 text-sm text-[#64748B]">Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.</p>
             </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <Button 
-                onClick={() => setServiceToDelete(null)}
-                className="bg-transparent border border-[#2a3347] hover:bg-[#2a3347] text-[#8a9ab5] font-bold py-6 font-oswald uppercase tracking-wider"
-              >
-                CANCELAR
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={() => setServiceToDelete(null)} className="h-11 rounded-[8px] bg-white border border-[#DDE3EE] text-[#172033] hover:bg-[#F6F7FB]">
+                Cancelar
               </Button>
-              <Button 
-                onClick={confirmDelete}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold py-6 font-oswald uppercase tracking-wider"
-                disabled={isLoading}
-              >
-                {isLoading ? "EXCLUINDO..." : "EXCLUIR"}
+              <Button onClick={confirmDelete} className="h-11 rounded-[8px] bg-[#DC2626] text-white hover:bg-[#bf1f1f]" disabled={isLoading}>
+                {isLoading ? "Excluindo..." : "Excluir"}
               </Button>
             </div>
           </div>
