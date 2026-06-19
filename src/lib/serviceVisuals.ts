@@ -168,10 +168,6 @@ const SERVICE_VISUALS: Record<string, string> = {
   "reflexologia": podologiaReflexologia,
   "spa dos pes": podologiaSpa,
   "spa": podologiaSpa,
-  // Massoterapia — entradas explícitas (mapeamento exclusivo)
-  "auriculoterapia": massagemTerapeutica, // placeholder, sobrescrito pelo icon library
-  "ventosaterapia": massagemTerapeutica,
-  "reflexologia massoterapia": massagemTerapeutica,
 };
 
 // Category-scoped overrides for names that exist in more than one category.
