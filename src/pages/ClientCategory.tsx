@@ -77,7 +77,6 @@ export default function ClientCategory() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [location] = useState<SavedLocation | null>(() => {
     try {
       return JSON.parse(localStorage.getItem("gohub_location_v2") || "null");
@@ -100,7 +99,6 @@ export default function ClientCategory() {
     let active = true;
     (async () => {
       setLoading(true);
-      setLoadError(null);
       const [{ data: shopData, error: shopError }, { data: serviceData, error: serviceError }] =
         await Promise.all([
           supabase.rpc("get_available_barbershops"),
@@ -109,15 +107,9 @@ export default function ClientCategory() {
       if (!active) return;
       if (shopError) {
         console.error("Erro ao carregar estabelecimentos:", shopError);
-        setLoadError(shopError.message || "Erro ao carregar estabelecimentos");
-        setLoading(false);
-        return;
       }
       if (serviceError) {
         console.error("Erro ao carregar serviços:", serviceError);
-      }
-      if (import.meta.env.DEV) {
-        console.log("[ClientCategory] get_available_barbershops →", shopData);
       }
       setShops((shopData || []) as Shop[]);
       setServices((serviceData || []) as Service[]);
@@ -128,7 +120,7 @@ export default function ClientCategory() {
     };
   }, [user]);
 
-  const { stores, isSubcategoryFallback } = useMemo(() => {
+  const stores = useMemo(() => {
     const grouped = new Map<string, Service[]>();
     services.forEach((service) => {
       const current = grouped.get(service.barbershop_id) || [];
@@ -140,7 +132,7 @@ export default function ClientCategory() {
     const lat = location?.latitude;
     const lon = location?.longitude;
 
-    const categoryStores = shops
+    const result = shops
       .map((shop) => {
         const shopServices = grouped.get(shop.id) || [];
         const content = [shop.name, shop.description, ...shopServices.map((item) => item.name)]
@@ -148,11 +140,8 @@ export default function ClientCategory() {
           .join(" ")
           .toLocaleLowerCase("pt-BR");
         const matchesCategory =
-          category.id === "todos" ||
-          (shop.category_slug || "barbearias") === category.id;
-        const matchesSubcategory = !subcategory || shopServices.some((service) =>
-          service.name.toLocaleLowerCase("pt-BR").includes(subcategory.toLocaleLowerCase("pt-BR")),
-        );
+          category.id === "todos" || (shop.category_slug || "") === category.id;
+        const matchesSubcategory = !subcategory || content.includes(subcategory.toLocaleLowerCase("pt-BR"));
         const matchesSearch = !normalizedQuery || content.includes(normalizedQuery);
         const minPrice = shopServices.length
           ? Math.min(...shopServices.map((item) => item.price).filter((price) => price > 0))
@@ -166,39 +155,13 @@ export default function ClientCategory() {
             : null;
         return { shop, services: shopServices, minPrice, distance, matchesCategory, matchesSubcategory, matchesSearch };
       })
-      .filter((item) => item.matchesCategory && item.matchesSearch);
+      .filter((item) => item.matchesCategory && item.matchesSubcategory && item.matchesSearch);
 
-    const subcategoryMatches = subcategory
-      ? categoryStores.filter((item) => item.matchesSubcategory)
-      : categoryStores;
-    const shouldFallback = Boolean(
-      subcategory && categoryStores.length > 0 && subcategoryMatches.length === 0,
-    );
-    const result = shouldFallback ? categoryStores : subcategoryMatches;
-
-    if (import.meta.env.DEV) {
-      const afterCategory = shops.filter((s) =>
-        category.id === "todos" || (s.category_slug || "barbearias") === category.id,
-      ).length;
-      console.log({
-        categorySlug: category.id,
-        shopsReturned: shops.length,
-        selectedSubcategory: subcategory,
-        activeFilters: filters,
-        searchQuery: query,
-        afterCategory,
-        subcategoryMatches: subcategoryMatches.length,
-        isSubcategoryFallback: shouldFallback,
-        finalCount: result.length,
-      });
-    }
-
-    const sorted = result.sort((a, b) => {
+    return result.sort((a, b) => {
       if (filters.includes("price")) return (a.minPrice ?? Infinity) - (b.minPrice ?? Infinity);
       if (filters.includes("distance")) return (a.distance ?? Infinity) - (b.distance ?? Infinity);
       return a.shop.name.localeCompare(b.shop.name, "pt-BR");
     });
-    return { stores: sorted, isSubcategoryFallback: shouldFallback };
   }, [category, filters, location, query, services, shops, subcategory]);
 
   const toggleFilter = (key: FilterKey) =>
@@ -351,19 +314,6 @@ export default function ClientCategory() {
                   </button>
                 );
               })}
-              {(filters.length > 0 || subcategory || query) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilters([]);
-                    setSubcategory(null);
-                    setQuery("");
-                  }}
-                  className="h-9 shrink-0 rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-[#3157D5]"
-                >
-                  Limpar
-                </button>
-              )}
             </div>
           </section>
 
@@ -376,22 +326,9 @@ export default function ClientCategory() {
               <span className="text-xs text-slate-500">{stores.length} locais</span>
             </div>
 
-            {isSubcategoryFallback && (
-              <div className="mx-4 mb-3 rounded-[8px] border border-[#C7D6FF] bg-[#EAF0FF] px-3 py-2 text-xs text-[#3157D5]">
-                Nenhum estabelecimento cadastrou “{subcategory}” no catálogo ainda. Mostrando todos de {category.label.toLocaleLowerCase("pt-BR")}.
-              </div>
-            )}
-
             {loading ? (
               <div className="no-scrollbar flex gap-3 overflow-hidden px-4">
                 {[1, 2].map((item) => <Skeleton key={item} className="h-64 w-[82%] shrink-0" />)}
-              </div>
-            ) : loadError ? (
-              <div className="px-4">
-                <div className="rounded-[8px] border border-red-200 bg-red-50 p-6 text-center">
-                  <p className="text-sm font-semibold text-red-700">Erro ao carregar estabelecimentos</p>
-                  <p className="mt-1 text-xs text-red-600">{loadError}</p>
-                </div>
               </div>
             ) : stores.length === 0 ? (
               <div className="px-4">
