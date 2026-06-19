@@ -1,5 +1,5 @@
 
-CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA extensions;
 
 -- 1. Função de normalização de slug
 CREATE OR REPLACE FUNCTION public.normalize_service_slug(p_name text)
@@ -9,7 +9,7 @@ STABLE
 AS $$
   SELECT trim(both '-' from regexp_replace(
     regexp_replace(
-      lower(public.unaccent(coalesce(p_name, ''))),
+      lower(extensions.unaccent(coalesce(p_name, ''))),
       '[^a-z0-9]+', '-', 'g'
     ),
     '-+', '-', 'g'
