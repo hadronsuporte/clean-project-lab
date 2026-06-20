@@ -5,6 +5,7 @@ import { Camera, Plus, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/UserAvatar";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 
 
 interface Barber {
@@ -49,6 +50,7 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
   const [active, setActive] = useState(true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (barbershopId) fetchBarbers();
@@ -103,13 +105,14 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
     setActive(true);
     setAvatarFile(null);
     setAvatarPreview(null);
+    setPendingAvatarFile(null);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
+      setPendingAvatarFile(file);
+      e.target.value = "";
     }
   };
 
@@ -313,6 +316,18 @@ export default function AdminBarbers({ barbershopId }: { barbershopId: string | 
         <Button type="submit" className="w-full h-12 rounded-[8px] bg-[#3157D5] text-sm font-semibold text-white hover:bg-[#274ac0]" disabled={isLoading}>
           {isLoading ? "Salvando..." : "Salvar profissional"}
         </Button>
+        <ImageCropDialog
+          file={pendingAvatarFile}
+          open={!!pendingAvatarFile}
+          title="Enquadrar foto do profissional"
+          cropShape="round"
+          onCancel={() => setPendingAvatarFile(null)}
+          onConfirm={(croppedFile) => {
+            setAvatarFile(croppedFile);
+            setAvatarPreview(URL.createObjectURL(croppedFile));
+            setPendingAvatarFile(null);
+          }}
+        />
       </form>
     );
   }

@@ -49,6 +49,9 @@ serve(async (req) => {
       description,
       paymentStatus,
       paymentDueDate,
+      subscriptionStatus,
+      monthlyPrice,
+      paidUntil,
       ownerName, 
       ownerEmail, 
       ownerPhone, 
@@ -126,7 +129,10 @@ serve(async (req) => {
         logo_url: logoUrl,
         description: description,
         payment_status: paymentStatus || "pending",
-        payment_due_date: paymentDueDate || null,
+        payment_due_date: paymentDueDate || paidUntil || null,
+        subscription_status: subscriptionStatus || "trialing",
+        monthly_price: Number(monthlyPrice) || 0,
+        paid_until: paidUntil || null,
         slug: slug,
         category_id: categoryId || null
       })

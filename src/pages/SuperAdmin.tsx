@@ -61,6 +61,7 @@ import {
   displayCategoryName,
 } from "@/lib/establishmentCategories";
 import { AddressFields, AddressData, emptyAddress, composeAddress } from "@/components/admin/AddressFields";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 import gohubLogo from "@/assets/login/gohub-logo.png";
 
 interface Barbershop {
@@ -183,6 +184,8 @@ export default function SuperAdmin() {
   const [createAddress, setCreateAddress] = useState<AddressData>(emptyAddress);
   const [ownerIsBarber, setOwnerIsBarber] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
+  const [pendingLogoIsEdit, setPendingLogoIsEdit] = useState(false);
 
   // Edit
   const [editingBarbershop, setEditingBarbershop] = useState<Barbershop | null>(null);
@@ -355,13 +358,9 @@ export default function SuperAdmin() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (isEdit) {
-      setEditLogoFile(file);
-      setEditLogoPreview(URL.createObjectURL(file));
-    } else {
-      setLogoFile(file);
-      setLogoPreview(URL.createObjectURL(file));
-    }
+    setPendingLogoIsEdit(isEdit);
+    setPendingLogoFile(file);
+    e.target.value = "";
   };
 
   const uploadLogo = async (file: File) => {
@@ -430,6 +429,34 @@ export default function SuperAdmin() {
         toast.error(response.error || "Erro ao cadastrar estabelecimento.");
         return;
       }
+
+      const createdShopId = response?.barbershop_id as string | undefined;
+      if (!createdShopId) throw new Error("Cadastro concluído sem identificar o estabelecimento.");
+
+      const selectedCategoryIds = Array.from(
+        new Set([createCategoryId, ...createAdditionalCategoryIds]),
+      );
+      const { error: createdShopUpdateError } = await supabase
+        .from("barbershops")
+        .update({
+          category_id: createCategoryId,
+          subscription_status: subscriptionStatus,
+          monthly_price: monthlyPriceValue,
+          paid_until: paidUntilValue || null,
+        })
+        .eq("id", createdShopId);
+      if (createdShopUpdateError) throw createdShopUpdateError;
+
+      const { error: categoryLinkError } = await (supabase as any)
+        .from("barbershop_categories")
+        .upsert(
+          selectedCategoryIds.map((categoryId) => ({
+            barbershop_id: createdShopId,
+            category_id: categoryId,
+          })),
+          { onConflict: "barbershop_id,category_id" },
+        );
+      if (categoryLinkError) throw categoryLinkError;
 
       toast.success("Estabelecimento cadastrado com sucesso");
       setIsCreateModalOpen(false);
@@ -1437,6 +1464,22 @@ export default function SuperAdmin() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <ImageCropDialog
+        file={pendingLogoFile}
+        open={!!pendingLogoFile}
+        title="Enquadrar foto do estabelecimento"
+        onCancel={() => setPendingLogoFile(null)}
+        onConfirm={(croppedFile) => {
+          if (pendingLogoIsEdit) {
+            setEditLogoFile(croppedFile);
+            setEditLogoPreview(URL.createObjectURL(croppedFile));
+          } else {
+            setLogoFile(croppedFile);
+            setLogoPreview(URL.createObjectURL(croppedFile));
+          }
+          setPendingLogoFile(null);
+        }}
+      />
       <ProfileModal isOpen={isProfileModalOpen} onOpenChange={setIsProfileModalOpen} />
       <LogoutConfirmDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
     </div>
