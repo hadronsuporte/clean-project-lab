@@ -233,7 +233,7 @@ for (const [categoryIndex, category] of categories.entries()) {
     );
     const servicesToCreate = [...selectedServices, ...categoryServices]
       .filter((item, index, list) => list.findIndex((other) => other.id === item.id) === index)
-      .slice(0, 3)
+      .slice(0, 5)
       .filter((item) => !existingCatalogIds.has(item.id))
       .map((item, serviceIndex) => ({
         barbershop_id: barbershopId,
