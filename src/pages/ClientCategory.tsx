@@ -473,7 +473,14 @@ export default function ClientCategory() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white">
                 <SlidersHorizontal className="h-4 w-4" />
               </span>
-              {FILTERS.map((filter) => {
+              {(selectedPetType === "Rações e acessórios"
+                ? ([
+                    { key: "distance", label: "Mais próximos" },
+                    { key: "today", label: "Aberto agora" },
+                    { key: "rating", label: "Melhor avaliados" },
+                  ] as { key: FilterKey; label: string }[])
+                : FILTERS
+              ).map((filter) => {
                 const selected = filters.includes(filter.key);
                 return (
                   <button
