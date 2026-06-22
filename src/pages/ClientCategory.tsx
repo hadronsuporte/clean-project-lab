@@ -24,6 +24,9 @@ import "@/lib/serviceIcons"; // registers icon_key → image map used by getServ
 const PET_STORE_TYPES = ["Pet shop", "Rações e acessórios"] as const;
 type PetStoreType = (typeof PET_STORE_TYPES)[number];
 
+const PET_PRODUCT_FILTERS = ["Rações", "Petiscos", "Higiene", "Brinquedos", "Acessórios"] as const;
+type PetProductFilter = (typeof PET_PRODUCT_FILTERS)[number];
+
 type Shop = {
   id: string;
   name: string;
@@ -81,6 +84,7 @@ export default function ClientCategory() {
   const [query, setQuery] = useState("");
   const [selectedCatalog, setSelectedCatalog] = useState<CatalogItem | null>(null);
   const [selectedPetType, setSelectedPetType] = useState<PetStoreType | null>(null);
+  const [selectedProductFilter, setSelectedProductFilter] = useState<PetProductFilter | null>(null);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [filters, setFilters] = useState<FilterKey[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
@@ -101,6 +105,7 @@ export default function ClientCategory() {
   useEffect(() => {
     setSelectedCatalog(null);
     setSelectedPetType(null);
+    setSelectedProductFilter(null);
     setQuery("");
   }, [categorySlug]);
 
@@ -312,6 +317,7 @@ export default function ClientCategory() {
                       onClick={() => {
                         setSelectedPetType(selected ? null : type);
                         setSelectedCatalog(null);
+                        setSelectedProductFilter(null);
                       }}
                       className={`h-9 shrink-0 rounded-full border px-3 text-xs font-semibold transition ${
                         selected
@@ -331,10 +337,49 @@ export default function ClientCategory() {
             </section>
           )}
 
-          {catalog.length > 0 && (
+          {category.id === "pet" && (selectedPetType === "Rações e acessórios" || selectedPetType === "Pet shop") && (
             <section className="pt-6">
               <div className="mb-3 flex items-center justify-between px-4">
-                <h2 className="text-lg font-extrabold">Explore serviços</h2>
+                <h2 className="text-lg font-extrabold">Explore produtos</h2>
+                {selectedProductFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProductFilter(null)}
+                    className="text-xs font-semibold text-[#3157D5]"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+              <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-1">
+                {PET_PRODUCT_FILTERS.map((filter) => {
+                  const selected = selectedProductFilter === filter;
+                  return (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => setSelectedProductFilter(selected ? null : filter)}
+                      className={`h-9 shrink-0 rounded-full border px-3 text-xs font-semibold transition ${
+                        selected
+                          ? "border-transparent text-white shadow-sm"
+                          : "border-slate-200 bg-white text-slate-700"
+                      }`}
+                      style={selected ? { backgroundColor: category.accent } : undefined}
+                    >
+                      {filter}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {catalog.length > 0 && selectedPetType !== "Rações e acessórios" && (
+            <section className="pt-6">
+              <div className="mb-3 flex items-center justify-between px-4">
+                <h2 className="text-lg font-extrabold">
+                  {category.id === "pet" && selectedPetType === "Pet shop" ? "Serviços disponíveis" : "Explore serviços"}
+                </h2>
                 {selectedCatalog && (
                   <button type="button" onClick={() => setSelectedCatalog(null)} className="text-xs font-semibold text-[#3157D5]">
                     Limpar
