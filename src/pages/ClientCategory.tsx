@@ -84,6 +84,7 @@ export default function ClientCategory() {
   const [query, setQuery] = useState("");
   const [selectedCatalog, setSelectedCatalog] = useState<CatalogItem | null>(null);
   const [selectedPetType, setSelectedPetType] = useState<PetStoreType | null>(null);
+  const [selectedProductFilter, setSelectedProductFilter] = useState<PetProductFilter | null>(null);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [filters, setFilters] = useState<FilterKey[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
@@ -104,6 +105,7 @@ export default function ClientCategory() {
   useEffect(() => {
     setSelectedCatalog(null);
     setSelectedPetType(null);
+    setSelectedProductFilter(null);
     setQuery("");
   }, [categorySlug]);
 
