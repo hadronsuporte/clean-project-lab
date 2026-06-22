@@ -358,7 +358,10 @@ export default function ClientCategory() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setSelectedCatalog(selected ? null : item)}
+                      onClick={() => {
+                        setSelectedCatalog(selected ? null : item);
+                        setSelectedPetType(null);
+                      }}
                       className="grid w-[88px] shrink-0 grid-rows-[64px_40px] gap-2 text-center active:scale-95"
                       style={{ scrollSnapAlign: "start" }}
                     >
