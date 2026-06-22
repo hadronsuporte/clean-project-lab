@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ChevronRight,
@@ -54,6 +55,7 @@ type Shop = {
 };
 
 type Service = { barbershop_id: string; name: string; price: number };
+type BusinessCategoryRow = { id: string; name: string; slug: string };
 type CatalogItem = {
   id: string;
   name: string;
@@ -61,6 +63,7 @@ type CatalogItem = {
   icon_key: string | null;
   custom?: boolean;
 };
+type CatalogQueryData = { items: CatalogItem[]; supplementalError: string | null };
 
 // Slugs comerciais que pertencem ao seletor "Comprar para o pet"
 // e NÃO devem aparecer na lista de serviços agendáveis.
@@ -68,6 +71,14 @@ const PET_STORE_CATALOG_SLUGS = new Set(["pet-shop", "racoes-e-acessorios"]);
 
 function slugifyServiceName(name: string): string {
   return normalizeName(name).replace(/\s+/g, "-");
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    return String((error as { message?: unknown }).message);
+  }
+  return String(error);
 }
 type SavedLocation = { label: string; latitude?: number; longitude?: number };
 type FilterKey = "distance" | "today" | "rating" | "price";
