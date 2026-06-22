@@ -1104,6 +1104,32 @@ export default function SuperAdmin() {
                   <p className="mt-1 text-[11px] text-[#64748B]">Selecione todas as áreas em que o estabelecimento atende.</p>
                 </Field>
 
+                {createIncludesPet && (
+                  <Field label="Tipos de estabelecimento Pet" htmlFor="create_pet_types">
+                    <div id="create_pet_types" className="grid grid-cols-2 gap-2 rounded-[8px] border border-[#DDE3EE] bg-[#FFF8E6] p-3">
+                      {PET_BUSINESS_TYPES.map((type) => {
+                        const checked = createPetTypes.includes(type);
+                        return (
+                          <label key={type} className="flex min-h-10 cursor-pointer items-center gap-2 text-xs text-[#172033]">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                setCreatePetTypes((current) =>
+                                  checked ? current.filter((t) => t !== type) : [...current, type],
+                                )
+                              }
+                              className="h-4 w-4 rounded border-[#CBD5E1] text-[#F59E0B] focus:ring-[#F59E0B]"
+                            />
+                            {type}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1 text-[11px] text-[#64748B]">Marque mais de um se o estabelecimento combinar tipos (ex.: Pet shop + Banho e tosa).</p>
+                  </Field>
+                )}
+
                 <AddressFields value={createAddress} onChange={setCreateAddress} idPrefix="create_addr" />
 
                 <div className="grid grid-cols-2 gap-3">
@@ -1315,6 +1341,31 @@ export default function SuperAdmin() {
                     })}
                 </div>
               </Field>
+              {editIncludesPet && (
+                <Field label="Tipos de estabelecimento Pet" htmlFor="edit_pet_types">
+                  <div id="edit_pet_types" className="grid grid-cols-2 gap-2 rounded-[8px] border border-[#DDE3EE] bg-[#FFF8E6] p-3 md:col-span-2">
+                    {PET_BUSINESS_TYPES.map((type) => {
+                      const checked = editPetTypes.includes(type);
+                      return (
+                        <label key={type} className="flex min-h-10 cursor-pointer items-center gap-2 text-xs text-[#172033]">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() =>
+                              setEditPetTypes((current) =>
+                                checked ? current.filter((t) => t !== type) : [...current, type],
+                              )
+                            }
+                            className="h-4 w-4 rounded border-[#CBD5E1] text-[#F59E0B] focus:ring-[#F59E0B]"
+                          />
+                          {type}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-[11px] text-[#64748B]">Marque mais de um se o estabelecimento combinar tipos.</p>
+                </Field>
+              )}
               <Field label="Valor mensal" htmlFor="edit_monthly">
                 <Input
                   id="edit_monthly"
