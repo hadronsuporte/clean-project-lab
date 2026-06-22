@@ -51,6 +51,7 @@ import iconSobrancelhas from "@/assets/categories/sobrancelhas.png";
 import iconMaquiagem from "@/assets/categories/maquiagem.png";
 import iconDepilacao from "@/assets/categories/depilacao.png";
 import iconPodologia from "@/assets/categories/podologia.png";
+import iconPet from "@/assets/categories/pet.png";
 import iconVerMais from "@/assets/categories/ver-mais.png";
 
 /* ============================================================
@@ -82,6 +83,7 @@ const CATEGORIES: Category[] = [
   { id: "maquiagem", label: "Maquiagem", image: iconMaquiagem },
   { id: "depilacao", label: "Depilação", image: iconDepilacao },
   { id: "podologia", label: "Podologia", image: iconPodologia },
+  { id: "pet", label: "Pet", image: iconPet },
   { id: "todos", label: "Ver mais", image: iconVerMais },
 ];
 
