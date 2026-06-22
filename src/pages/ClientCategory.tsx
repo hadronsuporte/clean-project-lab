@@ -362,22 +362,44 @@ export default function ClientCategory() {
                   </button>
                 )}
               </div>
-              <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-1">
+              <div
+                className="no-scrollbar flex items-start gap-3 overflow-x-auto px-4 pb-2"
+                style={{ scrollPaddingInline: 16, scrollSnapType: "x proximity" }}
+              >
                 {PET_PRODUCT_FILTERS.map((filter) => {
-                  const selected = selectedProductFilter === filter;
+                  const selected = selectedProductFilter === filter.label;
                   return (
                     <button
-                      key={filter}
+                      key={filter.label}
                       type="button"
-                      onClick={() => setSelectedProductFilter(selected ? null : filter)}
-                      className={`h-9 shrink-0 rounded-full border px-3 text-xs font-semibold transition ${
-                        selected
-                          ? "border-transparent text-white shadow-sm"
-                          : "border-slate-200 bg-white text-slate-700"
-                      }`}
-                      style={selected ? { backgroundColor: category.accent } : undefined}
+                      onClick={() =>
+                        setSelectedProductFilter(selected ? null : filter.label)
+                      }
+                      className="grid w-[88px] shrink-0 grid-rows-[64px_40px] gap-2 text-center active:scale-95"
+                      style={{ scrollSnapAlign: "start" }}
                     >
-                      {filter}
+                      <div
+                        className={`mx-auto flex h-16 w-16 items-center justify-center rounded-[8px] border bg-white ${
+                          selected ? "ring-2 ring-offset-2" : "border-slate-100"
+                        }`}
+                        style={
+                          selected
+                            ? { borderColor: category.accent, color: category.accent }
+                            : undefined
+                        }
+                      >
+                        <img
+                          src={filter.image}
+                          alt=""
+                          loading="lazy"
+                          width={48}
+                          height={48}
+                          className="h-12 w-12 object-contain"
+                        />
+                      </div>
+                      <span className="mx-auto flex h-10 w-full items-start justify-center overflow-hidden px-0.5 text-center text-[11px] font-semibold leading-[14px] text-slate-700 line-clamp-2 break-words">
+                        {filter.label}
+                      </span>
                     </button>
                   );
                 })}
