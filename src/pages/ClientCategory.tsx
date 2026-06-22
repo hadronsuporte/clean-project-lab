@@ -20,6 +20,10 @@ import { CLIENT_CATEGORIES, getCategoryBySlug } from "@/lib/clientCategories";
 import { getServiceDisplayName, getServiceVisual } from "@/lib/serviceVisuals";
 import "@/lib/serviceIcons"; // registers icon_key → image map used by getServiceVisual
 
+// Tipos comerciais Pet: exibem estabelecimentos sem fluxo de agendamento.
+const PET_STORE_TYPES = ["Pet shop", "Loja de rações", "Rações e acessórios"] as const;
+type PetStoreType = (typeof PET_STORE_TYPES)[number];
+
 type Shop = {
   id: string;
   name: string;
@@ -32,6 +36,7 @@ type Shop = {
   category_slug?: string | null;
   category_id?: string | null;
   blocked?: boolean | null;
+  pet_types?: string[] | null;
 };
 
 type Service = { barbershop_id: string; name: string; price: number };
@@ -75,6 +80,7 @@ export default function ClientCategory() {
 
   const [query, setQuery] = useState("");
   const [selectedCatalog, setSelectedCatalog] = useState<CatalogItem | null>(null);
+  const [selectedPetType, setSelectedPetType] = useState<PetStoreType | null>(null);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [filters, setFilters] = useState<FilterKey[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
@@ -94,6 +100,7 @@ export default function ClientCategory() {
 
   useEffect(() => {
     setSelectedCatalog(null);
+    setSelectedPetType(null);
     setQuery("");
   }, [categorySlug]);
 
@@ -135,6 +142,7 @@ export default function ClientCategory() {
           supabase.rpc("get_barbershops_by_category_service", {
             p_category_slug: category.id,
             p_catalog_service_id: selectedCatalog?.id ?? null,
+            p_pet_type: selectedPetType ?? null,
           }),
           supabase.from("services").select("barbershop_id,name,price"),
         ]);
@@ -152,7 +160,7 @@ export default function ClientCategory() {
     return () => {
       active = false;
     };
-  }, [user, category.id, selectedCatalog?.id]);
+  }, [user, category.id, selectedCatalog?.id, selectedPetType]);
 
   const stores = useMemo(() => {
     const grouped = new Map<string, Service[]>();
@@ -204,7 +212,10 @@ export default function ClientCategory() {
   const toggleFilter = (key: FilterKey) =>
     setFilters((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]));
 
-  const openShop = (shopId: string) => navigate(`/client-business/${shopId}?category=${category.id}`);
+  const openShop = (shopId: string) => {
+    const mode = selectedPetType ? "&mode=store" : "";
+    navigate(`/client-business/${shopId}?category=${category.id}${mode}`);
+  };
 
   if (authLoading) return <LoadingScreen />;
 
@@ -284,6 +295,41 @@ export default function ClientCategory() {
               />
             </div>
           </section>
+
+          {category.id === "pet" && (
+            <section className="pt-5">
+              <div className="mb-2 px-4">
+                <p className="text-[11px] font-bold uppercase text-slate-400">Lojas e produtos</p>
+                <h2 className="mt-1 text-base font-extrabold">Comprar para o pet</h2>
+              </div>
+              <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-1">
+                {PET_STORE_TYPES.map((type) => {
+                  const selected = selectedPetType === type;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => {
+                        setSelectedPetType(selected ? null : type);
+                        setSelectedCatalog(null);
+                      }}
+                      className={`h-9 shrink-0 rounded-full border px-3 text-xs font-semibold transition ${
+                        selected
+                          ? "border-transparent text-white shadow-sm"
+                          : "border-slate-200 bg-white text-slate-700"
+                      }`}
+                      style={selected ? { backgroundColor: category.accent } : undefined}
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 px-4 text-[11px] text-slate-500">
+                Estabelecimentos comerciais — sem agendamento online.
+              </p>
+            </section>
+          )}
 
           {catalog.length > 0 && (
             <section className="pt-6">
