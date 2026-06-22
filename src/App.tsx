@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App as CapacitorApp } from '@capacitor/app';
+import type { PluginListenerHandle } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { supabase } from "@/integrations/supabase/client";
 import Login from "./pages/Login";
@@ -81,10 +83,12 @@ const router = createBrowserRouter([
   },
 ]);
 
+const queryClient = new QueryClient();
+
 function App() {
   useEffect(() => {
-    let backHandler: any = null;
-    let urlHandler: any = null;
+    let backHandler: PluginListenerHandle | null = null;
+    let urlHandler: PluginListenerHandle | null = null;
 
     // Handling Android Back Button
     const setupBackButton = async () => {
@@ -178,13 +182,15 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <PushNotificationRegistrar />
-      <PhoneGate>
-        <RouterProvider router={router} />
-      </PhoneGate>
-      <Toaster position="top-center" richColors />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <PushNotificationRegistrar />
+        <PhoneGate>
+          <RouterProvider router={router} />
+        </PhoneGate>
+        <Toaster position="top-center" richColors />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

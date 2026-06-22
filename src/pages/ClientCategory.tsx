@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ChevronRight,
@@ -54,6 +55,7 @@ type Shop = {
 };
 
 type Service = { barbershop_id: string; name: string; price: number };
+type BusinessCategoryRow = { id: string; name: string; slug: string };
 type CatalogItem = {
   id: string;
   name: string;
@@ -61,6 +63,7 @@ type CatalogItem = {
   icon_key: string | null;
   custom?: boolean;
 };
+type CatalogQueryData = { items: CatalogItem[]; supplementalError: string | null };
 
 // Slugs comerciais que pertencem ao seletor "Comprar para o pet"
 // e NÃO devem aparecer na lista de serviços agendáveis.
@@ -68,6 +71,14 @@ const PET_STORE_CATALOG_SLUGS = new Set(["pet-shop", "racoes-e-acessorios"]);
 
 function slugifyServiceName(name: string): string {
   return normalizeName(name).replace(/\s+/g, "-");
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    return String((error as { message?: unknown }).message);
+  }
+  return String(error);
 }
 type SavedLocation = { label: string; latitude?: number; longitude?: number };
 type FilterKey = "distance" | "today" | "rating" | "price";
@@ -110,7 +121,9 @@ export default function ClientCategory() {
   const [selectedCatalog, setSelectedCatalog] = useState<CatalogItem | null>(null);
   const [selectedPetType, setSelectedPetType] = useState<PetStoreType | null>(null);
   const [selectedProductFilter, setSelectedProductFilter] = useState<PetProductFilter | null>(null);
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const selectedCatalogId = selectedCatalog?.id ?? null;
+  const selectedCatalogSlug = selectedCatalog?.slug ?? null;
+  const selectedCatalogIsCustom = Boolean(selectedCatalog?.custom);
   const [filters, setFilters] = useState<FilterKey[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -123,6 +136,98 @@ export default function ClientCategory() {
     }
   });
 
+  const businessCategoryQuery = useQuery<BusinessCategoryRow, Error>({
+    queryKey: ["business-category", categorySlug],
+    enabled: category.id !== "todos",
+    gcTime: 0,
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("business_categories")
+        .select("id,name,slug")
+        .eq("slug", categorySlug)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error(`Categoria não encontrada: ${categorySlug}`);
+
+      return data as BusinessCategoryRow;
+    },
+  });
+
+  const categoryId = businessCategoryQuery.data?.id ?? null;
+
+  const serviceCatalogQuery = useQuery<CatalogQueryData, Error>({
+    queryKey: ["service-catalog", categorySlug, categoryId],
+    enabled: category.id !== "todos" && Boolean(categoryId),
+    gcTime: 0,
+    retry: 1,
+    queryFn: async () => {
+      if (!categoryId) return { items: [], supplementalError: null };
+
+      const { data, error } = await supabase
+        .from("service_catalog")
+        .select("id,name,slug,icon_key")
+        .eq("category_id", categoryId)
+        .eq("active", true)
+        .order("name");
+
+      if (error) throw new Error(error.message);
+
+      const items = ((data || []) as CatalogItem[]).filter(
+        (item) => !(categorySlug === "pet" && PET_STORE_CATALOG_SLUGS.has(item.slug)),
+      );
+      const knownSlugs = new Set(items.map((item) => slugifyServiceName(item.slug || item.name)));
+      let supplementalError: string | null = null;
+
+      try {
+        const { data: categoryShops, error: shopsError } = await supabase
+          .from("barbershops")
+          .select("id")
+          .eq("category_id", categoryId);
+
+        if (shopsError) throw shopsError;
+
+        const shopIds = (categoryShops || []).map((shop: { id: string }) => shop.id);
+        if (shopIds.length > 0) {
+          const { data: customServices, error: servicesError } = await supabase
+            .from("services")
+            .select("name,catalog_service_id")
+            .in("barbershop_id", shopIds)
+            .is("catalog_service_id", null);
+
+          if (servicesError) throw servicesError;
+
+          for (const service of (customServices || []) as { name: string }[]) {
+            const slug = slugifyServiceName(service.name);
+            if (!slug || knownSlugs.has(slug)) continue;
+            if (categorySlug === "pet" && PET_STORE_CATALOG_SLUGS.has(slug)) continue;
+            knownSlugs.add(slug);
+            items.push({
+              id: `custom:${slug}`,
+              name: service.name.trim(),
+              slug,
+              icon_key: null,
+              custom: true,
+            });
+          }
+        }
+      } catch (error) {
+        supplementalError = getErrorMessage(error);
+        console.error("Erro ao carregar serviços personalizados:", error);
+      }
+
+      return {
+        items: items.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+        supplementalError,
+      };
+    },
+  });
+
+  const catalog = serviceCatalogQuery.data?.items ?? [];
+  const catalogErrorMessage =
+    businessCategoryQuery.error?.message || serviceCatalogQuery.error?.message || serviceCatalogQuery.data?.supplementalError || null;
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/login", { replace: true });
   }, [authLoading, navigate, user]);
@@ -134,79 +239,13 @@ export default function ClientCategory() {
     setQuery("");
   }, [categorySlug]);
 
-  // Load global catalog for the selected category (skip for 'todos')
-  useEffect(() => {
-    if (category.id === "todos") {
-      setCatalog([]);
-      return;
-    }
-    let active = true;
-    (async () => {
-      const { data: catData } = await supabase
-        .from("business_categories")
-        .select("id")
-        .eq("slug", category.id)
-        .maybeSingle();
-      if (!active || !catData) return;
-      const { data, error } = await supabase
-        .from("service_catalog")
-        .select("id,name,slug,icon_key")
-        .eq("category_id", catData.id)
-        .eq("active", true)
-        .order("name");
-      if (error) console.error("Erro ao carregar catálogo:", error);
-      if (!active) return;
-      let items = ((data || []) as CatalogItem[]).filter(
-        (item) => !(category.id === "pet" && PET_STORE_CATALOG_SLUGS.has(item.slug)),
-      );
-
-      // Pet: incluir serviços personalizados cadastrados pelos estabelecimentos
-      // (services sem catalog_service_id) como entradas virtuais, sem duplicar.
-      if (category.id === "pet") {
-        const { data: petShops } = await supabase
-          .from("barbershops")
-          .select("id")
-          .eq("category_id", catData.id);
-        const ids = (petShops || []).map((s: { id: string }) => s.id);
-        if (ids.length > 0) {
-          const { data: customSvcs } = await supabase
-            .from("services")
-            .select("name, catalog_service_id")
-            .in("barbershop_id", ids)
-            .is("catalog_service_id", null);
-          const knownSlugs = new Set(items.map((i) => i.slug));
-          const seen = new Set<string>();
-          for (const svc of (customSvcs || []) as { name: string }[]) {
-            const slug = slugifyServiceName(svc.name);
-            if (!slug || knownSlugs.has(slug) || seen.has(slug)) continue;
-            if (PET_STORE_CATALOG_SLUGS.has(slug)) continue;
-            seen.add(slug);
-            items.push({
-              id: `custom:${slug}`,
-              name: svc.name.trim(),
-              slug,
-              icon_key: null,
-              custom: true,
-            });
-          }
-          items = items.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-        }
-      }
-
-      setCatalog(items);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [category.id]);
-
   useEffect(() => {
     if (!user) return;
     let active = true;
     (async () => {
       setLoading(true);
       const catalogIdForRpc =
-        selectedCatalog && !selectedCatalog.custom ? selectedCatalog.id : null;
+        selectedCatalogId && !selectedCatalogIsCustom ? selectedCatalogId : null;
       const [{ data: shopData, error: shopError }, { data: serviceData, error: serviceError }] =
         await Promise.all([
           supabase.rpc("get_barbershops_by_category_service", {
@@ -227,8 +266,8 @@ export default function ClientCategory() {
       let resultShops = (shopData || []) as Shop[];
       // Para serviços personalizados (sem id no catálogo), filtrar shops client-side
       // pelo slug normalizado do nome do serviço.
-      if (selectedCatalog?.custom) {
-        const target = selectedCatalog.slug;
+      if (selectedCatalogIsCustom && selectedCatalogSlug) {
+        const target = selectedCatalogSlug;
         const matchingShopIds = new Set(
           allServices
             .filter((s) => slugifyServiceName(s.name) === target)
@@ -243,7 +282,7 @@ export default function ClientCategory() {
     return () => {
       active = false;
     };
-  }, [user, category.id, selectedCatalog?.id, selectedCatalog?.custom, selectedCatalog?.slug, selectedPetType]);
+  }, [user, category.id, selectedCatalogId, selectedCatalogIsCustom, selectedCatalogSlug, selectedPetType]);
 
   const stores = useMemo(() => {
     const grouped = new Map<string, Service[]>();
@@ -470,6 +509,14 @@ export default function ClientCategory() {
                     </button>
                   );
                 })}
+              </div>
+            </section>
+          )}
+
+          {catalogErrorMessage && selectedPetType !== "Rações e acessórios" && (
+            <section className="px-4 pt-4">
+              <div className="rounded-[8px] border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
+                {catalogErrorMessage}
               </div>
             </section>
           )}
