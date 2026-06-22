@@ -507,25 +507,50 @@ export type Database = {
         }[]
       }
       get_barber_dashboard: { Args: { p_day?: string }; Returns: Json }
-      get_barbershops_by_category_service: {
-        Args: { p_catalog_service_id?: string; p_category_slug: string }
-        Returns: {
-          address: string
-          blocked: boolean
-          category_id: string
-          category_name: string
-          category_slug: string
-          created_at: string
-          description: string
-          id: string
-          latitude: number
-          logo_url: string
-          longitude: number
-          name: string
-          phone: string
-          subscription_status: string
-        }[]
-      }
+      get_barbershops_by_category_service:
+        | {
+            Args: { p_catalog_service_id?: string; p_category_slug: string }
+            Returns: {
+              address: string
+              blocked: boolean
+              category_id: string
+              category_name: string
+              category_slug: string
+              created_at: string
+              description: string
+              id: string
+              latitude: number
+              logo_url: string
+              longitude: number
+              name: string
+              phone: string
+              subscription_status: string
+            }[]
+          }
+        | {
+            Args: {
+              p_catalog_service_id?: string
+              p_category_slug: string
+              p_pet_type?: string
+            }
+            Returns: {
+              address: string
+              blocked: boolean
+              category_id: string
+              category_name: string
+              category_slug: string
+              created_at: string
+              description: string
+              id: string
+              latitude: number
+              logo_url: string
+              longitude: number
+              name: string
+              pet_types: string[]
+              phone: string
+              subscription_status: string
+            }[]
+          }
       get_financial_report: {
         Args: {
           p_barbershop_id: string

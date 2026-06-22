@@ -34,6 +34,7 @@ export default function ClientBusiness() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const category = getCategoryBySlug(params.get("category") || "barbearias") || getCategoryBySlug("todos")!;
+  const storeMode = params.get("mode") === "store";
   const [shop, setShop] = useState<Shop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,7 +134,7 @@ export default function ClientBusiness() {
             <span className="text-xs text-slate-500">{services.length} opções</span>
           </div>
 
-          {services.length === 0 ? (
+          {storeMode || services.length === 0 ? (
             <div className="rounded-[8px] border border-slate-200 bg-white p-6 text-center">
               <div
                 className="mx-auto flex h-12 w-12 items-center justify-center rounded-full"
