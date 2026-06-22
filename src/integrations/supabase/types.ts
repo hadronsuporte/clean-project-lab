@@ -178,6 +178,7 @@ export type Database = {
           paid_until: string | null
           payment_due_date: string | null
           payment_status: string | null
+          pet_types: string[] | null
           phone: string | null
           slug: string | null
           subscription_status: string | null
@@ -198,6 +199,7 @@ export type Database = {
           paid_until?: string | null
           payment_due_date?: string | null
           payment_status?: string | null
+          pet_types?: string[] | null
           phone?: string | null
           slug?: string | null
           subscription_status?: string | null
@@ -218,6 +220,7 @@ export type Database = {
           paid_until?: string | null
           payment_due_date?: string | null
           payment_status?: string | null
+          pet_types?: string[] | null
           phone?: string | null
           slug?: string | null
           subscription_status?: string | null

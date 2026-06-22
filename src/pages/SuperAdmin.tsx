@@ -59,6 +59,7 @@ import {
   ESTABLISHMENT_CATEGORIES,
   getCategoryMeta,
   displayCategoryName,
+  PET_BUSINESS_TYPES,
 } from "@/lib/establishmentCategories";
 import { AddressFields, AddressData, emptyAddress, composeAddress, parseAddress } from "@/components/admin/AddressFields";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
@@ -79,6 +80,7 @@ interface Barbershop {
   created_at?: string | null;
   category_id?: string | null;
   category_ids?: string[];
+  pet_types?: string[] | null;
   owner?: { name: string; phone?: string } | null;
 }
 
@@ -181,6 +183,7 @@ export default function SuperAdmin() {
   const [createMonthlyPrice, setCreateMonthlyPrice] = useState("");
   const [createCategoryId, setCreateCategoryId] = useState<string>("");
   const [createAdditionalCategoryIds, setCreateAdditionalCategoryIds] = useState<string[]>([]);
+  const [createPetTypes, setCreatePetTypes] = useState<string[]>([]);
   const [createAddress, setCreateAddress] = useState<AddressData>(emptyAddress);
   const [ownerIsBarber, setOwnerIsBarber] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -194,6 +197,7 @@ export default function SuperAdmin() {
   const [editMonthlyPrice, setEditMonthlyPrice] = useState("");
   const [editCategoryId, setEditCategoryId] = useState<string>("");
   const [editAdditionalCategoryIds, setEditAdditionalCategoryIds] = useState<string[]>([]);
+  const [editPetTypes, setEditPetTypes] = useState<string[]>([]);
   const [editAddress, setEditAddress] = useState<AddressData>(emptyAddress);
 
   // Delete
@@ -224,6 +228,24 @@ export default function SuperAdmin() {
     categories.forEach((c) => (m[c.id] = c.slug));
     return m;
   }, [categories]);
+
+  const petCategoryId = useMemo(
+    () => categories.find((c) => c.slug === "pet")?.id || null,
+    [categories],
+  );
+
+  const createIncludesPet = useMemo(
+    () =>
+      !!petCategoryId &&
+      (createCategoryId === petCategoryId || createAdditionalCategoryIds.includes(petCategoryId)),
+    [petCategoryId, createCategoryId, createAdditionalCategoryIds],
+  );
+  const editIncludesPet = useMemo(
+    () =>
+      !!petCategoryId &&
+      (editCategoryId === petCategoryId || editAdditionalCategoryIds.includes(petCategoryId)),
+    [petCategoryId, editCategoryId, editAdditionalCategoryIds],
+  );
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -275,6 +297,7 @@ export default function SuperAdmin() {
           category_ids: (categoryLinks || [])
             .filter((link: any) => link.barbershop_id === shop.id)
             .map((link: any) => link.category_id),
+          pet_types: Array.isArray(shop.pet_types) ? shop.pet_types : null,
           owner: ownerUser ? { name: ownerUser.name, phone: ownerUser.phone } : null,
         };
       });
@@ -456,6 +479,7 @@ export default function SuperAdmin() {
           subscription_status: subscriptionStatus,
           monthly_price: monthlyPriceValue,
           paid_until: paidUntilValue || null,
+          pet_types: createIncludesPet ? createPetTypes : null,
         })
         .eq("id", createdShopId);
       if (createdShopUpdateError) throw createdShopUpdateError;
@@ -480,6 +504,7 @@ export default function SuperAdmin() {
       setCreateMonthlyPrice("");
       setCreateCategoryId("");
       setCreateAdditionalCategoryIds([]);
+      setCreatePetTypes([]);
       setCreateAddress(emptyAddress);
       fetchBarbershops();
     } catch (error: any) {
@@ -534,6 +559,7 @@ export default function SuperAdmin() {
           blocked,
           logo_url: logoUrl,
           category_id: editCategoryId,
+          pet_types: editIncludesPet ? editPetTypes : null,
         })
         .eq("id", editingBarbershop.id);
 
@@ -948,6 +974,7 @@ export default function SuperAdmin() {
                                   (categoryId) => categoryId !== shop.category_id,
                                 ),
                               );
+                              setEditPetTypes(shop.pet_types || []);
                               setEditAddress(parseAddress(shop.address));
                             }}
                           >
@@ -1076,6 +1103,32 @@ export default function SuperAdmin() {
                   </div>
                   <p className="mt-1 text-[11px] text-[#64748B]">Selecione todas as áreas em que o estabelecimento atende.</p>
                 </Field>
+
+                {createIncludesPet && (
+                  <Field label="Tipos de estabelecimento Pet" htmlFor="create_pet_types">
+                    <div id="create_pet_types" className="grid grid-cols-2 gap-2 rounded-[8px] border border-[#DDE3EE] bg-[#FFF8E6] p-3">
+                      {PET_BUSINESS_TYPES.map((type) => {
+                        const checked = createPetTypes.includes(type);
+                        return (
+                          <label key={type} className="flex min-h-10 cursor-pointer items-center gap-2 text-xs text-[#172033]">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                setCreatePetTypes((current) =>
+                                  checked ? current.filter((t) => t !== type) : [...current, type],
+                                )
+                              }
+                              className="h-4 w-4 rounded border-[#CBD5E1] text-[#F59E0B] focus:ring-[#F59E0B]"
+                            />
+                            {type}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1 text-[11px] text-[#64748B]">Marque mais de um se o estabelecimento combinar tipos (ex.: Pet shop + Banho e tosa).</p>
+                  </Field>
+                )}
 
                 <AddressFields value={createAddress} onChange={setCreateAddress} idPrefix="create_addr" />
 
@@ -1288,6 +1341,31 @@ export default function SuperAdmin() {
                     })}
                 </div>
               </Field>
+              {editIncludesPet && (
+                <Field label="Tipos de estabelecimento Pet" htmlFor="edit_pet_types">
+                  <div id="edit_pet_types" className="grid grid-cols-2 gap-2 rounded-[8px] border border-[#DDE3EE] bg-[#FFF8E6] p-3 md:col-span-2">
+                    {PET_BUSINESS_TYPES.map((type) => {
+                      const checked = editPetTypes.includes(type);
+                      return (
+                        <label key={type} className="flex min-h-10 cursor-pointer items-center gap-2 text-xs text-[#172033]">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() =>
+                              setEditPetTypes((current) =>
+                                checked ? current.filter((t) => t !== type) : [...current, type],
+                              )
+                            }
+                            className="h-4 w-4 rounded border-[#CBD5E1] text-[#F59E0B] focus:ring-[#F59E0B]"
+                          />
+                          {type}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-[11px] text-[#64748B]">Marque mais de um se o estabelecimento combinar tipos.</p>
+                </Field>
+              )}
               <Field label="Valor mensal" htmlFor="edit_monthly">
                 <Input
                   id="edit_monthly"
